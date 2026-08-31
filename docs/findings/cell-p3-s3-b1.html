@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cell p3 s3 b1</title>
+<style>
+:root{
+  color-scheme:light;
+  --surface-0:#f5f4f2;--surface-1:#fcfcfb;--line:#dedcd6;--grid:#eceae5;
+  --text-1:#0b0b0b;--text-2:#52514e;--text-3:#8a887f;
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;
+  --good-bg:#e0f2e3;--good-fg:#0d5c1d;--warn-bg:#fdf0d3;--warn-fg:#7a5300;
+  --mut-bg:#eceae5;--mut-fg:#52514e;--bad-bg:#fbe3e3;--bad-fg:#8f1d1d;
+  --q1:#cde2fb;--q2:#9ec5f4;--q3:#6da7ec;--q4:#3987e5;--q5:#256abf;--q6:#184f95;--q7:#0d366b;
+  --banner-bg:#fdf0d3;--banner-line:#c98500;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme:dark;
+    --surface-0:#111110;--surface-1:#1a1a19;--line:#3a3936;--grid:#262523;
+    --text-1:#ffffff;--text-2:#c3c2b7;--text-3:#8a887f;
+    --s1:#3987e5;--s2:#d95926;--s3:#199e70;
+    --good-bg:#123a1c;--good-fg:#9fdca9;--warn-bg:#42350b;--warn-fg:#ecc76a;
+    --mut-bg:#262523;--mut-fg:#c3c2b7;--bad-bg:#461414;--bad-fg:#f1a5a5;
+    --q1:#0d366b;--q2:#184f95;--q3:#256abf;--q4:#3987e5;--q5:#6da7ec;--q6:#9ec5f4;--q7:#cde2fb;
+    --banner-bg:#42350b;--banner-line:#ecc76a;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface-0);color:var(--text-1);
+  font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 48px}
+header.site{background:var(--surface-1);border-bottom:1px solid var(--line);margin-bottom:24px}
+header.site .wrap{padding-top:18px;padding-bottom:0}
+h1{font-size:24px;margin:6px 0 2px;letter-spacing:-.01em}
+h2{font-size:17px;margin:32px 0 10px;letter-spacing:-.01em}
+h3{font-size:14px;margin:18px 0 6px;color:var(--text-2)}
+p{max-width:76ch}
+.sub{color:var(--text-2);margin:0 0 12px}
+p.banner{border:1px solid var(--banner-line);border-left:4px solid var(--banner-line);
+  background:var(--banner-bg);color:var(--text-1);padding:8px 12px;border-radius:6px;
+  font-size:13px;max-width:none;margin:14px 0}
+nav.tabs{display:flex;gap:2px;flex-wrap:wrap;margin:10px 0 0}
+nav.tabs a{padding:8px 14px;border-radius:8px 8px 0 0;color:var(--text-2);
+  text-decoration:none;font-size:13.5px;border:1px solid transparent;border-bottom:none}
+nav.tabs a:hover{color:var(--text-1);background:var(--surface-0)}
+nav.tabs a.on{background:var(--surface-0);border-color:var(--line);color:var(--text-1);font-weight:600}
+a{color:var(--s1)}
+.cards{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+.card{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:12px 16px;min-width:132px;flex:0 1 auto}
+.card .k{font-size:12px;color:var(--text-2);letter-spacing:.02em}
+.card .v{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.card .d{font-size:12px;color:var(--text-3)}
+.panel{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:14px 16px;margin:14px 0}
+figure{margin:0}
+figure figcaption{font-size:13px;color:var(--text-2);margin:4px 0 8px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2);margin:2px 0 6px}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;
+  vertical-align:-1px}
+.charts{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+svg{max-width:100%;height:auto;display:block}
+svg text{font:11px system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--text-2)}
+svg .lbl{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
+  stroke-width:3px;stroke-linejoin:round}
+svg .axis{stroke:var(--line)}
+svg .gridline{stroke:var(--grid)}
+svg .cellstroke{stroke:var(--surface-1);stroke-width:2px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;margin:10px 0;font-size:13px;background:var(--surface-1);
+  border:1px solid var(--line);border-radius:8px}
+th,td{border-bottom:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--surface-0);color:var(--text-2);font-weight:600;font-size:12px;
+  letter-spacing:.02em;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td{font-variant-numeric:tabular-nums}
+.tier,.badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;
+  font-weight:600;white-space:nowrap}
+.tier-heldout_verified{background:var(--good-bg);color:var(--good-fg)}
+.tier-search_only{background:var(--warn-bg);color:var(--warn-fg)}
+.tier-unreplicated{background:var(--mut-bg);color:var(--mut-fg)}
+.badge-open{background:var(--mut-bg);color:var(--mut-fg)}
+.badge-supported{background:var(--good-bg);color:var(--good-fg)}
+.badge-refuted{background:var(--bad-bg);color:var(--bad-fg)}
+.badge-inconclusive{background:var(--warn-bg);color:var(--warn-fg)}
+.hash{word-break:break-all;font:12px ui-monospace,Consolas,monospace;color:var(--text-2)}
+.mono{font:13px ui-monospace,Consolas,monospace}
+.note{font-size:13px;color:var(--text-2);font-style:italic}
+dl.meta{display:grid;grid-template-columns:max-content 1fr;gap:2px 16px;font-size:13px}
+dl.meta dt{color:var(--text-2)}
+dl.meta dd{margin:0}
+article.entry{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+article.entry h2{margin-top:0}
+article.entry .when{font-size:12px;color:var(--text-3);margin:0 0 8px}
+footer{margin-top:40px;font-size:12px;color:var(--text-3)}
+</style>
+</head>
+<body>
+<header class="site"><div class="wrap">
+<p class="banner">Automatically generated. Not reviewed by a human. See rk-overview for interpretation.</p>
+<h1>cell p3 s3 b1</h1>
+
+<nav class="tabs"><a href="index.html" class="on">overview</a><a href="costmodel.html">cost model</a><a href="falsification.html">falsification</a><a href="hypotheses.html">hypotheses</a><a href="literature.html">literature</a><a href="interpretation.html">interpretation</a></nav>
+</div></header>
+<div class="wrap">
+<p class="sub">grid order 3, 3 stages, cycle bucket 1</p>
+<div class="panel"><dl class="meta">
+<dt>tier</dt><dd><span class="tier tier-unreplicated">unreplicated</span></dd>
+<dt>phase label</dt><dd>exhaustive — optimal within the enumerated space</dd>
+<dt>tableau_hash</dt><dd><span class="hash">4f501ec6a5ce8c6258fc99ab267807e5d5f35445e222252b1b5a82a15671416c</span></dd>
+<dt>verifier_hash</dt><dd><span class="hash">de5bec229ffa404a85b9172fdc808ef6035716c3df8b308c816e90ffb54fd6e9</span></dd>
+<dt>cycle_id</dt><dd>6</dd>
+<dt>seed</dt><dd>0</dd>
+<dt>directive_id</dt><dd>D-E100006</dd>
+<dt>hypothesis_id</dt><dd>none</dd>
+<dt>recorded</dt><dd>2026-08-30T05:51:24Z</dd>
+</dl></div>
+<h2>Tableau</h2>
+<div class="scroll"><table>
+<tr><th></th><th>A[.][0]</th><th>A[.][1]</th><th>A[.][2]</th></tr>
+<tr><th class="mono">c[0] = 0/1</th><td class="mono">0/1</td><td class="mono">0/1</td><td class="mono">0/1</td></tr>
+<tr><th class="mono">c[1] = -1/16</th><td class="mono">-1/16</td><td class="mono">0/1</td><td class="mono">0/1</td></tr>
+<tr><th class="mono">c[2] = 75/256</th><td class="mono">135/128</td><td class="mono">-195/256</td><td class="mono">0/1</td></tr>
+<tr><th>b</th><td class="mono">-491/45</td><td class="mono">328/39</td><td class="mono">2048/585</td></tr>
+</table></div>
+<h2>Per problem</h2>
+<div class="panel"><figure><figcaption>Per-problem error under m0plus_fast (log scale)</figcaption><svg viewBox="0 0 560 228" width="560" height="228" role="img" aria-label="Per-problem error, log scale"><line class="gridline" x1="118.00" y1="10" x2="118.00" y2="202"/><text x="118.00" y="216" text-anchor="middle">1e-3</text><line class="gridline" x1="331.00" y1="10" x2="331.00" y2="202"/><text x="331.00" y="216" text-anchor="middle">1e-2</text><line class="gridline" x1="544.00" y1="10" x2="544.00" y2="202"/><text x="544.00" y="216" text-anchor="middle">1e-1</text><text x="112" y="27.00" text-anchor="end">dahlquist</text><rect x="118" y="14" width="306.72" height="18" rx="4" fill="var(--s1)" class="cellstroke"><title>dahlquist: 0.0275425</title></rect><text class="lbl" x="430.72" y="27.00">0.0275425</text><text x="112" y="53.00" text-anchor="end">damped_osc</text><rect x="118" y="40" width="288.29" height="18" rx="4" fill="var(--s1)" class="cellstroke"><title>damped_osc: 0.0225677</title></rect><text class="lbl" x="412.29" y="53.00">0.0225677</text><text x="112" y="79.00" text-anchor="end">dc_motor</text><rect x="118" y="66" width="344.31" height="18" rx="4" fill="var(--s1)" class="cellstroke"><title>dc_motor: 0.0413485</title></rect><text class="lbl" x="468.31" y="79.00">0.0413485</text><text x="112" y="105.00" text-anchor="end">pendulum</text><rect x="118" y="92" width="157.34" height="18" rx="4" fill="var(--s1)" class="cellstroke"><title>pendulum: 0.0054786</title></rect><text class="lbl" x="281.34" y="105.00">0.0054786</text><text x="112" y="131.00" text-anchor="end">quaternion</text><rect x="118" y="118" width="342.91" height="18" rx="4" fill="var(--s1)" class="cellstroke"><title>quaternion: 0.0407275</title></rect><text class="lbl" x="466.91" y="131.00">0.0407275</text><text x="112" y="157.00" text-anchor="end">rc_thermal</text><rect x="118" y="144" width="399.92" height="18" rx="4" fill="var(--s1)" class="cellstroke"><title>rc_thermal: 0.0754307</title></rect><text class="lbl" x="523.92" y="157.00">0.0754307</text><text x="112" y="183.00" text-anchor="end">vanderpol_mild</text><rect x="118" y="170" width="379.45" height="18" rx="4" fill="var(--s1)" class="cellstroke"><title>vanderpol_mild: 0.0604582</title></rect><text class="lbl" x="503.45" y="183.00">0.0604582</text></svg></figure></div>
+<h2>Cycle counts (n_states = 1)</h2>
+<table><tr><th>model</th><th>cycles</th><th>note</th></tr>
+<tr><td>m0plus_fast</td><td>29</td><td></td></tr>
+<tr><td>m0plus_slow</td><td>60</td><td></td></tr>
+<tr><td>avr_approx</td><td>142</td><td>Cost model approximate; see HANDOFF §4.5.</td></tr>
+</table>
+<h2>Score</h2>
+<table><tr><th>metric</th><th>value</th></tr>
+<tr><td>measured_order</td><td>3.04041</td></tr>
+<tr><td>order_fit_points</td><td>5</td></tr>
+<tr><td>error_constant</td><td>0.207919</td></tr>
+<tr><td>stability_real</td><td>-2.51275</td></tr>
+<tr><td>stability_imag</td><td>1.73205</td></tr>
+<tr><td>csd_weight_total</td><td>24</td></tr>
+<tr><td>coeff_quant_error</td><td>0.00010016</td></tr>
+<tr><td>search_error</td><td>0.0405096</td></tr>
+<tr><td>heldout_error</td><td>0.0476661</td></tr>
+<tr><td>overflow_margin</td><td>1.97898</td></tr>
+</table>
+<h3>All per-problem keys</h3>
+<div class="scroll"><table><tr><th>key</th><th>error</th><th>note</th></tr>
+<tr><td>avr_approx:dahlquist</td><td>4.53999e-05</td><td>Cost model approximate; see HANDOFF §4.5.</td></tr>
+<tr><td>avr_approx:damped_osc</td><td>0.00743743</td><td>Cost model approximate; see HANDOFF §4.5.</td></tr>
+<tr><td>avr_approx:dc_motor</td><td>0.00743727</td><td>Cost model approximate; see HANDOFF §4.5.</td></tr>
+<tr><td>avr_approx:heldout_error</td><td>inf</td><td>Cost model approximate; see HANDOFF §4.5.</td></tr>
+<tr><td>avr_approx:pendulum</td><td>0.0492801</td><td>Cost model approximate; see HANDOFF §4.5.</td></tr>
+<tr><td>avr_approx:quaternion</td><td>0.0149981</td><td>Cost model approximate; see HANDOFF §4.5.</td></tr>
+<tr><td>avr_approx:rc_thermal</td><td>inf</td><td>Cost model approximate; see HANDOFF §4.5.</td></tr>
+<tr><td>avr_approx:search_error</td><td>0.0225619</td><td>Cost model approximate; see HANDOFF §4.5.</td></tr>
+<tr><td>avr_approx:vanderpol_mild</td><td>0.038364</td><td>Cost model approximate; see HANDOFF §4.5.</td></tr>
+<tr><td>dahlquist</td><td>0.0275425</td><td></td></tr>
+<tr><td>damped_osc</td><td>0.0225677</td><td></td></tr>
+<tr><td>dc_motor</td><td>0.0413485</td><td></td></tr>
+<tr><td>pendulum</td><td>0.0054786</td><td></td></tr>
+<tr><td>quaternion</td><td>0.0407275</td><td></td></tr>
+<tr><td>rc_thermal</td><td>0.0754307</td><td></td></tr>
+<tr><td>slow:dahlquist</td><td>0.0133823</td><td></td></tr>
+<tr><td>slow:damped_osc</td><td>0.0103696</td><td></td></tr>
+<tr><td>slow:dc_motor</td><td>0.0183301</td><td></td></tr>
+<tr><td>slow:heldout_error</td><td>0.059849</td><td></td></tr>
+<tr><td>slow:pendulum</td><td>0.0105585</td><td></td></tr>
+<tr><td>slow:quaternion</td><td>0.0187186</td><td></td></tr>
+<tr><td>slow:rc_thermal</td><td>0.116317</td><td></td></tr>
+<tr><td>slow:search_error</td><td>0.0310919</td><td></td></tr>
+<tr><td>slow:vanderpol_mild</td><td>0.0511225</td><td></td></tr>
+<tr><td>vanderpol_mild</td><td>0.0604582</td><td></td></tr>
+</table></div>
+<footer>rk-harness findings — Q15 fixed point, equal cycle budget, Cortex-M0+ cost models.</footer>
+</div>
+</body>
+</html>

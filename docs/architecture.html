@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>architecture</title>
+<style>
+:root{
+  color-scheme:light;
+  --surface-0:#f5f4f2;--surface-1:#fcfcfb;--line:#dedcd6;--grid:#eceae5;
+  --text-1:#0b0b0b;--text-2:#52514e;--text-3:#8a887f;
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;
+  --good-bg:#e0f2e3;--good-fg:#0d5c1d;--warn-bg:#fdf0d3;--warn-fg:#7a5300;
+  --mut-bg:#eceae5;--mut-fg:#52514e;--bad-bg:#fbe3e3;--bad-fg:#8f1d1d;
+  --q1:#cde2fb;--q2:#9ec5f4;--q3:#6da7ec;--q4:#3987e5;--q5:#256abf;--q6:#184f95;--q7:#0d366b;
+  --banner-bg:#fdf0d3;--banner-line:#c98500;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme:dark;
+    --surface-0:#111110;--surface-1:#1a1a19;--line:#3a3936;--grid:#262523;
+    --text-1:#ffffff;--text-2:#c3c2b7;--text-3:#8a887f;
+    --s1:#3987e5;--s2:#d95926;--s3:#199e70;
+    --good-bg:#123a1c;--good-fg:#9fdca9;--warn-bg:#42350b;--warn-fg:#ecc76a;
+    --mut-bg:#262523;--mut-fg:#c3c2b7;--bad-bg:#461414;--bad-fg:#f1a5a5;
+    --q1:#0d366b;--q2:#184f95;--q3:#256abf;--q4:#3987e5;--q5:#6da7ec;--q6:#9ec5f4;--q7:#cde2fb;
+    --banner-bg:#42350b;--banner-line:#ecc76a;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface-0);color:var(--text-1);
+  font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 48px}
+header.site{background:var(--surface-1);border-bottom:1px solid var(--line);margin-bottom:24px}
+header.site .wrap{padding-top:18px;padding-bottom:0}
+h1{font-size:24px;margin:6px 0 2px;letter-spacing:-.01em}
+h2{font-size:17px;margin:32px 0 10px;letter-spacing:-.01em}
+h3{font-size:14px;margin:18px 0 6px;color:var(--text-2)}
+p{max-width:76ch}
+.sub{color:var(--text-2);margin:0 0 12px}
+p.banner{border:1px solid var(--banner-line);border-left:4px solid var(--banner-line);
+  background:var(--banner-bg);color:var(--text-1);padding:8px 12px;border-radius:6px;
+  font-size:13px;max-width:none;margin:14px 0}
+nav.tabs{display:flex;gap:2px;flex-wrap:wrap;margin:10px 0 0}
+nav.tabs a{padding:8px 14px;border-radius:8px 8px 0 0;color:var(--text-2);
+  text-decoration:none;font-size:13.5px;border:1px solid transparent;border-bottom:none}
+nav.tabs a:hover{color:var(--text-1);background:var(--surface-0)}
+nav.tabs a.on{background:var(--surface-0);border-color:var(--line);color:var(--text-1);font-weight:600}
+a{color:var(--s1)}
+.cards{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+.card{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:12px 16px;min-width:132px;flex:0 1 auto}
+.card .k{font-size:12px;color:var(--text-2);letter-spacing:.02em}
+.card .v{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.card .d{font-size:12px;color:var(--text-3)}
+.panel{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:14px 16px;margin:14px 0}
+figure{margin:0}
+figure figcaption{font-size:13px;color:var(--text-2);margin:4px 0 8px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2);margin:2px 0 6px}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;
+  vertical-align:-1px}
+.charts{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+svg{max-width:100%;height:auto;display:block}
+svg text{font:11px system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--text-2)}
+svg .lbl{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
+  stroke-width:3px;stroke-linejoin:round}
+svg .axis{stroke:var(--line)}
+svg .gridline{stroke:var(--grid)}
+svg .cellstroke{stroke:var(--surface-1);stroke-width:2px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;margin:10px 0;font-size:13px;background:var(--surface-1);
+  border:1px solid var(--line);border-radius:8px}
+th,td{border-bottom:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--surface-0);color:var(--text-2);font-weight:600;font-size:12px;
+  letter-spacing:.02em;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td{font-variant-numeric:tabular-nums}
+.tier,.badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;
+  font-weight:600;white-space:nowrap}
+.tier-heldout_verified{background:var(--good-bg);color:var(--good-fg)}
+.tier-search_only{background:var(--warn-bg);color:var(--warn-fg)}
+.tier-unreplicated{background:var(--mut-bg);color:var(--mut-fg)}
+.badge-open{background:var(--mut-bg);color:var(--mut-fg)}
+.badge-supported{background:var(--good-bg);color:var(--good-fg)}
+.badge-refuted{background:var(--bad-bg);color:var(--bad-fg)}
+.badge-inconclusive{background:var(--warn-bg);color:var(--warn-fg)}
+.hash{word-break:break-all;font:12px ui-monospace,Consolas,monospace;color:var(--text-2)}
+.mono{font:13px ui-monospace,Consolas,monospace}
+.note{font-size:13px;color:var(--text-2);font-style:italic}
+dl.meta{display:grid;grid-template-columns:max-content 1fr;gap:2px 16px;font-size:13px}
+dl.meta dt{color:var(--text-2)}
+dl.meta dd{margin:0}
+article.entry{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+article.entry h2{margin-top:0}
+article.entry .when{font-size:12px;color:var(--text-3);margin:0 0 8px}
+footer{margin-top:40px;font-size:12px;color:var(--text-3)}
+
+.hero{font-size:17px;max-width:78ch}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:900px){.two{grid-template-columns:1fr}}
+.decision{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.decision h3{margin:0 0 6px;font-size:15px;color:var(--text-1)}
+.decision .orig{color:var(--text-2);border-left:3px solid var(--line);padding-left:12px;margin:8px 0}
+.decision .asbuilt{margin:8px 0 0}
+.decision .tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
+  font-weight:600;margin-left:8px;vertical-align:2px}
+.tag-kept{background:var(--good-bg);color:var(--good-fg)}
+.tag-changed{background:var(--warn-bg);color:var(--warn-fg)}
+svg .box{fill:var(--surface-1);stroke:var(--line)}
+svg .boxhl{fill:var(--surface-0);stroke:var(--s1);stroke-width:1.5}
+svg .arrow{stroke:var(--text-3);fill:none;marker-end:url(#ah)}
+svg .bt{font-weight:600;fill:var(--text-1)}
+svg .bs{fill:var(--text-2);font-size:10px}
+</style>
+</head>
+<body>
+<header class="site"><div class="wrap">
+<p class="banner">rk-overview is the human-maintained explainer for the rk project. The companion site rk-findings is generated by the harness every cycle and carries the authoritative numbers; a frozen copy from 2026-08-30 is snapshotted under this site. Drafted with Claude, edited and owned by the author.</p>
+<h1>architecture</h1>
+<p class="sub">The as-built system: boundaries, loop, arithmetic, search, host layer.</p>
+<nav class="tabs"><a href="index.html">overview</a><a href="architecture.html" class="on">architecture</a><a href="design-decisions.html">design decisions</a><a href="results.html">results</a><a href="findings/index.html">findings snapshot (2026-08-30)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+</div></header>
+<div class="wrap">
+<figure class="panel"><figcaption>The as-built system. The verifier lives inside the read-only mount; the credential never crosses the container boundary.</figcaption><div class="scroll"><svg viewBox="0 0 930 236" width="930" height="236" role="img" aria-label="System diagram: host, container with read-only harness, and services"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--text-3)"/></marker></defs><rect class="box" x="20" y="16" width="250" height="118" rx="8"/><text class="bt" x="30" y="34">Windows host</text><text class="bs" x="30" y="50">watchdog: heartbeat kill, spend/disk stop,</text><text class="bs" x="30" y="63">pause on battery / CPU load,</text><text class="bs" x="30" y="76">git push rk-work + rk-findings</text><text class="bs" x="30" y="89">config.json + configure.py + watcher</text><rect class="box" x="20" y="152" width="250" height="64" rx="8"/><text class="bt" x="30" y="170">credentials</text><text class="bs" x="30" y="186">GitHub PAT: host only, never mounted</text><text class="bs" x="30" y="199">codex auth.json: mounted read-only</text><rect class="box" x="320" y="16" width="300" height="200" rx="8"/><text class="bt" x="330" y="34">run container (docker)</text><rect class="boxhl" x="336" y="44" width="268" height="46" rx="8"/><text class="bt" x="346" y="62">rk-harness  (mounted :ro)</text><text class="bs" x="346" y="78">verifier + evaluator + cost models</text><text class="bs" x="346" y="91">pinned sha256 checked at start</text><rect class="box" x="336" y="100" width="128" height="52" rx="8"/><text class="bt" x="346" y="118">runner</text><text class="bs" x="346" y="134">cycle loop</text><text class="bs" x="346" y="147">only LLM caller</text><rect class="box" x="480" y="100" width="124" height="52" rx="8"/><text class="bt" x="490" y="118">search</text><text class="bs" x="490" y="134">CMA-ES islands</text><text class="bs" x="490" y="147">enumeration</text><rect class="box" x="336" y="160" width="268" height="46" rx="8"/><text class="bt" x="346" y="178">rk-work  (mounted rw)</text><text class="bs" x="346" y="194">append-only archive, events, ledger</text><rect class="box" x="670" y="16" width="240" height="64" rx="8"/><text class="bt" x="680" y="34">Codex (plan)</text><text class="bs" x="680" y="50">directives + hypotheses + digests</text><text class="bs" x="680" y="63">web search server-side</text><rect class="box" x="670" y="100" width="240" height="52" rx="8"/><text class="bt" x="680" y="118">rk-findings</text><text class="bs" x="680" y="134">auto site, rebuilt each cycle</text><rect class="box" x="670" y="168" width="240" height="48" rx="8"/><text class="bt" x="680" y="186">GitHub Pages</text><text class="bs" x="680" y="202">pages-build-deployment on push</text><path class="arrow" d="M 270 75 L 320 75"/><text class="bs" x="295.0" y="71.0" text-anchor="middle">docker run</text><path class="arrow" d="M 620 60 L 670 48"/><text class="bs" x="645.0" y="50.0" text-anchor="middle">throttled calls</text><path class="arrow" d="M 620 126 L 670 126"/><text class="bs" x="645.0" y="122.0" text-anchor="middle">commit</text><path class="arrow" d="M 270 184 L 336 184"/><text class="bs" x="300" y="178" text-anchor="middle">push (host)</text><path class="arrow" d="M 790 152 L 790 168"/></svg></div></figure>
+
+<h2>Trust boundaries</h2>
+<p>The design assumes the searching agent will, if permitted, optimise the scorer instead of the
+score. Four boundaries make that unprofitable:</p>
+<ul>
+<li><strong>The scorer cannot be edited.</strong> <code>rk-harness</code> is mounted read-only
+into the container, and the container refuses to start unless the sha256 over the ten verifier
+files (coeffrep, orderconditions, verifier, costmodel, evaluator, problems, and the four fixture
+files) matches a pinned value. Every archive record carries the verifier hash that scored it.</li>
+<li><strong>No credential reaches the agent.</strong> The GitHub token stays on the host: the
+container receives a filtered environment, only ever <em>commits</em> into the mounted
+checkouts, and the host watchdog pushes with the owner's own credentials.</li>
+<li><strong>The model never grades itself.</strong> Confidence tiers
+(heldout_verified / search_only / unreplicated) and hypothesis verdicts
+(supported / refuted / inconclusive) are computed by code from the archive. The tier strings do
+not appear in any LLM prompt template; a directive carrying an unknown key &mdash; including a
+tier &mdash; is rejected, not ignored.</li>
+<li><strong>Model-written code is quarantined.</strong> A model-authored problem executes only
+after an AST-checked import allowlist (math only, no dunders, no I/O), determinism and time
+bounds, a range check, a reference solution, and a promotion gate; it can then join only the
+held-out set, so the optimiser can never be steered toward a problem the model invented.</li>
+</ul>
+
+
+<h2>The cycle loop</h2>
+<figure class="panel"><figcaption>One idempotent cycle; a crash anywhere costs at most one cycle.</figcaption><div class="scroll"><svg viewBox="0 0 950 210" width="950" height="210" role="img" aria-label="Cycle loop: replay, encourager, candidates, verify, evaluate, tier, append, ledger, site, commit"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--text-3)"/></marker></defs><rect class="box" x="16" y="16" width="168" height="52" rx="8"/><text class="bt" x="26" y="34">replay</text><text class="bs" x="26" y="50">archive → state</text><path class="arrow" d="M 184 42.0 L 202 42.0"/><rect class="box" x="202" y="16" width="168" height="52" rx="8"/><text class="bt" x="212" y="34">encourager</text><text class="bs" x="212" y="50">ladder + calendar</text><path class="arrow" d="M 370 42.0 L 388 42.0"/><rect class="box" x="388" y="16" width="168" height="52" rx="8"/><text class="bt" x="398" y="34">candidates</text><text class="bs" x="398" y="50">enumerate / CMA-ES</text><path class="arrow" d="M 556 42.0 L 574 42.0"/><rect class="boxhl" x="574" y="16" width="168" height="52" rx="8"/><text class="bt" x="584" y="34">verify ×9</text><text class="bs" x="584" y="50">pure code, exact</text><path class="arrow" d="M 742 42.0 L 760 42.0"/><rect class="box" x="760" y="16" width="168" height="52" rx="8"/><text class="bt" x="770" y="34">evaluate</text><text class="bs" x="770" y="50">Q15, 3 cost models</text><rect class="box" x="16" y="108" width="168" height="52" rx="8"/><text class="bt" x="26" y="126">tier</text><text class="bs" x="26" y="142">vs cell incumbent</text><path class="arrow" d="M 184 134.0 L 202 134.0"/><rect class="box" x="202" y="108" width="168" height="52" rx="8"/><text class="bt" x="212" y="126">append</text><text class="bs" x="212" y="142">fsync JSONL</text><path class="arrow" d="M 370 134.0 L 388 134.0"/><rect class="box" x="388" y="108" width="168" height="52" rx="8"/><text class="bt" x="398" y="126">ledger</text><text class="bs" x="398" y="142">verdicts by code</text><path class="arrow" d="M 556 134.0 L 574 134.0"/><rect class="box" x="574" y="108" width="168" height="52" rx="8"/><text class="bt" x="584" y="126">site</text><text class="bs" x="584" y="142">regenerate + guard</text><path class="arrow" d="M 742 134.0 L 760 134.0"/><rect class="box" x="760" y="108" width="168" height="52" rx="8"/><text class="bt" x="770" y="126">commit</text><text class="bs" x="770" y="142">host pushes later</text><path class="arrow" d="M 844.0 68 L 108.0 106"/></svg></div></figure>
+
+<p>The runner executes one idempotent cycle at a time; a crash at any point costs at most one
+cycle because the archive is append-only with fsync, state is written atomically, and replay
+discards a torn trailing line. Each cycle: replay the archive &rarr; ask the encourager for an
+action &rarr; produce candidates &rarr; verify each &rarr; evaluate in Q15 under three cost
+models at equal cycle budget &rarr; assign a tier against the cell's incumbent &rarr; append
+&rarr; resolve open hypotheses &rarr; regenerate the findings site &rarr; commit &rarr; save
+state.</p>
+
+<h2>Verification, in order</h2>
+<p>Nine checks, cheap before expensive, all pure code: NOT_EXPLICIT, ROW_SUM_INCONSISTENT,
+DYADIC_IMPOSSIBLE (order &ge; 3 with all-dyadic coefficients is provably empty &mdash; the
+order-3 condition sums to 1/3, which no dyadic rational equals), ORDER_NOT_MET (exact rational
+residuals over rooted trees, never floats), COEFF_UNREPRESENTABLE (a range check &mdash;
+inexactness like 1/3 is <em>recorded</em>, never rejected), Q15_OVERFLOW (2&times; amplitude
+margin), UNSTABLE, NO_ASYMPTOTIC_WINDOW (the measured-order fit found no consistent slope run),
+NAN_OR_INF. Only the primary cost model's columns gate verification; the slow and AVR columns
+are archive breadth.</p>
+
+<h2>Arithmetic, exactly</h2>
+<p>States are Q15 (int16, scale 2<sup>-15</sup>). A multiply is <code>(a*b) &gt;&gt; 15</code>
+with an arithmetic shift &mdash; flooring toward negative infinity, matching ASRS and
+deliberately not matching C's truncation. Addition overflow raises rather than wraps, so
+overflow becomes a verifier rejection instead of a silent wrong answer. Coefficients are not Q15:
+each is an integer-and-shift pair m/2<sup>s</sup> (rk4's 1 and kutta3's 2 do not fit [-1, 1)),
+and inexact representations contribute a recorded quantisation error. Cost is driven by CSD
+(non-adjacent-form) weight &mdash; 3/8 is dyadic yet costs two shifts and an add &mdash; with
+every coefficient priced at min(shift-add expansion, multiply).</p>
+
+<h2>Where candidates come from</h2>
+<p>Phase 0 and 1 are exhaustive enumerations (16 points at order 2; 5,094 exact 3-stage order-3
+points), so their results are proofs of optimality within the enumerated space, and the site
+labels them that way. Phases 2 and 3 run CMA-ES islands over the strictly-lower triangle of A
+snapped to dyadics, with b then solved <em>exactly</em> over the rationals from the b-linear
+order conditions &mdash; snapping b would make order &ge; 3 impossible by the dyadic theorem.
+When the requested order is not exactly solvable for a snapped A (order 4 rarely is), the
+projection falls back to the highest solvable order &ge; 2 and the candidate is verified at the
+order it actually achieves.</p>
+
+<h2>The outer loop: a research partner, not a sampler</h2>
+<p>The LLM (Codex, plan-billed, authenticated on the host and mounted read-only) never touches
+the inner loop. It emits JSON directives that can only narrow the search &mdash; target order,
+stage counts, structural constraints &mdash; validated against a schema where unknown keys are
+rejections. Directives are requested every few cycles (and on every escalation) and reused in
+between; calls stop at a plan-usage cap. On HYPOTHESIZE escalations it proposes falsifiable
+hypotheses whose ids and verdicts are assigned by code and whose predicates must parse under a
+closed grammar (a hand-written parser; no eval anywhere near model output). A literature loop
+web-searches a rotating topic every ~50 cycles and feeds the digest into every prompt, so the
+directives and hypotheses are grounded in existing research. The digests and the model's prose
+interpretation are published on the findings site, clearly labelled and softened so the site's
+banned-words guard holds.</p>
+
+<h2>The host layer</h2>
+<p>A PowerShell watchdog polls every 10 s: stale heartbeat &rarr; kill; spend over cap or disk
+under 5 GB &rarr; stop; laptop on battery or foreground CPU load &rarr; pause (and resume);
+plus the host-side pushes. Operational knobs &mdash; container resources, auto-stop after N
+minutes/cycles, LLM throttles, watchdog thresholds &mdash; live in a workspace
+<code>config.json</code> edited by <code>configure.py</code>; scientific thresholds are
+deliberately not configurable because changing them invalidates the archive. A read-only watcher
+window renders the whole state live; Ctrl+C in it cannot touch the run.</p>
+
+<h2>What the pre-flight actually caught</h2>
+<p>The checklist was executed as a program, not a document, and it earned its keep: the crash
+-recovery drill exposed that a runner killed mid-seeding never finished writing the classical
+baselines (fixed: seeding is idempotent per hash, every cycle); the trust-boundary probe showed
+the original PAT could push the verifier repo despite the handoff's 403 test passing (fixed by
+moving the credential out of the container entirely); the first live archive build tripped the
+banned-words guard on a hypothesis containing &ldquo;beats&rdquo; &mdash; the guard doing
+exactly its job against text nobody reviewed.</p>
+
+<footer>rk-overview — snapshot 2026-08-30; the live numbers are on rk-findings.</footer>
+</div>
+</body>
+</html>

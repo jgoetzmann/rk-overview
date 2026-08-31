@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hypothesis ledger</title>
+<style>
+:root{
+  color-scheme:light;
+  --surface-0:#f5f4f2;--surface-1:#fcfcfb;--line:#dedcd6;--grid:#eceae5;
+  --text-1:#0b0b0b;--text-2:#52514e;--text-3:#8a887f;
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;
+  --good-bg:#e0f2e3;--good-fg:#0d5c1d;--warn-bg:#fdf0d3;--warn-fg:#7a5300;
+  --mut-bg:#eceae5;--mut-fg:#52514e;--bad-bg:#fbe3e3;--bad-fg:#8f1d1d;
+  --q1:#cde2fb;--q2:#9ec5f4;--q3:#6da7ec;--q4:#3987e5;--q5:#256abf;--q6:#184f95;--q7:#0d366b;
+  --banner-bg:#fdf0d3;--banner-line:#c98500;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme:dark;
+    --surface-0:#111110;--surface-1:#1a1a19;--line:#3a3936;--grid:#262523;
+    --text-1:#ffffff;--text-2:#c3c2b7;--text-3:#8a887f;
+    --s1:#3987e5;--s2:#d95926;--s3:#199e70;
+    --good-bg:#123a1c;--good-fg:#9fdca9;--warn-bg:#42350b;--warn-fg:#ecc76a;
+    --mut-bg:#262523;--mut-fg:#c3c2b7;--bad-bg:#461414;--bad-fg:#f1a5a5;
+    --q1:#0d366b;--q2:#184f95;--q3:#256abf;--q4:#3987e5;--q5:#6da7ec;--q6:#9ec5f4;--q7:#cde2fb;
+    --banner-bg:#42350b;--banner-line:#ecc76a;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface-0);color:var(--text-1);
+  font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 48px}
+header.site{background:var(--surface-1);border-bottom:1px solid var(--line);margin-bottom:24px}
+header.site .wrap{padding-top:18px;padding-bottom:0}
+h1{font-size:24px;margin:6px 0 2px;letter-spacing:-.01em}
+h2{font-size:17px;margin:32px 0 10px;letter-spacing:-.01em}
+h3{font-size:14px;margin:18px 0 6px;color:var(--text-2)}
+p{max-width:76ch}
+.sub{color:var(--text-2);margin:0 0 12px}
+p.banner{border:1px solid var(--banner-line);border-left:4px solid var(--banner-line);
+  background:var(--banner-bg);color:var(--text-1);padding:8px 12px;border-radius:6px;
+  font-size:13px;max-width:none;margin:14px 0}
+nav.tabs{display:flex;gap:2px;flex-wrap:wrap;margin:10px 0 0}
+nav.tabs a{padding:8px 14px;border-radius:8px 8px 0 0;color:var(--text-2);
+  text-decoration:none;font-size:13.5px;border:1px solid transparent;border-bottom:none}
+nav.tabs a:hover{color:var(--text-1);background:var(--surface-0)}
+nav.tabs a.on{background:var(--surface-0);border-color:var(--line);color:var(--text-1);font-weight:600}
+a{color:var(--s1)}
+.cards{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+.card{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:12px 16px;min-width:132px;flex:0 1 auto}
+.card .k{font-size:12px;color:var(--text-2);letter-spacing:.02em}
+.card .v{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.card .d{font-size:12px;color:var(--text-3)}
+.panel{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:14px 16px;margin:14px 0}
+figure{margin:0}
+figure figcaption{font-size:13px;color:var(--text-2);margin:4px 0 8px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2);margin:2px 0 6px}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;
+  vertical-align:-1px}
+.charts{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+svg{max-width:100%;height:auto;display:block}
+svg text{font:11px system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--text-2)}
+svg .lbl{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
+  stroke-width:3px;stroke-linejoin:round}
+svg .axis{stroke:var(--line)}
+svg .gridline{stroke:var(--grid)}
+svg .cellstroke{stroke:var(--surface-1);stroke-width:2px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;margin:10px 0;font-size:13px;background:var(--surface-1);
+  border:1px solid var(--line);border-radius:8px}
+th,td{border-bottom:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--surface-0);color:var(--text-2);font-weight:600;font-size:12px;
+  letter-spacing:.02em;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td{font-variant-numeric:tabular-nums}
+.tier,.badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;
+  font-weight:600;white-space:nowrap}
+.tier-heldout_verified{background:var(--good-bg);color:var(--good-fg)}
+.tier-search_only{background:var(--warn-bg);color:var(--warn-fg)}
+.tier-unreplicated{background:var(--mut-bg);color:var(--mut-fg)}
+.badge-open{background:var(--mut-bg);color:var(--mut-fg)}
+.badge-supported{background:var(--good-bg);color:var(--good-fg)}
+.badge-refuted{background:var(--bad-bg);color:var(--bad-fg)}
+.badge-inconclusive{background:var(--warn-bg);color:var(--warn-fg)}
+.hash{word-break:break-all;font:12px ui-monospace,Consolas,monospace;color:var(--text-2)}
+.mono{font:13px ui-monospace,Consolas,monospace}
+.note{font-size:13px;color:var(--text-2);font-style:italic}
+dl.meta{display:grid;grid-template-columns:max-content 1fr;gap:2px 16px;font-size:13px}
+dl.meta dt{color:var(--text-2)}
+dl.meta dd{margin:0}
+article.entry{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+article.entry h2{margin-top:0}
+article.entry .when{font-size:12px;color:var(--text-3);margin:0 0 8px}
+footer{margin-top:40px;font-size:12px;color:var(--text-3)}
+</style>
+</head>
+<body>
+<header class="site"><div class="wrap">
+<p class="banner">Automatically generated. Not reviewed by a human. See rk-overview for interpretation.</p>
+<h1>hypothesis ledger</h1>
+<p class="sub">Falsifiable statements about the archive, resolved mechanically.</p>
+<nav class="tabs"><a href="index.html">overview</a><a href="costmodel.html">cost model</a><a href="falsification.html">falsification</a><a href="hypotheses.html" class="on">hypotheses</a><a href="literature.html">literature</a><a href="interpretation.html">interpretation</a></nav>
+</div></header>
+<div class="wrap">
+<div class="cards"><div class="card"><div class="k">open</div><div class="v">0</div></div><div class="card"><div class="k">supported</div><div class="v">0</div></div><div class="card"><div class="k">refuted</div><div class="v">1</div></div><div class="card"><div class="k">inconclusive</div><div class="v">0</div></div></div>
+<p class="note">Verdicts are computed by code from the archive; the model never writes one. A missing cell reads as inconclusive, never refuted.</p>
+<div class="scroll"><table><tr><th>id</th><th>statement</th><th>mechanism</th><th>control</th><th>predicate</th><th>verdict</th><th>n_samples</th><th>effect_size</th><th>min_samples</th><th>resolved_cycle</th><th>cycle</th><th>rationale</th></tr>
+<tr><td>H-001</td><td>The order-2, three-stage archive cell does better than the order-2, two-stage cell on held-out error under the slow cost model.</td><td>The slow cost model rewards the additional stage&#x27;s accuracy enough to overcome its higher cycle cost.</td><td>Under the fast cost model, the cheaper two-stage cell should instead have lower held-out error if cost-driven selection causes the advantage.</td><td class="mono">slow.p2s3.heldout &lt; slow.p2s2.heldout AND fast.p2s2.heldout &lt; fast.p2s3.heldout</td><td><span class="badge badge-refuted">refuted</span></td><td>44</td><td>0.603339</td><td>20</td><td>548</td><td>n/a</td><td></td></tr>
+</table></div>
+<footer>rk-harness findings — Q15 fixed point, equal cycle budget, Cortex-M0+ cost models.</footer>
+</div>
+</body>
+</html>
