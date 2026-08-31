@@ -163,7 +163,7 @@ rk4 spends 56% of its cycles on coefficient arithmetic under the fast multiplier
 slow one), and its Q15 error stops improving below h &asymp; 0.16 on the damped oscillator while
 float64 keeps falling &mdash; the roundoff/truncation crossover sits squarely in the practical
 range, so the project proceeds.</li>
-<li><strong>Floor rounding is a first-class actor.</strong> Q15 multiplies floor toward negative
+<li><strong>Floor rounding changes the answers.</strong> Q15 multiplies floor toward negative
 infinity (that is what ARM's <code>ASRS</code> does), and the resulting -&frac12;-LSB bias per
 term is the same order as the per-step dynamics at these budgets: at equal cycle budget Euler's
 <em>search-set</em> error undercuts rk4's, and the stiff <code>rc_thermal</code> problem

@@ -49,7 +49,7 @@ rk4 spends 56% of its cycles on coefficient arithmetic under the fast multiplier
 slow one), and its Q15 error stops improving below h &asymp; 0.16 on the damped oscillator while
 float64 keeps falling &mdash; the roundoff/truncation crossover sits squarely in the practical
 range, so the project proceeds.</li>
-<li><strong>Floor rounding is a first-class actor.</strong> Q15 multiplies floor toward negative
+<li><strong>Floor rounding changes the answers.</strong> Q15 multiplies floor toward negative
 infinity (that is what ARM's <code>ASRS</code> does), and the resulting -&frac12;-LSB bias per
 term is the same order as the per-step dynamics at these budgets: at equal cycle budget Euler's
 <em>search-set</em> error undercuts rk4's, and the stiff <code>rc_thermal</code> problem
@@ -148,7 +148,7 @@ window renders the whole state live; Ctrl+C in it cannot touch the run.</p>
 baselines (fixed: seeding is idempotent per hash, every cycle); the trust-boundary probe showed
 the original PAT could push the verifier repo despite the handoff's 403 test passing (fixed by
 moving the credential out of the container entirely); the first live archive build tripped the
-banned-words guard on a hypothesis containing &ldquo;beats&rdquo; &mdash; the guard doing
+banned-words guard on a hypothesis containing "beats" &mdash; the guard doing
 exactly its job against text nobody reviewed.</p>
 """
 
@@ -206,7 +206,7 @@ DECISIONS = [
      "dashboard metric so it cannot rot unnoticed.",
      "Kept literally: a test walks the optimizer's import graph and fails on any load of the "
      "name. The D5 drill — deliberately feeding the optimizer the held-out set — collapses the "
-     "gap to zero and restores it on revert, proving the metric measures what it claims. The "
+     "gap to zero and restores it on revert, so the metric measures what it claims to. The "
      "gap is also the honest headline so far: search error transfers poorly to held-out."),
     ("MAP-Elites, one grid per order",
      "Descriptors are stage count and cycle-cost bucket; a table of results rather than a "
