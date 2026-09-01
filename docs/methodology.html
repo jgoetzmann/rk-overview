@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>methodology</title>
+<style>
+:root{
+  color-scheme:light;
+  --surface-0:#f5f4f2;--surface-1:#fcfcfb;--line:#dedcd6;--grid:#eceae5;
+  --text-1:#0b0b0b;--text-2:#52514e;--text-3:#8a887f;
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;
+  --good-bg:#e0f2e3;--good-fg:#0d5c1d;--warn-bg:#fdf0d3;--warn-fg:#7a5300;
+  --mut-bg:#eceae5;--mut-fg:#52514e;--bad-bg:#fbe3e3;--bad-fg:#8f1d1d;
+  --q1:#cde2fb;--q2:#9ec5f4;--q3:#6da7ec;--q4:#3987e5;--q5:#256abf;--q6:#184f95;--q7:#0d366b;
+  --banner-bg:#fdf0d3;--banner-line:#c98500;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme:dark;
+    --surface-0:#111110;--surface-1:#1a1a19;--line:#3a3936;--grid:#262523;
+    --text-1:#ffffff;--text-2:#c3c2b7;--text-3:#8a887f;
+    --s1:#3987e5;--s2:#d95926;--s3:#199e70;
+    --good-bg:#123a1c;--good-fg:#9fdca9;--warn-bg:#42350b;--warn-fg:#ecc76a;
+    --mut-bg:#262523;--mut-fg:#c3c2b7;--bad-bg:#461414;--bad-fg:#f1a5a5;
+    --q1:#0d366b;--q2:#184f95;--q3:#256abf;--q4:#3987e5;--q5:#6da7ec;--q6:#9ec5f4;--q7:#cde2fb;
+    --banner-bg:#42350b;--banner-line:#ecc76a;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface-0);color:var(--text-1);
+  font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 48px}
+header.site{background:var(--surface-1);border-bottom:1px solid var(--line);margin-bottom:24px}
+header.site .wrap{padding-top:18px;padding-bottom:0}
+h1{font-size:24px;margin:6px 0 2px;letter-spacing:-.01em}
+h2{font-size:17px;margin:32px 0 10px;letter-spacing:-.01em}
+h3{font-size:14px;margin:18px 0 6px;color:var(--text-2)}
+p{max-width:76ch}
+.sub{color:var(--text-2);margin:0 0 12px}
+p.banner{border:1px solid var(--banner-line);border-left:4px solid var(--banner-line);
+  background:var(--banner-bg);color:var(--text-1);padding:8px 12px;border-radius:6px;
+  font-size:13px;max-width:none;margin:14px 0}
+nav.tabs{display:flex;gap:2px;flex-wrap:wrap;margin:10px 0 0}
+nav.tabs a{padding:8px 14px;border-radius:8px 8px 0 0;color:var(--text-2);
+  text-decoration:none;font-size:13.5px;border:1px solid transparent;border-bottom:none}
+nav.tabs a:hover{color:var(--text-1);background:var(--surface-0)}
+nav.tabs a.on{background:var(--surface-0);border-color:var(--line);color:var(--text-1);font-weight:600}
+a{color:var(--s1)}
+.cards{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+.card{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:12px 16px;min-width:132px;flex:0 1 auto}
+.card .k{font-size:12px;color:var(--text-2);letter-spacing:.02em}
+.card .v{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.card .d{font-size:12px;color:var(--text-3)}
+.panel{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:14px 16px;margin:14px 0}
+figure{margin:0}
+figure figcaption{font-size:13px;color:var(--text-2);margin:4px 0 8px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2);margin:2px 0 6px}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;
+  vertical-align:-1px}
+.charts{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+svg{max-width:100%;height:auto;display:block}
+svg text{font:11px system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--text-2)}
+svg .lbl{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
+  stroke-width:3px;stroke-linejoin:round}
+svg .axis{stroke:var(--line)}
+svg .gridline{stroke:var(--grid)}
+svg .cellstroke{stroke:var(--surface-1);stroke-width:2px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;margin:10px 0;font-size:13px;background:var(--surface-1);
+  border:1px solid var(--line);border-radius:8px}
+th,td{border-bottom:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--surface-0);color:var(--text-2);font-weight:600;font-size:12px;
+  letter-spacing:.02em;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td{font-variant-numeric:tabular-nums}
+.tier,.badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;
+  font-weight:600;white-space:nowrap}
+.tier-heldout_verified{background:var(--good-bg);color:var(--good-fg)}
+.tier-search_only{background:var(--warn-bg);color:var(--warn-fg)}
+.tier-unreplicated{background:var(--mut-bg);color:var(--mut-fg)}
+.badge-open{background:var(--mut-bg);color:var(--mut-fg)}
+.badge-supported{background:var(--good-bg);color:var(--good-fg)}
+.badge-refuted{background:var(--bad-bg);color:var(--bad-fg)}
+.badge-inconclusive{background:var(--warn-bg);color:var(--warn-fg)}
+.hash{word-break:break-all;font:12px ui-monospace,Consolas,monospace;color:var(--text-2)}
+.mono{font:13px ui-monospace,Consolas,monospace}
+.note{font-size:13px;color:var(--text-2);font-style:italic}
+dl.meta{display:grid;grid-template-columns:max-content 1fr;gap:2px 16px;font-size:13px}
+dl.meta dt{color:var(--text-2)}
+dl.meta dd{margin:0}
+article.entry{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+article.entry h2{margin-top:0}
+article.entry .when{font-size:12px;color:var(--text-3);margin:0 0 8px}
+.when{font-size:12px;color:var(--text-3)}
+p.lead{color:var(--text-2);font-size:13.5px;max-width:76ch;margin:10px 0 16px}
+details.explain{margin:10px 0;max-width:76ch;font-size:13px;color:var(--text-2);
+  border:1px solid var(--line);border-radius:8px;background:var(--surface-1)}
+details.explain summary{cursor:pointer;padding:6px 12px;color:var(--text-3);
+  font-size:12.5px;letter-spacing:.02em}
+details.explain summary:hover{color:var(--text-1)}
+details.explain[open] summary{border-bottom:1px solid var(--line);color:var(--text-2)}
+details.explain>div{padding:4px 12px 8px}
+details.explain p{margin:8px 0}
+details.fold{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  margin:10px 0}
+details.fold>summary{cursor:pointer;padding:10px 16px;font-size:13.5px}
+details.fold>summary:hover{color:var(--text-1)}
+details.fold[open]>summary{border-bottom:1px solid var(--line)}
+details.fold>div{padding:6px 16px 12px}
+footer{margin-top:40px;font-size:12px;color:var(--text-3)}
+
+.hero{font-size:17px;max-width:78ch}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:900px){.two{grid-template-columns:1fr}}
+.decision{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.decision h3{margin:0 0 6px;font-size:15px;color:var(--text-1)}
+.decision .orig{color:var(--text-2);border-left:3px solid var(--line);padding-left:12px;margin:8px 0}
+.decision .asbuilt{margin:8px 0 0}
+.decision .tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
+  font-weight:600;margin-left:8px;vertical-align:2px}
+.tag-kept{background:var(--good-bg);color:var(--good-fg)}
+.tag-changed{background:var(--warn-bg);color:var(--warn-fg)}
+svg .box{fill:var(--surface-1);stroke:var(--line)}
+svg .boxhl{fill:var(--surface-0);stroke:var(--s1);stroke-width:1.5}
+svg .arrow{stroke:var(--text-3);fill:none;marker-end:url(#ah)}
+svg .bt{font-weight:600;fill:var(--text-1)}
+svg .bs{fill:var(--text-2);font-size:10px}
+details.howto{margin:8px 0 4px;font-size:13px;color:var(--text-2)}
+details.howto summary{cursor:pointer;color:var(--s1);font-size:12.5px;font-weight:600;
+  list-style-position:inside}
+details.howto>div{border-left:3px solid var(--line);padding:2px 0 2px 12px;margin-top:6px}
+details.howto p{max-width:76ch;margin:6px 0}
+ul.toc{columns:2;column-gap:32px;font-size:13px;margin:8px 0 4px;padding-left:20px}
+ul.toc li{margin:2px 0}
+@media (max-width:700px){ul.toc{columns:1}}
+.decision{scroll-margin-top:16px}
+.decision:target{border-color:var(--s1)}
+.p0wrap{min-width:780px}
+.p0head,details.p0 summary{display:grid;
+  grid-template-columns:18px 80px 130px 88px 118px 148px 1fr;
+  gap:10px;align-items:center;padding:7px 12px}
+.p0head{font-size:12px;color:var(--text-2);font-weight:600;letter-spacing:.02em}
+details.p0{background:var(--surface-1);border:1px solid var(--line);border-radius:8px;
+  margin:6px 0;font-size:13px}
+details.p0 summary{cursor:pointer;list-style:none;font-variant-numeric:tabular-nums}
+details.p0 summary::-webkit-details-marker{display:none}
+details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
+details.p0[open] summary::before{content:"\2212"}
+details.p0[open] summary{border-bottom:1px solid var(--line)}
+.p0body{padding:10px 16px 12px 40px}
+</style>
+</head>
+<body>
+<header class="site"><div class="wrap">
+<p class="banner">rk-overview is the human-maintained explainer for the rk project. The companion site rk-findings is generated by the harness every cycle and carries the authoritative numbers; a frozen copy from 2026-09-01 (US Central) is snapshotted under this site. Drafted with Claude, edited and owned by the author.</p>
+<h1>methodology</h1>
+<p class="sub">How the harness earns its numbers: the start gate, the pinned hash, the drills, and the watchdog.</p>
+<nav class="tabs"><a href="index.html">overview</a><a href="architecture.html">architecture</a><a href="methodology.html" class="on">methodology</a><a href="design-decisions.html">design decisions</a><a href="results.html">results</a><a href="findings/index.html">findings snapshot (2026-09-01)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+</div></header>
+<div class="wrap">
+
+<p>This page is the human account of how the harness works and how it was validated. Its
+machine-generated counterpart is the findings site's methodology page — rebuilt by the harness
+every cycle, always current on constants and thresholds — available in the
+<a href="findings/methodology.html">snapshot here</a> and
+<a href="https://jgoetzmann.github.io/rk-findings/methodology.html">live on rk-findings</a>.
+That page states what the numbers mean; this one explains why the machinery around them is
+built the way it is, and what was actually exercised before the run was left alone. The system
+itself is drawn on the <a href="architecture.html">architecture page</a>; the paper trail of
+choices is on <a href="design-decisions.html">design decisions</a>.</p>
+
+<h2>The shape of the problem</h2>
+<p>An unattended search, partly steered by a language model, produces numbers for months with
+nobody watching. Numbers from such a system are worth exactly as much as the guarantees around
+them: that the scoring rules could not drift, that the searching process could not touch its
+own scorer, and that a crash or a stray operator cannot silently corrupt the record. So the
+validation story is really three gates, engaged in order: once at container start, once
+inside every cycle, and continuously from the host.</p>
+
+<h2>The gate at container start</h2>
+<p>The container's entrypoint refuses to run science before proving its environment, in a fixed
+order. It writes a heartbeat immediately — the gate takes long enough that the host watchdog
+once killed a fresh container fourteen seconds after start, because the heartbeat file on disk
+predated the restart; the fix is the very first line of the entrypoint, not a longer timeout.
+It then probes its own mount: if <code>/harness</code> accepts a write, the container exits
+rather than run with a writable scorer. It recomputes the verifier hash and compares it to the
+pinned value. Finally it runs the golden and canary tests — G1 through G20 plus the K1 and K2
+canaries, 55 cases at the pre-flight run — with pytest, against the harness as mounted. Any
+failure is exit 1 and the runner never starts.</p>
+<p>The point of running tests at start rather than at build time: "the tests passed when the
+image was built" claims nothing about the harness that is mounted today. The gate re-earns the
+claim on every start, including every automatic restart after a kill.</p>
+
+<h2>Ten files, one hash</h2>
+<p>Six modules decide every score: coefficient representation, the order conditions, the
+verifier, the cost model, the evaluator, and the problem set. Four fixture files pin their
+golden values. A sha256 over those ten files, concatenated in a fixed order, is pinned in
+<code>VERIFIER_HASH</code>; the entrypoint recomputes and compares it, and every archive record
+stores the hash that scored it. A change to any byte of the ten is therefore loud twice over:
+the container refuses to start, and a record produced under a different hash would advertise
+the fact in its own row.</p>
+<p>This was drilled, not assumed. Pre-flight item A3 altered one line of
+<code>coeffrep.py</code> and started the container: exit 1, "VERIFIER HASH MISMATCH — refusing
+to run". Restored, the same container gated green and started, the 55 golden and canary cases
+passing in under four seconds.</p>
+
+<h2>What the container cannot reach</h2>
+<p>The harness mount is read-only (<code>:ro</code> on the docker command line, re-checked by
+the entrypoint's write probe). The GitHub credential never enters the container at all: the
+env file the container receives is filtered on the host and drops every
+<code>GITHUB_TOKEN</code> line, the runner only ever commits into the mounted work and findings
+checkouts, and the host watchdog pushes those commits with the owner's own credentials every
+ten minutes. The Codex OAuth file is mounted read-only for the plan-billed planning calls.</p>
+<p>The original design scoped a token instead: push rights on rk-work and rk-findings, with a
+403 on rk-harness as an acceptance test. That plan failed honestly. The pre-flight scope probe
+showed the owner's actual token could push the verifier repo, and the earlier 403 had passed
+for an unrelated reason. Moving the credential out of the container entirely makes the
+guarantee independent of anyone's permission model — there is no token whose scope can rot.
+The full story is under <a href="design-decisions.html#credentials">credentials outside the
+container</a>.</p>
+
+<h2>The test suites, tiered</h2>
+<p>The suite is organised as numbered tiers that mirror the dependency stack, cheapest and
+most foundational at the bottom: T1 covers fixed point, coefficient representation and cycle
+counting; T2 the order conditions, evaluator and verifier; T3 the archive, search and
+directive validation; T4 the ledger, runner and site generator; T5 the operational config and
+the watch view; T6 the Central-time display formatting. Together they collect a bit under a
+thousand parametrised cases at this snapshot, with a <code>slow</code> marker separating the
+second-scale ones.</p>
+<p>Two kinds of test carry most of the weight. Golden tests (G-numbered) pin behaviour to
+fixture values written down before the build: the measured order of rk4 comes out 4.0706 from
+3 fit points, the hand-counted ARMv6-M multiply sequence costs 13 cycles fast and 75 slow, and
+the eleven coefficient representations in the fixture reproduce bit for bit. Canary tests
+(K-numbered) are anti-gaming: K1 plants a candidate tuned on the search set and asserts it can
+earn search_only but never heldout_verified; K2 asserts that a winner in a single problem
+family that is worse on both aggregates stays unreplicated. The gate at container start is a
+selection from this same suite, so the anti-gaming properties are re-proved on the mounted
+code every time the container comes up.</p>
+
+<h2>The pre-flight, executed as a program</h2>
+<p>The pre-flight checklist (docs/REVIEW.md in the harness repo) is not a document anyone
+initials; <code>scripts/preflight.py</code> executes every machine-checkable item, prints the
+measured value next to each verdict, and writes the report with a sign-off block
+(docs/REVIEW-REPORT.md). Statuses are PASS, FAIL, MANUAL (needs the host, hardware, or a
+human), SKIP and INFO; the trust boundary (A), ground truth (B), anchor result (C) and
+falsification (K) sections gate, and a FAIL there is a nonzero exit. The full run, suite and
+docker drills included, was executed on 2026-08-30: every gating section green, with eight
+items that need the host, hardware or a human left marked MANUAL, each carrying its
+instructions in the report.</p>
+<p>The drills are where the exercise paid for itself, because they act instead of asserting:
+A1 actually tries to write <code>/harness</code> from inside a running container; A3 actually
+tampers with a verifier file and expects the refusal; D5 deliberately feeds the optimizer the
+held-out set and checks the search/held-out gap collapses to zero, then returns on revert —
+which is what shows the gap metric measures what it claims. Three of these drills changed the
+system before the run started; that story is told on the
+<a href="architecture.html">architecture page</a>.</p>
+
+<h2>The operational layer</h2>
+<p>Once running, the container answers to a host watchdog that polls every ten seconds and
+holds every kill switch outside the container. A heartbeat older than two minutes is a
+<code>docker kill</code>; a wrongful kill self-heals, because the restart policy brings the
+container back and the start gate re-runs. Spend over the monthly cap, or free disk under five
+gigabytes, is a stop that stays down. The laptop on battery is a pause, plugged back in an
+unpause; another foreground workload holding the CPU above 50% for thirty seconds is a pause,
+back under 30% an unpause. Pause is atomic, so the run resumes mid-cycle exactly where it
+stopped.</p>
+<p>The run also throttles itself. Auto-stop limits (wall-clock minutes or cycle count) end the
+run at the next cycle boundary. The language model is asked for a fresh directive every five
+cycles and on every escalation, with the last directive reused in between; calls stop once
+Codex reports 80% of the weekly plan used; the web literature digest runs every fifty cycles
+and the archive interpretation every twenty-five. All of these are operational knobs in a
+workspace config.json edited through <code>configure.py</code>. Scientific thresholds are
+deliberately not in that file: changing them would invalidate the archive, which is why they
+live in the hash-pinned code instead.</p>
+<p>One bookkeeping rule ties the layer together: everything stored — archive records, events,
+heartbeat, run state — is UTC, and only human-facing display converts to US Central, through
+one small module. The watchdog's staleness arithmetic and the archive's determinism both
+depend on storage never carrying a local time.</p>
+
+<h2>What this page does not cover</h2>
+<p>The scientific method of the search itself — the nine verifier checks in order, exact
+rational order conditions, equal-cycle-budget evaluation, tier assignment, the encourager
+ladder — is on the <a href="architecture.html">architecture page</a>, and the current
+constants and thresholds are on the findings methodology page
+(<a href="findings/methodology.html">snapshot</a>,
+<a href="https://jgoetzmann.github.io/rk-findings/methodology.html">live</a>). The findings
+site is the machine truth; if this page and that one ever disagree, trust that one.</p>
+
+<footer>rk-overview — snapshot 2026-09-01 (US Central); the live numbers are on rk-findings.</footer>
+</div>
+</body>
+</html>

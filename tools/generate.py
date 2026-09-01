@@ -1,8 +1,10 @@
 """Build the rk-overview site into docs/.
 
 Snapshot semantics: run by hand, reads the live rk-work archive plus tools/floor_round.json,
-copies the current rk-findings pages under docs/findings/, and writes four authored pages.
+copies the current rk-findings pages under docs/findings/, and writes five authored pages.
 Reuses the findings site's style and chart primitives so the two sites read as one system.
+Timezone policy: stored data is UTC; anything rendered for humans goes through
+rk_harness.timefmt (US Central), and SNAPSHOT_DATE is a Central-time date.
 
     set PYTHONPATH=..\\rk-harness  (and RK_WORK_DIR to ..\\rk-work)
     python tools/generate.py
@@ -26,8 +28,9 @@ import pages_text as T  # noqa: E402
 from rk_harness import archive, sitegen as sg  # noqa: E402
 from rk_harness import costmodel, enumeration  # noqa: E402
 from rk_harness import tableau as tableau_mod  # noqa: E402
+from rk_harness import timefmt  # noqa: E402
 
-SNAPSHOT_DATE = "2026-08-30"
+SNAPSHOT_DATE = "2026-09-01"   # the date the snapshot was taken, US Central
 DOCS = ROOT / "docs"
 
 _EXTRA_STYLE = """
@@ -48,15 +51,41 @@ svg .boxhl{fill:var(--surface-0);stroke:var(--s1);stroke-width:1.5}
 svg .arrow{stroke:var(--text-3);fill:none;marker-end:url(#ah)}
 svg .bt{font-weight:600;fill:var(--text-1)}
 svg .bs{fill:var(--text-2);font-size:10px}
+details.howto{margin:8px 0 4px;font-size:13px;color:var(--text-2)}
+details.howto summary{cursor:pointer;color:var(--s1);font-size:12.5px;font-weight:600;
+  list-style-position:inside}
+details.howto>div{border-left:3px solid var(--line);padding:2px 0 2px 12px;margin-top:6px}
+details.howto p{max-width:76ch;margin:6px 0}
+ul.toc{columns:2;column-gap:32px;font-size:13px;margin:8px 0 4px;padding-left:20px}
+ul.toc li{margin:2px 0}
+@media (max-width:700px){ul.toc{columns:1}}
+.decision{scroll-margin-top:16px}
+.decision:target{border-color:var(--s1)}
+.p0wrap{min-width:780px}
+.p0head,details.p0 summary{display:grid;
+  grid-template-columns:18px 80px 130px 88px 118px 148px 1fr;
+  gap:10px;align-items:center;padding:7px 12px}
+.p0head{font-size:12px;color:var(--text-2);font-weight:600;letter-spacing:.02em}
+details.p0{background:var(--surface-1);border:1px solid var(--line);border-radius:8px;
+  margin:6px 0;font-size:13px}
+details.p0 summary{cursor:pointer;list-style:none;font-variant-numeric:tabular-nums}
+details.p0 summary::-webkit-details-marker{display:none}
+details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
+details.p0[open] summary::before{content:"\\2212"}
+details.p0[open] summary{border-bottom:1px solid var(--line)}
+.p0body{padding:10px 16px 12px 40px}
 """
 
 _NAV = (
     ("index.html", "overview"),
     ("architecture.html", "architecture"),
+    ("methodology.html", "methodology"),
     ("design-decisions.html", "design decisions"),
     ("results.html", "results"),
     ("findings/index.html", f"findings snapshot ({SNAPSHOT_DATE})"),
 )
+
+_ABOUT = T.ABOUT_NOTE.format(date=SNAPSHOT_DATE)
 
 
 def _nav(active: str) -> str:
@@ -76,15 +105,28 @@ def _page(title: str, body: str, active: str, subtitle: str = "") -> str:
         f"<title>{sg._esc(title)}</title>\n"
         f"<style>{sg._STYLE}{_EXTRA_STYLE}</style>\n</head>\n<body>\n"
         '<header class="site"><div class="wrap">\n'
-        f'<p class="banner">{sg._esc(T.ABOUT_NOTE)}</p>\n'
+        f'<p class="banner">{sg._esc(_ABOUT)}</p>\n'
         f"<h1>{sg._esc(title)}</h1>\n{sub}\n"
         f"{_nav(active)}\n"
         "</div></header>\n"
         '<div class="wrap">\n'
         f"{body}\n"
-        f"<footer>rk-overview — snapshot {SNAPSHOT_DATE}; the live numbers are on rk-findings.</footer>\n"
+        f"<footer>rk-overview — snapshot {SNAPSHOT_DATE} (US Central); the live numbers are on rk-findings.</footer>\n"
         "</div>\n</body>\n</html>\n"
     )
+
+
+def _howto(body_html: str) -> str:
+    """A short expandable explainer rendered under a diagram, chart, or table."""
+    return ('<details class="howto"><summary>How to read this</summary>'
+            f"<div>{body_html}</div></details>")
+
+
+def _panel(inner: str, howto: str = "") -> str:
+    """Panel wrapper; the howto is only attached when there is a chart to explain."""
+    if not inner:
+        return ""
+    return '<div class="panel">' + inner + (_howto(howto) if howto else "") + "</div>"
 
 
 # ----------------------------------------------------------------------------- diagrams
@@ -145,7 +187,9 @@ def system_diagram() -> str:
     svg = (f'<svg viewBox="0 0 930 236" width="930" height="236" role="img" '
            'aria-label="System diagram: host, container with read-only harness, and services">'
            + "".join(p) + "</svg>")
-    return f'<figure class="panel"><figcaption>The as-built system. The verifier lives inside the read-only mount; the credential never crosses the container boundary.</figcaption><div class="scroll">{svg}</div></figure>'
+    return ('<figure class="panel"><figcaption>The as-built system. The verifier lives inside '
+            "the read-only mount; the credential never crosses the container boundary."
+            f'</figcaption><div class="scroll">{svg}</div>{_howto(T.HOW_SYSTEM)}</figure>')
 
 
 def cycle_diagram() -> str:
@@ -175,7 +219,7 @@ def cycle_diagram() -> str:
            'aria-label="Cycle loop: replay, encourager, candidates, verify, evaluate, tier, append, ledger, site, commit">'
            + "".join(p) + "</svg>")
     return ('<figure class="panel"><figcaption>One idempotent cycle; a crash anywhere costs at most '
-            f'one cycle.</figcaption><div class="scroll">{svg}</div></figure>')
+            f'one cycle.</figcaption><div class="scroll">{svg}</div>{_howto(T.HOW_CYCLE)}</figure>')
 
 
 # ----------------------------------------------------------------------------- charts
@@ -298,24 +342,69 @@ def rounding_chart(data: dict) -> str:
                           ("var(--s2)", "round-to-nearest (counterfactual)")]) + svg + "</figure>")
 
 
-def phase0_table(records) -> str:
+_TIER_MEANING = {
+    "heldout_verified": "better than the cell incumbent on the search and held-out aggregates, "
+                        "improving at least two problem families",
+    "search_only": "better than the cell incumbent on the search aggregate but not on held-out",
+    "unreplicated": "no incumbent to compare against, or no improvement on either aggregate",
+}
+
+
+def _phase0_body(t, rec, cyc: int) -> str:
+    """The full archived score vector for one phase-0 point, shown when its row is expanded."""
+    a21 = sg._frac(t.A[1][0])
+    if rec is None:
+        return (f'<p class="note">a21 = {a21}; enumerated at {cyc} slow cycles/step, but no '
+                "archived record for this point at snapshot time.</p>")
+    sv = rec.score
+    # Unprefixed keys are the primary model's per-problem errors; "slow:" and "avr_approx:"
+    # prefixes mark the advisory columns.
+    per = [(k, v) for k, v in sorted(sv.per_problem.items()) if ":" not in k]
+    per_txt = "; ".join(f"{sg._esc(n)} {sg._num(v)}" for n, v in per)
+    cyc_txt = ", ".join(f"{m} {sg._num(sv.cycles.get(m))}"
+                        for m in ("m0plus_fast", "m0plus_slow", "avr_approx"))
+    pairs = [
+        ("tableau", f"a21 = {a21}; b = ({sg._frac(t.b[0])}, {sg._frac(t.b[1])}); "
+                    f"c = (0, {a21})"),
+        ("cycles per step", cyc_txt),
+        ("CSD weight total", sg._num(sv.csd_weight_total)),
+        ("coefficient quantisation error", sg._num(sv.coeff_quant_error)),
+        ("measured order", f"{sg._num(sv.measured_order)} from {sv.order_fit_points} fit points"),
+        ("error constant", sg._num(sv.error_constant)),
+        ("stability interval", f"real {sg._num(sv.stability_real)}, "
+                               f"imaginary {sg._num(sv.stability_imag)}"),
+        ("overflow margin", sg._num(sv.overflow_margin)),
+        ("search error", sg._num(sv.search_error)),
+        ("held-out error", sg._num(sv.heldout_error)),
+        ("per-problem error (primary model)", per_txt or "n/a"),
+        ("tier", f"{sg._tier_badge(rec.tier)} {sg._esc(_TIER_MEANING.get(rec.tier, ''))}"),
+        ("archived", f"cycle {rec.cycle_id}, appended {sg._esc(timefmt.fmt_ct(rec.timestamp))}"),
+        ("tableau hash", f'<span class="hash">{sg._esc(rec.tableau_hash)}</span>'),
+    ]
+    dl = "".join(f"<dt>{sg._esc(k)}</dt><dd>{v}</dd>" for k, v in pairs)
+    return f'<dl class="meta">{dl}</dl>'
+
+
+def phase0_rows(records) -> str:
+    """The 16 phase-0 points as expandable rows: summary = the table columns, body = depth."""
     by_hash = {r.tableau_hash: r for r in records}
     names = {tableau_mod.content_hash(t): n for n, t in tableau_mod.classical().items()}
-    rows = []
+    parts = ['<div class="p0head"><span></span><span>a21</span><span>b</span>'
+             "<span>slow cycles</span><span>held-out error</span><span>tier</span>"
+             "<span></span></div>"]
     for cyc, t in enumeration.cheapest(enumeration.enumerate_phase0(), costmodel.M0PLUS_SLOW):
         h = tableau_mod.content_hash(t)
         rec = by_hash.get(h)
-        rows.append(
-            "<tr>"
-            f'<td class="mono">{sg._frac(t.A[1][0])}</td>'
-            f'<td class="mono">({sg._frac(t.b[0])}, {sg._frac(t.b[1])})</td>'
-            f"<td>{cyc}</td>"
-            f"<td>{sg._num(rec.score.heldout_error) if rec else 'n/a'}</td>"
-            f"<td>{sg._tier_badge(rec.tier) if rec else ''}</td>"
-            f"<td>{sg._esc(names.get(h, ''))}</td>"
-            "</tr>")
-    return ('<div class="scroll"><table><tr><th>a21</th><th>b</th><th>slow cycles</th>'
-            "<th>held-out error</th><th>tier</th><th></th></tr>" + "".join(rows) + "</table></div>")
+        parts.append(
+            '<details class="p0"><summary>'
+            f'<span class="mono">{sg._frac(t.A[1][0])}</span>'
+            f'<span class="mono">({sg._frac(t.b[0])}, {sg._frac(t.b[1])})</span>'
+            f"<span>{cyc}</span>"
+            f"<span>{sg._num(rec.score.heldout_error) if rec else 'n/a'}</span>"
+            f"<span>{sg._tier_badge(rec.tier) if rec else ''}</span>"
+            f"<span>{sg._esc(names.get(h, ''))}</span></summary>"
+            f'<div class="p0body">{_phase0_body(t, rec, cyc)}</div></details>')
+    return '<div class="scroll"><div class="p0wrap">' + "".join(parts) + "</div></div>"
 
 
 # ----------------------------------------------------------------------------- pages
@@ -362,8 +451,10 @@ def build() -> None:
     body.append("</div>")
     body.append("<h2>Reading this site</h2>")
     body.append('<p><a href="architecture.html">Architecture</a> explains the system and its trust '
-                'boundaries; <a href="design-decisions.html">design decisions</a> records every '
-                'deliberate choice and what happened to it in the build; '
+                'boundaries; <a href="methodology.html">methodology</a> walks the validation: the '
+                'gate at container start, the pinned verifier hash, the test tiers, the pre-flight '
+                'drills, and the watchdog; <a href="design-decisions.html">design decisions</a> '
+                'records every deliberate choice and what happened to it in the build; '
                 '<a href="results.html">results</a> carries the run-level charts; the '
                 f'<a href="findings/index.html">findings snapshot ({SNAPSHOT_DATE})</a> is a frozen copy of '
                 'the machine-generated site, and the <a href="https://jgoetzmann.github.io/rk-findings/">live '
@@ -378,16 +469,27 @@ def build() -> None:
     pages["architecture.html"] = _page("architecture", "\n".join(body), "architecture.html",
                                        "The as-built system: boundaries, loop, arithmetic, search, host layer.")
 
+    # ---------------- methodology
+    pages["methodology.html"] = _page("methodology", T.METHODOLOGY, "methodology.html",
+                                      "How the harness earns its numbers: the start gate, the "
+                                      "pinned hash, the drills, and the watchdog.")
+
     # ---------------- design decisions
     body = ['<p class="note">Each entry: the original decision from DESIGN.md (written before the '
             "build), and what the working system actually does. Tags mark whether contact with "
             "reality kept or changed it.</p>"]
-    for title, orig, asbuilt in T.DECISIONS:
+    body.append(_howto(T.HOW_DECISIONS))
+    body.append("<h3>Contents</h3>")
+    body.append('<ul class="toc">' + "".join(
+        f'<li><a href="#{slug}">{sg._esc(title)}</a></li>'
+        for slug, title, _orig, _asbuilt in T.DECISIONS) + "</ul>")
+    for slug, title, orig, asbuilt in T.DECISIONS:
         changed = any(w in asbuilt.lower() for w in ("superseded", "amended", "changed"))
         tag = ('<span class="tag tag-changed">revised in build</span>' if changed
                else '<span class="tag tag-kept">held up</span>')
-        body.append('<div class="decision">'
-                    f"<h3>{sg._esc(title)}{tag}</h3>"
+        body.append(f'<div class="decision" id="{slug}">'
+                    f'<h3><a href="#{slug}" style="color:inherit;text-decoration:none">'
+                    f"{sg._esc(title)}</a>{tag}</h3>"
                     f'<div class="orig"><strong>Original:</strong> {sg._esc(orig)}</div>'
                     f'<div class="asbuilt"><strong>As built:</strong> {sg._esc(asbuilt)}</div>'
                     "</div>")
@@ -400,22 +502,29 @@ def build() -> None:
 
     # ---------------- results
     body = ['<p class="note">Charts computed from the archive and event stream at snapshot time '
-            f"({SNAPSHOT_DATE}); the live equivalents keep moving on rk-findings.</p>"]
-    body.append('<div class="panel">' + records_chart(records) + "</div>")
+            f"({SNAPSHOT_DATE}, US Central); the live equivalents keep moving on rk-findings.</p>"]
+    if records:
+        last_ts = max(r.timestamp for r in records)
+        body.append(f'<p class="note">Archive at this snapshot: {len(records):,} records; the '
+                    f"latest was appended {sg._esc(timefmt.fmt_ct(last_ts))}.</p>")
+    body.append(_panel(records_chart(records), T.HOW_RECORDS))
     body.append('<div class="two">')
-    body.append('<div class="panel">' + tier_chart(records) + "</div>")
-    body.append('<div class="panel">' + reject_chart(events) + "</div>")
+    body.append(_panel(tier_chart(records), T.HOW_TIERS))
+    body.append(_panel(reject_chart(events), T.HOW_REJECTS))
     body.append("</div>")
     body.append("<h2>The rounding experiment</h2>")
-    body.append('<div class="panel">' + rounding_chart(fr) + "</div>")
+    body.append(_panel(rounding_chart(fr), T.HOW_ROUNDING))
     body.append("<h2>Phase 0, in full: the sixteen-point proof</h2>")
     body.append('<p class="note">The complete 2-stage order-2 space with exactly representable '
                 "coefficients, cheapest to dearest under the slow multiplier. This is an "
-                "enumeration, so the ordering is a proof within the space, not a search result.</p>")
-    body.append(phase0_table(records))
+                "enumeration, so the ordering is a proof within the space, not a search result. "
+                "Click any row for the full archived record.</p>")
+    body.append(_howto(T.HOW_PHASE0))
+    body.append(phase0_rows(records))
     if fals and isinstance(fals.get("methods"), dict):
         body.append("<h2>Falsification sweeps</h2>")
         body.append(sg._legend([("var(--s1)", "Q15 fixed point"), ("var(--s2)", "float64, same steps")]))
+        body.append(_howto(T.HOW_SWEEPS))
         body.append('<div class="charts">')
         for name in sorted(fals["methods"]):
             chart = sg._sweep_chart(name, fals["methods"][name])
