@@ -1,9 +1,10 @@
 """Build the rk-overview site into docs/.
 
-Snapshot semantics: run by hand, reads the live rk-work archive plus tools/floor_round.json,
-copies the current rk-findings pages under docs/findings/, and writes five authored pages.
-Reuses the findings site's style and chart primitives so the two sites read as one system.
-Timezone policy: stored data is UTC; anything rendered for humans goes through
+Snapshot semantics: run by hand, reads the live rk-work archive plus
+tools/key_findings.json (written by tools/key_findings.py), copies the current
+rk-findings pages under docs/findings/, and writes five authored pages. Reuses the
+findings site's style tokens and a few chart primitives so the two sites read as one
+system. Timezone policy: stored data is UTC; anything rendered for humans goes through
 rk_harness.timefmt (US Central), and SNAPSHOT_DATE is a Central-time date.
 
     set PYTHONPATH=..\\rk-harness  (and RK_WORK_DIR to ..\\rk-work)
@@ -13,9 +14,11 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import shutil
 import sys
 from collections import Counter
+from fractions import Fraction
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -32,35 +35,109 @@ from rk_harness import timefmt  # noqa: E402
 
 SNAPSHOT_DATE = "2026-09-01"   # the date the snapshot was taken, US Central
 DOCS = ROOT / "docs"
+LIVE_URL = "https://jgoetzmann.github.io/rk-findings/"
+
+# Test-suite figures, stated on the methodology page. Verified 2026-09-01 against
+# `pytest --collect-only -q` in rk-harness (987 collected across the seven tier files)
+# and docs/REVIEW-REPORT.md item A3+ ("55 passed, 894 deselected in 3.81s").
+TESTS_TOTAL = 987
+GATE_TESTS = 55
+SUITE_TIERS = [
+    ("T1", 332, "fixed point, coefficient representation, cycle counting"),
+    ("T2", 216, "order conditions, evaluator, verifier"),
+    ("T3", 234, "archive, search, directive validation"),
+    ("T4", 173, "ledger, runner, site generator"),
+    ("T5", 10, "operational config and the watch view"),
+    ("T6", 8, "Central-time display formatting"),
+    ("T7", 14, "the findings methodology page"),
+]
+assert sum(n for _t, n, _c in SUITE_TIERS) == TESTS_TOTAL
+
+# Pre-flight report figures, from rk-harness docs/REVIEW-REPORT.md (2026-08-30 run):
+# 91 PASS, 0 FAIL, 8 MANUAL, 1 INFO, 0 SKIP; all twelve sections green.
+
+# Decisions whose plan changed on contact with the build (tagged on the page).
+REVISED_DECISIONS = {"credentials", "numbers-not-claims"}
 
 _EXTRA_STYLE = """
-.hero{font-size:17px;max-width:78ch}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+h1{font-size:27px;margin:14px 0 4px;letter-spacing:-.015em}
+h2{font-size:19px;margin:36px 0 12px}
+h3{font-size:15px;margin:20px 0 8px;color:var(--text-1)}
+.sub{font-size:14.5px}
+nav.tabs{margin-top:14px}
+nav.tabs a.on{box-shadow:inset 0 3px 0 var(--s1)}
+.herolead{font-size:17.5px;line-height:1.6;max-width:74ch}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 8px}
+.chip{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:10px 16px;min-width:120px}
+.chip .v{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em}
+.chip .k{font-size:12px;color:var(--text-2)}
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:14px;margin:16px 0}
+a.gcard{display:block;background:var(--surface-1);border:1px solid var(--line);
+  border-radius:12px;padding:14px 18px;text-decoration:none;color:inherit}
+a.gcard:hover{border-color:var(--s1)}
+a.gcard .t{font-weight:650;color:var(--s1);margin:0 0 4px;font-size:15px}
+a.gcard .d{font-size:13px;color:var(--text-2)}
+.teasers{margin:12px 0}
+a.tease{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:baseline;
+  padding:10px 14px;margin:8px 0;background:var(--surface-1);border:1px solid var(--line);
+  border-radius:10px;text-decoration:none;color:inherit}
+a.tease:hover{border-color:var(--s1)}
+a.tease .tn{display:inline-grid;place-items:center;width:26px;height:26px;
+  border-radius:8px;background:var(--s1);color:#fff;font-weight:700;font-size:14px}
+a.tease .tt{font-weight:650}
+a.tease .td{font-size:13px;color:var(--text-2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
 @media (max-width:900px){.two{grid-template-columns:1fr}}
+p.verdict{font-size:17px;line-height:1.65;max-width:82ch}
+section.finding{margin:44px 0;scroll-margin-top:16px}
+section.finding h2{font-size:20px;margin-bottom:8px}
+.findnum{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;
+  background:var(--s1);color:#fff;font-size:16px;font-weight:700;margin-right:12px;
+  vertical-align:-7px}
+figure.fig{background:var(--surface-1);border:1px solid var(--line);border-radius:12px;
+  padding:16px 18px 12px;margin:16px 0}
+figure.fig figcaption{font-size:13.5px;color:var(--text-2);margin:10px 0 2px;
+  max-width:96ch;border-top:1px solid var(--line);padding-top:10px}
+figure.fig .src{display:block;margin-top:6px;font-size:12px;color:var(--text-3)}
+figure.panel figcaption{font-size:13.5px;margin:4px 0 10px}
+svg text{font-size:13px}
+svg .lbl{font-size:13px}
+svg .dlab{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
+  stroke-width:3.5px;stroke-linejoin:round}
+svg .bt{font-weight:650;fill:var(--text-1);font-size:15px}
+svg .bs{fill:var(--text-2);font-size:14px}
+svg .alab{font-size:12.5px;fill:var(--text-3);paint-order:stroke;stroke:var(--surface-1);stroke-width:3px;stroke-linejoin:round}
+svg .box{fill:var(--surface-1);stroke:var(--line)}
+svg .boxhl{fill:var(--surface-0);stroke:var(--s1);stroke-width:1.5}
+svg .boxbad{fill:var(--bad-bg);stroke:var(--bad-fg)}
+svg .frozen{stroke-dasharray:6 4}
+svg .arrow{stroke:var(--text-3);fill:none;marker-end:url(#ah);stroke-width:1.5}
+svg .arrowdash{stroke-dasharray:6 4}
+svg .enclosure{fill:none;stroke:var(--text-3);stroke-dasharray:4 4;opacity:.7}
+svg a text{fill:var(--s1)}
+ol.checks li{margin:6px 0;max-width:82ch}
+ul.toc{columns:2;column-gap:32px;font-size:13.5px;margin:8px 0 4px;padding-left:20px}
+ul.toc li{margin:3px 0}
+@media (max-width:700px){ul.toc{columns:1}}
+details.howto{margin:8px 0 4px;font-size:13px;color:var(--text-2)}
+details.howto summary{cursor:pointer;color:var(--s1);font-size:12.5px;font-weight:600;
+  list-style-position:inside}
+details.howto>div{border-left:3px solid var(--line);padding:2px 0 2px 12px;margin-top:6px}
+details.howto p{max-width:80ch;margin:6px 0}
 .decision{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
-  padding:16px 20px;margin:14px 0}
+  padding:16px 20px;margin:14px 0;scroll-margin-top:16px}
+.decision:target{border-color:var(--s1)}
 .decision h3{margin:0 0 6px;font-size:15px;color:var(--text-1)}
-.decision .orig{color:var(--text-2);border-left:3px solid var(--line);padding-left:12px;margin:8px 0}
+.decision .orig{color:var(--text-2);border-left:3px solid var(--line);padding-left:12px;
+  margin:8px 0}
 .decision .asbuilt{margin:8px 0 0}
 .decision .tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
   font-weight:600;margin-left:8px;vertical-align:2px}
 .tag-kept{background:var(--good-bg);color:var(--good-fg)}
 .tag-changed{background:var(--warn-bg);color:var(--warn-fg)}
-svg .box{fill:var(--surface-1);stroke:var(--line)}
-svg .boxhl{fill:var(--surface-0);stroke:var(--s1);stroke-width:1.5}
-svg .arrow{stroke:var(--text-3);fill:none;marker-end:url(#ah)}
-svg .bt{font-weight:600;fill:var(--text-1)}
-svg .bs{fill:var(--text-2);font-size:10px}
-details.howto{margin:8px 0 4px;font-size:13px;color:var(--text-2)}
-details.howto summary{cursor:pointer;color:var(--s1);font-size:12.5px;font-weight:600;
-  list-style-position:inside}
-details.howto>div{border-left:3px solid var(--line);padding:2px 0 2px 12px;margin-top:6px}
-details.howto p{max-width:76ch;margin:6px 0}
-ul.toc{columns:2;column-gap:32px;font-size:13px;margin:8px 0 4px;padding-left:20px}
-ul.toc li{margin:2px 0}
-@media (max-width:700px){ul.toc{columns:1}}
-.decision{scroll-margin-top:16px}
-.decision:target{border-color:var(--s1)}
 .p0wrap{min-width:780px}
 .p0head,details.p0 summary{display:grid;
   grid-template-columns:18px 80px 130px 88px 118px 148px 1fr;
@@ -74,30 +151,30 @@ details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
 details.p0[open] summary::before{content:"\\2212"}
 details.p0[open] summary{border-bottom:1px solid var(--line)}
 .p0body{padding:10px 16px 12px 40px}
+footer{border-top:1px solid var(--line);padding-top:12px;margin-top:56px}
 """
 
 _NAV = (
     ("index.html", "overview"),
-    ("architecture.html", "architecture"),
+    ("results.html", "key findings"),
     ("methodology.html", "methodology"),
+    ("architecture.html", "architecture"),
     ("design-decisions.html", "design decisions"),
-    ("results.html", "results"),
     ("findings/index.html", f"findings snapshot ({SNAPSHOT_DATE})"),
 )
-
-_ABOUT = T.ABOUT_NOTE.format(date=SNAPSHOT_DATE)
 
 
 def _nav(active: str) -> str:
     links = "".join(
         f'<a href="{href}"{" class=" + chr(34) + "on" + chr(34) if href == active else ""}>{sg._esc(label)}</a>'
         for href, label in _NAV)
-    links += '<a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a>'
+    links += f'<a href="{LIVE_URL}">live findings ↗</a>'
     return f'<nav class="tabs">{links}</nav>'
 
 
 def _page(title: str, body: str, active: str, subtitle: str = "") -> str:
     sub = f'<p class="sub">{sg._esc(subtitle)}</p>' if subtitle else ""
+    footer = T.FOOTER.format(date=SNAPSHOT_DATE)
     return (
         "<!doctype html>\n"
         '<html lang="en">\n<head>\n<meta charset="utf-8">\n'
@@ -105,91 +182,216 @@ def _page(title: str, body: str, active: str, subtitle: str = "") -> str:
         f"<title>{sg._esc(title)}</title>\n"
         f"<style>{sg._STYLE}{_EXTRA_STYLE}</style>\n</head>\n<body>\n"
         '<header class="site"><div class="wrap">\n'
-        f'<p class="banner">{sg._esc(_ABOUT)}</p>\n'
         f"<h1>{sg._esc(title)}</h1>\n{sub}\n"
         f"{_nav(active)}\n"
         "</div></header>\n"
         '<div class="wrap">\n'
         f"{body}\n"
-        f"<footer>rk-overview — snapshot {SNAPSHOT_DATE} (US Central); the live numbers are on rk-findings.</footer>\n"
+        f"<footer>{sg._esc(footer)}</footer>\n"
         "</div>\n</body>\n</html>\n"
     )
 
 
 def _howto(body_html: str) -> str:
-    """A short expandable explainer rendered under a diagram, chart, or table."""
+    """A short expandable explainer rendered under a diagram or table."""
     return ('<details class="howto"><summary>How to read this</summary>'
             f"<div>{body_html}</div></details>")
 
 
 def _panel(inner: str, howto: str = "") -> str:
-    """Panel wrapper; the howto is only attached when there is a chart to explain."""
     if not inner:
         return ""
     return '<div class="panel">' + inner + (_howto(howto) if howto else "") + "</div>"
 
 
+def _fig(svg: str, caption_html: str, legend: str = "", source: str = "") -> str:
+    """A key-findings figure: legend, scrollable chart, visible caption, source line."""
+    if not svg:
+        return ""
+    src = f'<span class="src">{sg._esc(source)}</span>' if source else ""
+    return ('<figure class="fig">' + legend + f'<div class="scroll">{svg}</div>'
+            f"<figcaption>{caption_html}{src}</figcaption></figure>")
+
+
+def _short(v: float) -> str:
+    return f"{v:.3g}"
+
+
 # ----------------------------------------------------------------------------- diagrams
+# Boxes are sized from their content: ~8.6 px/char for 15px semibold titles and
+# ~7.35 px/char for 14px body lines, plus padding, so labels never overflow.
+
+_TCH, _LCH = 8.6, 7.35
+
+
+def _natw(title: str, lines: list[str], pad: int = 26) -> int:
+    widths = [len(title) * _TCH] + [len(ln) * _LCH for ln in lines]
+    return int(max(widths) + pad)
+
+
+def _nath(lines: list[str]) -> int:
+    return 40 if not lines else 44 + 19 * len(lines)
+
 
 def _defs() -> str:
-    return ('<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">'
-            '<path d="M0,0 L8,4 L0,8 z" fill="var(--text-3)"/></marker></defs>')
+    return ('<defs><marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" '
+            'orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--text-3)"/></marker></defs>')
 
 
-def _box(x, y, w, h, title, lines, hl=False) -> str:
-    cls = "boxhl" if hl else "box"
-    out = [f'<rect class="{cls}" x="{x}" y="{y}" width="{w}" height="{h}" rx="8"/>',
-           f'<text class="bt" x="{x + 10}" y="{y + 18}">{sg._esc(title)}</text>']
+def _box(x, y, w, title, lines, cls="box", extra_cls="") -> str:
+    h = _nath(lines)
+    c = f"{cls} {extra_cls}".strip()
+    out = [f'<rect class="{c}" x="{x}" y="{y}" width="{w}" height="{h}" rx="9"/>',
+           f'<text class="bt" x="{x + 13}" y="{y + 23}">{sg._esc(title)}</text>']
     for i, ln in enumerate(lines):
-        out.append(f'<text class="bs" x="{x + 10}" y="{y + 34 + 13 * i}">{sg._esc(ln)}</text>')
+        out.append(f'<text class="bs" x="{x + 13}" y="{y + 45 + 19 * i}">{sg._esc(ln)}</text>')
     return "".join(out)
 
 
-def _arrow(x1, y1, x2, y2, label="", lx=None, ly=None) -> str:
-    out = [f'<path class="arrow" d="M {x1} {y1} L {x2} {y2}"/>']
+def _arrow(x1, y1, x2, y2, label="", lx=None, ly=None, dashed=False) -> str:
+    cls = "arrow arrowdash" if dashed else "arrow"
+    out = [f'<path class="{cls}" d="M {x1} {y1} L {x2} {y2}"/>']
     if label:
-        out.append(f'<text class="bs" x="{lx if lx is not None else (x1 + x2) / 2}" '
-                   f'y="{ly if ly is not None else (y1 + y2) / 2 - 4}" text-anchor="middle">{sg._esc(label)}</text>')
+        out.append(f'<text class="alab" x="{lx if lx is not None else (x1 + x2) / 2}" '
+                   f'y="{ly if ly is not None else (y1 + y2) / 2 - 6}" '
+                   f'text-anchor="middle">{sg._esc(label)}</text>')
     return "".join(out)
+
+
+def _badge(x, y, text, bg, fg) -> str:
+    w = len(text) * 7 + 14
+    return (f'<rect x="{x}" y="{y}" width="{w}" height="19" rx="9" fill="{bg}"/>'
+            f'<text x="{x + w / 2}" y="{y + 13.5}" text-anchor="middle" '
+            f'style="font-size:11px;font-weight:700;fill:{fg}">{sg._esc(text)}</text>')
+
+
+def repo_diagram() -> str:
+    """The four-repository split, with the live/frozen cue for the two sites."""
+    b1t, b1l = "rk-harness", ["the scorer: verifier, evaluator,",
+                              "cost models, 987 tests",
+                              "read-only in the container"]
+    b2t, b2l = "rk-work", ["run state: append-only archive,",
+                           "events, hypothesis ledger",
+                           "the one writable mount"]
+    b3t, b3l = "rk-findings", ["machine-generated numbers site,",
+                               "rebuilt by the run every cycle"]
+    b4t, b4l = "rk-overview  (this site)", ["human-written explainer pages",
+                                            "+ a frozen copy of the findings site"]
+    lab_a, lab_b = "verifies + scores", "rebuilt every cycle"
+    w1, w2 = _natw(b1t, b1l), _natw(b2t, b2l)
+    # widest of the two right boxes, with room for the corner badge beside the title
+    w3 = max(_natw(b3t, b3l), _natw(b4t, b4l), int(len(b4t) * _TCH) + 13 + 76 + 18)
+    gap_a = int(len(lab_a) * 6.4) + 26   # arrow gaps sized to their labels
+    gap_b = int(len(lab_b) * 6.4) + 26
+    x1, y1 = 20, 46
+    x2 = x1 + w1 + gap_a
+    x3 = x2 + w2 + gap_b
+    h1, h2, h3, h4 = _nath(b1l), _nath(b2l), _nath(b3l), _nath(b4l)
+    y4 = y1 + h3 + 88
+    W = x3 + w3 + 20
+    H = y4 + h4 + 62
+    p = [_defs()]
+    # container enclosure around the two mounted repos
+    p.append(f'<rect class="enclosure" x="{x1 - 10}" y="{y1 - 26}" '
+             f'width="{x2 + w2 - x1 + 20}" height="{max(h1, h2) + 40}" rx="12"/>')
+    p.append(f'<text class="alab" x="{x1 - 2}" y="{y1 - 32}">mounted into the run container</text>')
+    p.append(_box(x1, y1, w1, b1t, b1l, cls="boxhl"))
+    p.append(_box(x2, y1, w2, b2t, b2l))
+    p.append(_box(x3, y1, w3, b3t, b3l))
+    p.append(_badge(x3 + w3 - 58, y1 + 10, "LIVE", "var(--good-bg)", "var(--good-fg)"))
+    p.append(_box(x3, y4, w3, b4t, b4l, extra_cls="frozen"))
+    p.append(_badge(x3 + w3 - 76, y4 + 10, "FROZEN", "var(--mut-bg)", "var(--mut-fg)"))
+    p.append(_arrow(x1 + w1, y1 + h1 / 2, x2, y1 + h2 / 2, lab_a))
+    p.append(_arrow(x2 + w2, y1 + h2 / 2, x3, y1 + h3 / 2, lab_b))
+    p.append(f'<path class="arrow arrowdash" d="M {x3 + w3 / 2} {y1 + h3} L {x3 + w3 / 2} {y4}"/>')
+    p.append(f'<text class="alab" x="{x3 + w3 / 2 - 12}" y="{(y1 + h3 + y4) / 2 + 4}" '
+             f'text-anchor="end">frozen copy taken {SNAPSHOT_DATE}</text>')
+    p.append(f'<a href="{LIVE_URL}"><text class="alab" x="{x3}" y="{y1 + h3 + 18}" '
+             f'style="fill:var(--s1)">jgoetzmann.github.io/rk-findings ↗ (live)</text></a>')
+    p.append(f'<text class="alab" x="{x3}" y="{y4 + h4 + 18}">jgoetzmann.github.io/rk-overview</text>')
+    p.append(f'<text class="alab" x="{x3}" y="{y4 + h4 + 34}">(you are here, frozen at {SNAPSHOT_DATE})</text>')
+    svg = (f'<svg viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" '
+           'aria-label="The four repositories: rk-harness and rk-work mounted into the '
+           'container, rk-findings rebuilt every cycle and published live, rk-overview a '
+           'frozen snapshot">' + "".join(p) + "</svg>")
+    return ('<figure class="panel"><figcaption>One writer and one trust level per '
+            "repository. The live site keeps moving with the run; this site is a dated "
+            f'snapshot.</figcaption><div class="scroll">{svg}</div>{_howto(T.HOW_REPOS)}</figure>')
 
 
 def system_diagram() -> str:
+    hostt = "Windows host"
+    hostl = ["watchdog: heartbeat kill,",
+             "spend / disk stop, battery pause,",
+             "git pushes + config + watcher"]
+    credt = "credentials"
+    credl = ["GitHub PAT: host only, not mounted",
+             "Codex auth: mounted read-only"]
+    harnt = "rk-harness  (read-only mount)"
+    harnl = ["verifier + evaluator + cost models", "sha256 pinned, checked at start"]
+    runt, runl = "runner", ["cycle loop; the only LLM caller"]
+    seat, seal = "search", ["CMA-ES islands + enumeration"]
+    workt = "rk-work  (writable mount)"
+    workl = ["append-only archive, events, ledger"]
+    cxt, cxl = "Codex (planning)", ["directives, hypotheses, digests"]
+    fint, finl = "rk-findings", ["auto site, rebuilt every cycle"]
+    pgt, pgl = "GitHub Pages", ["deploys on push from the host"]
+
+    c1w = max(_natw(hostt, hostl), _natw(credt, credl))
+    iw = max(_natw(harnt, harnl), _natw(workt, workl),
+             _natw(runt, runl) + 12 + _natw(seat, seal))
+    c2w = iw + 32
+    c3w = max(_natw(cxt, cxl), _natw(fint, finl), _natw(pgt, pgl))
+    lab_run, lab_push = "docker run", "git push (host)"
+    lab_llm, lab_commit = "throttled LLM calls", "commit each cycle"
+    gap1 = max(96, int(max(len(lab_run), len(lab_push)) * 6.4) + 26)
+    gap2 = max(96, int(max(len(lab_llm), len(lab_commit)) * 6.4) + 26)
+    x1, x2 = 16, 16 + c1w + gap1
+    x3 = x2 + c2w + gap2
+    W = x3 + c3w + 16
+
     p = [_defs()]
-    # host column
-    p.append(_box(20, 16, 250, 118, "Windows host", [
-        "watchdog: heartbeat kill, spend/disk stop,",
-        "pause on battery / CPU load,",
-        "git push rk-work + rk-findings",
-        "config.json + configure.py + watcher"]))
-    p.append(_box(20, 152, 250, 64, "credentials", [
-        "GitHub PAT: host only, never mounted",
-        "codex auth.json: mounted read-only"]))
-    # container
-    p.append(_box(320, 16, 300, 200, "run container (docker)", []))
-    p.append(_box(336, 44, 268, 46, "rk-harness  (mounted :ro)", [
-        "verifier + evaluator + cost models",
-        "pinned sha256 checked at start"], hl=True))
-    p.append(_box(336, 100, 128, 52, "runner", ["cycle loop", "only LLM caller"]))
-    p.append(_box(480, 100, 124, 52, "search", ["CMA-ES islands", "enumeration"]))
-    p.append(_box(336, 160, 268, 46, "rk-work  (mounted rw)", [
-        "append-only archive, events, ledger"]))
-    # outer services
-    p.append(_box(670, 16, 240, 64, "Codex (plan)", [
-        "directives + hypotheses + digests",
-        "web search server-side"]))
-    p.append(_box(670, 100, 240, 52, "rk-findings", ["auto site, rebuilt each cycle"]))
-    p.append(_box(670, 168, 240, 48, "GitHub Pages", ["pages-build-deployment on push"]))
-    p.append(_arrow(270, 75, 320, 75, "docker run"))
-    p.append(_arrow(620, 60, 670, 48, "throttled calls"))
-    p.append(_arrow(620, 126, 670, 126, "commit"))
-    p.append(_arrow(270, 184, 336, 184, "push (host)", 300, 178))
-    p.append(_arrow(790, 152, 790, 168, ""))
-    svg = (f'<svg viewBox="0 0 930 236" width="930" height="236" role="img" '
+    y = 16
+    p.append(_box(x1, y, c1w, hostt, hostl))
+    hosth = _nath(hostl)
+    p.append(_box(x1, y + hosth + 18, c1w, credt, credl))
+    # container: outer box drawn manually so inner boxes stack inside it
+    ih_harn, ih_run, ih_work = _nath(harnl), _nath(runl), _nath(workl)
+    inner_y = y + 36
+    cont_h = 36 + ih_harn + 12 + ih_run + 12 + ih_work + 16
+    p.append(f'<rect class="box" x="{x2}" y="{y}" width="{c2w}" height="{cont_h}" rx="10"/>')
+    p.append(f'<text class="bt" x="{x2 + 13}" y="{y + 24}">run container (docker)</text>')
+    p.append(_box(x2 + 16, inner_y, iw, harnt, harnl, cls="boxhl"))
+    ry = inner_y + ih_harn + 12
+    rw = _natw(runt, runl)
+    p.append(_box(x2 + 16, ry, rw, runt, runl))
+    p.append(_box(x2 + 16 + rw + 12, ry, iw - rw - 12, seat, seal))
+    wy = ry + ih_run + 12
+    p.append(_box(x2 + 16, wy, iw, workt, workl))
+    # right column
+    cxh, finh = _nath(cxl), _nath(finl)
+    y_cx = 16
+    y_fin = y_cx + cxh + 26
+    y_pg = y_fin + finh + 26
+    p.append(_box(x3, y_cx, c3w, cxt, cxl))
+    p.append(_box(x3, y_fin, c3w, fint, finl))
+    p.append(_box(x3, y_pg, c3w, pgt, pgl))
+    # arrows
+    p.append(_arrow(x1 + c1w, y + 44, x2, y + 44, lab_run))
+    p.append(_arrow(x1 + c1w, y + hosth + 60, x2, wy + 20, lab_push,
+                    lx=x1 + c1w + gap1 / 2, ly=(y + hosth + 60 + wy + 20) / 2 - 10))
+    p.append(_arrow(x2 + c2w, ry + ih_run / 2, x3, y_cx + cxh / 2, lab_llm,
+                    lx=x2 + c2w + gap2 / 2, ly=(ry + ih_run / 2 + y_cx + cxh / 2) / 2 - 10))
+    p.append(_arrow(x2 + c2w, wy + 20, x3, y_fin + finh / 2, lab_commit,
+                    lx=x2 + c2w + gap2 / 2, ly=(wy + 20 + y_fin + finh / 2) / 2 - 10))
+    p.append(_arrow(x3 + c3w / 2, y_fin + finh, x3 + c3w / 2, y_pg))
+    H = max(y + cont_h, y_pg + _nath(pgl)) + 16
+    svg = (f'<svg viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" '
            'aria-label="System diagram: host, container with read-only harness, and services">'
            + "".join(p) + "</svg>")
-    return ('<figure class="panel"><figcaption>The as-built system. The verifier lives inside '
-            "the read-only mount; the credential never crosses the container boundary."
-            f'</figcaption><div class="scroll">{svg}</div>{_howto(T.HOW_SYSTEM)}</figure>')
+    return ('<figure class="panel"><figcaption>The as-built system. The verifier lives '
+            "inside the read-only mount; the GitHub credential never crosses the container "
+            f'boundary.</figcaption><div class="scroll">{svg}</div>{_howto(T.HOW_SYSTEM)}</figure>')
 
 
 def cycle_diagram() -> str:
@@ -197,54 +399,518 @@ def cycle_diagram() -> str:
         ("replay", "archive → state"),
         ("encourager", "ladder + calendar"),
         ("candidates", "enumerate / CMA-ES"),
-        ("verify ×9", "pure code, exact"),
+        ("verify ×9", "nine checks, exact"),
         ("evaluate", "Q15, 3 cost models"),
         ("tier", "vs cell incumbent"),
         ("append", "fsync JSONL"),
         ("ledger", "verdicts by code"),
-        ("site", "regenerate + guard"),
+        ("site", "rebuild + guard"),
         ("commit", "host pushes later"),
     ]
+    bw = max(_natw(t, [s]) for t, s in steps)
+    bh = _nath(["x"])
+    gap, row_gap = 44, 52
     p = [_defs()]
-    bw, bh, gap = 168, 52, 18
     for i, (t, s) in enumerate(steps):
         row, col = divmod(i, 5)
         x = 16 + col * (bw + gap)
-        y = 16 + row * (bh + 40)
-        p.append(_box(x, y, bw, bh, t, [s], hl=(t == "verify ×9")))
+        y = 16 + row * (bh + row_gap)
+        p.append(_box(x, y, bw, t, [s], cls="boxhl" if t.startswith("verify") else "box"))
         if col < 4:
             p.append(_arrow(x + bw, y + bh / 2, x + bw + gap, y + bh / 2))
-    p.append(_arrow(16 + 4 * (bw + gap) + bw / 2, 16 + bh, 16 + bw / 2 + 8, 16 + bh + 40 - 2))
-    svg = (f'<svg viewBox="0 0 950 210" width="950" height="210" role="img" '
-           'aria-label="Cycle loop: replay, encourager, candidates, verify, evaluate, tier, append, ledger, site, commit">'
-           + "".join(p) + "</svg>")
-    return ('<figure class="panel"><figcaption>One idempotent cycle; a crash anywhere costs at most '
-            f'one cycle.</figcaption><div class="scroll">{svg}</div>{_howto(T.HOW_CYCLE)}</figure>')
+    # wrap arrow from the end of row 1 down and back to the start of row 2
+    x_last = 16 + 4 * (bw + gap)
+    y2 = 16 + bh + row_gap
+    p.append(f'<path class="arrow" d="M {x_last + bw / 2} {16 + bh} '
+             f'L {x_last + bw / 2} {16 + bh + row_gap / 2} '
+             f'L {16 + bw / 2} {16 + bh + row_gap / 2} L {16 + bw / 2} {y2 - 2}"/>')
+    W = 16 * 2 + 5 * bw + 4 * gap
+    H = 16 * 2 + 2 * bh + row_gap
+    svg = (f'<svg viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" '
+           'aria-label="Cycle loop: replay, encourager, candidates, verify, evaluate, '
+           'tier, append, ledger, site, commit">' + "".join(p) + "</svg>")
+    return ('<figure class="panel"><figcaption>One idempotent cycle; a crash anywhere '
+            f'costs at most one cycle.</figcaption><div class="scroll">{svg}</div>'
+            f"{_howto(T.HOW_CYCLE)}</figure>")
 
 
-# ----------------------------------------------------------------------------- charts
+def pipeline_diagram() -> str:
+    """The container start gate, in execution order, with the exit-1 branch."""
+    chain = [
+        ("container start", []),
+        ("1 · write heartbeat", ["the first line of the entrypoint"]),
+        ("2 · read-only probe", ["a write to /harness must fail"]),
+        ("3 · verifier hash check", ["sha256 over ten files vs the pinned value"]),
+        ("4 · golden + canary tests", [f"{GATE_TESTS} cases with pytest, under four seconds"]),
+        ("runner starts", ["science on a proven environment only"]),
+    ]
+    failt = "exit 1"
+    faill = ["the runner never starts;", "the watchdog restarts, the gate re-runs"]
+    cw = max(_natw(t, ls) for t, ls in chain)
+    fw = _natw(failt, faill)
+    gap_y = 30
+    x, y = 16, 16
+    fx = x + cw + 96
+    p = [_defs()]
+    ys = []
+    for t, ls in chain:
+        h = _nath(ls)
+        hl = t == "runner starts"
+        p.append(_box(x, y, cw, t, ls, cls="boxhl" if hl else "box"))
+        ys.append((y, h))
+        y += h + gap_y
+    for (by, bh), (ny, _nh) in zip(ys, ys[1:]):
+        p.append(_arrow(x + cw / 2, by + bh, x + cw / 2, ny - 2))
+    # exit-1 branch: a rail collecting the four checks
+    fail_top = ys[1][0]
+    fail_bot = ys[4][0] + ys[4][1]
+    fh = _nath(faill)
+    fy = (fail_top + fail_bot) / 2 - fh / 2
+    railx = x + cw + 46
+    p.append(f'<rect class="boxbad" x="{fx}" y="{fy}" width="{fw}" height="{fh}" rx="9"/>')
+    p.append(f'<text x="{fx + 13}" y="{fy + 23}" style="font-weight:650;font-size:15px;'
+             f'fill:var(--bad-fg)">{failt}</text>')
+    for i, ln in enumerate(faill):
+        p.append(f'<text x="{fx + 13}" y="{fy + 45 + 19 * i}" style="font-size:14px;'
+                 f'fill:var(--bad-fg)">{sg._esc(ln)}</text>')
+    for by, bh in ys[1:5]:
+        p.append(f'<path d="M {x + cw} {by + bh / 2} L {railx} {by + bh / 2}" '
+                 'stroke="var(--bad-fg)" fill="none" opacity=".55"/>')
+    p.append(f'<path d="M {railx} {ys[1][0] + ys[1][1] / 2} L {railx} {fy + fh / 2}" '
+             'stroke="var(--bad-fg)" fill="none" opacity=".55"/>')
+    p.append(f'<path d="M {railx} {fy + fh / 2} L {fx - 2} {fy + fh / 2}" '
+             'stroke="var(--bad-fg)" fill="none" marker-end="url(#ah)"/>')
+    p.append(f'<text class="alab" x="{railx - 6}" y="{ys[1][0] + 8}" '
+             'text-anchor="end" style="fill:var(--bad-fg)">any failure</text>')
+    W = fx + fw + 16
+    H = y - gap_y + 16
+    svg = (f'<svg viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" '
+           'aria-label="Start gate: heartbeat, read-only probe, hash check, golden and '
+           'canary tests, then the runner; any failure exits">' + "".join(p) + "</svg>")
+    return ('<figure class="panel"><figcaption>The start gate, run on every container '
+            "start. The runner is unreachable until all four checks pass against the "
+            f'harness as mounted.</figcaption><div class="scroll">{svg}</div>'
+            f"{_howto(T.HOW_PIPELINE)}</figure>")
 
-def _linear_line(points: list[tuple[float, float]], w, h, xlabel, ylabel, aria) -> str:
+
+# ----------------------------------------------------------------------------- key-findings charts
+
+def _kf_load() -> dict:
+    path = HERE / "key_findings.json"
+    if not path.exists():
+        print("WARN: key_findings.json missing; findings charts skipped")
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except ValueError:
+        print("WARN: key_findings.json unparsable; findings charts skipped")
+        return {}
+
+
+def _series(kf: dict, finding: str, name: str):
+    s = kf.get(finding, {}).get("series", {}).get(name)
+    if isinstance(s, list) and s:
+        return s
+    if isinstance(s, dict) and s and "absent" not in s:
+        return s
+    print(f"WARN: series {finding}.{name} empty or absent; chart skipped")
+    return None
+
+
+def _logpos(v, lo, hi, a, b) -> float:
+    t = (math.log10(v) - math.log10(lo)) / (math.log10(hi) - math.log10(lo))
+    return a + t * (b - a)
+
+
+def _tickfmt(v: float) -> str:
+    return f"{v:g}"
+
+
+def frontier_chart(kf: dict) -> str:
+    rows = _series(kf, "efficiency", "frontier_cycles_vs_heldout")
+    if not rows:
+        return ""
+    w, h, ml, mr, mt, mb = 880, 470, 66, 26, 18, 52
+    xlo, xhi, ylo, yhi = 4, 95, 0.02, 0.45
+    fx = lambda v: _logpos(v, xlo, xhi, ml, w - mr)
+    fy = lambda v: h - mb - (_logpos(v, ylo, yhi, 0, h - mt - mb))
+    p = []
+    for tv in (5, 10, 20, 40, 80):
+        p.append(f'<line class="gridline" x1="{sg._fmt(fx(tv))}" y1="{mt}" x2="{sg._fmt(fx(tv))}" y2="{h - mb}"/>')
+        p.append(f'<text x="{sg._fmt(fx(tv))}" y="{h - mb + 18}" text-anchor="middle">{tv}</text>')
+    for tv in (0.02, 0.05, 0.1, 0.2, 0.4):
+        p.append(f'<line class="gridline" x1="{ml}" y1="{sg._fmt(fy(tv))}" x2="{w - mr}" y2="{sg._fmt(fy(tv))}"/>')
+        p.append(f'<text x="{ml - 8}" y="{sg._fmt(fy(tv) + 4)}" text-anchor="end">{_tickfmt(tv)}</text>')
+    p.append(f'<line class="axis" x1="{ml}" y1="{h - mb}" x2="{w - mr}" y2="{h - mb}"/>')
+    p.append(f'<line class="axis" x1="{ml}" y1="{mt}" x2="{ml}" y2="{h - mb}"/>')
+    p.append(f'<text x="{sg._fmt((ml + w - mr) / 2)}" y="{h - 8}" text-anchor="middle">cycles per step (log)</text>')
+    p.append(f'<text x="14" y="{sg._fmt((mt + h - mb) / 2)}" text-anchor="middle" '
+             f'transform="rotate(-90 14 {sg._fmt((mt + h - mb) / 2)})">held-out error (log)</text>')
+    classical = [r for r in rows if r.get("kind") == "classical"]
+    discovered = [r for r in rows if r.get("kind") == "discovered"]
+    best_classical = min((r["heldout_error"] for r in classical), default=None)
+    if best_classical:
+        yy = fy(best_classical)
+        p.append(f'<line x1="{ml}" y1="{sg._fmt(yy)}" x2="{w - mr}" y2="{sg._fmt(yy)}" '
+                 'stroke="var(--s2)" stroke-dasharray="5 4" opacity=".7"/>')
+        p.append(f'<text class="dlab" x="{w - mr - 4}" y="{sg._fmt(yy - 7)}" text-anchor="end">'
+                 f'best classical anchor ({_short(best_classical)})</text>')
+    for i, r in enumerate(sorted(classical, key=lambda r: r["cycles"])):
+        px, py = fx(r["cycles"]), fy(r["heldout_error"])
+        p.append(f'<circle cx="{sg._fmt(px)}" cy="{sg._fmt(py)}" r="5.5" fill="var(--s2)" class="cellstroke">'
+                 f'<title>{sg._esc(r.get("name"))} (classical): {r["cycles"]} cycles/step, '
+                 f'held-out error {_short(r["heldout_error"])}</title></circle>')
+        dy = -10 if i % 2 == 0 else 20
+        p.append(f'<text class="dlab" x="{sg._fmt(px)}" y="{sg._fmt(py + dy)}" '
+                 f'text-anchor="middle">{sg._esc(r.get("name"))}</text>')
+    best = min(discovered, key=lambda r: r["heldout_error"], default=None)
+    for r in discovered:
+        px, py = fx(r["cycles"]), fy(r["heldout_error"])
+        p.append(f'<circle cx="{sg._fmt(px)}" cy="{sg._fmt(py)}" r="5.5" fill="var(--s1)" class="cellstroke">'
+                 f'<title>discovered, order {r.get("order")}, {r.get("stages")} stages: '
+                 f'{r["cycles"]} cycles/step, held-out error {_short(r["heldout_error"])}, '
+                 f'tier {sg._esc(r.get("tier"))}</title></circle>')
+    if best:
+        px, py = fx(best["cycles"]), fy(best["heldout_error"])
+        p.append(f'<circle cx="{sg._fmt(px)}" cy="{sg._fmt(py)}" r="10" fill="none" '
+                 'stroke="var(--s1)" stroke-width="1.5"/>')
+        p.append(f'<text class="dlab" x="{sg._fmt(px + 14)}" y="{sg._fmt(py + 4)}">'
+                 f'best discovered: {_short(best["heldout_error"])} at {best["cycles"]} cycles</text>')
+    svg = (f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
+           'aria-label="Efficiency frontier: per-step cycles against held-out error, '
+           'discovered versus classical methods, both axes log">' + "".join(p) + "</svg>")
+    caption = ("Each dot is one method at the shared 65,536-cycle budget: x is per-step "
+               "cost in cycles, y is held-out error, both log, so down and left is "
+               "better. Orange dots are the eight classical anchors, named; blue dots "
+               "are the best archived method in each occupied grid cell. Every blue dot "
+               "below the dashed line beats every classical anchor outright. Hover any "
+               "dot for its cell and tier.")
+    legend = sg._legend([("var(--s1)", "discovered (best per grid cell)"),
+                         ("var(--s2)", "classical anchors")])
+    return _fig(svg, caption, legend, "data: key_findings.json, series frontier_cycles_vs_heldout")
+
+
+def flip_slope_chart(kf: dict) -> str:
+    agg = kf.get("floor_bias_flip", {}).get("numbers", {}).get("aggregate", {})
+    try:
+        fl = agg["floor"]["search_rms"]
+        rd = agg["round_to_nearest"]["search_rms"]
+    except KeyError:
+        print("WARN: floor_bias_flip aggregate numbers missing; slope chart skipped")
+        return ""
+    methods = sorted(fl["rank"], key=lambda m: fl["rank"][m])
+    w, h = 660, 330
+    xr, xf = 218, 452
+    y0, dy = 92, 62
+    colors = {"euler": "var(--s1)", "rk4": "var(--s2)"}
+    p = [f'<text class="dlab" x="{xr}" y="40" text-anchor="middle">round-to-nearest</text>',
+         f'<text class="alab" x="{xr}" y="56" text-anchor="middle">(counterfactual)</text>',
+         f'<text class="dlab" x="{xf}" y="40" text-anchor="middle">floor (ASRS)</text>',
+         f'<text class="alab" x="{xf}" y="56" text-anchor="middle">(what the hardware does)</text>']
+    for rank in range(1, 5):
+        p.append(f'<text x="40" y="{y0 + (rank - 1) * dy + 4}" text-anchor="middle">rank {rank}</text>')
+    for m in methods:
+        yr = y0 + (rd["rank"][m] - 1) * dy
+        yf = y0 + (fl["rank"][m] - 1) * dy
+        c = colors.get(m, "var(--text-3)")
+        p.append(f'<path d="M {xr} {yr} L {xf} {yf}" stroke="{c}" stroke-width="2.5" fill="none" '
+                 f'opacity="{1 if m in colors else 0.65}"/>')
+        for (xx, yy) in ((xr, yr), (xf, yf)):
+            p.append(f'<circle cx="{xx}" cy="{yy}" r="5" fill="{c}" class="cellstroke">'
+                     f'<title>{sg._esc(m)}: search-set RMS {_short(rd["error"][m])} under '
+                     f'round-to-nearest, {_short(fl["error"][m])} under floor</title></circle>')
+        p.append(f'<text class="dlab" x="{xr - 14}" y="{yr + 4}" text-anchor="end">'
+                 f'{sg._esc(m)} · {_short(rd["error"][m])}</text>')
+        p.append(f'<text class="dlab" x="{xf + 14}" y="{yf + 4}">'
+                 f'{sg._esc(m)} · {_short(fl["error"][m])}</text>')
+    svg = (f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
+           'aria-label="Rank slope chart: method ranking by search-set RMS error under '
+           'round-to-nearest versus floor rounding">' + "".join(p) + "</svg>")
+    caption = ("Each line is one method; its ends are the method's rank by search-set "
+               "RMS error under the two rounding modes, with the RMS value beside each "
+               "end. Blue and orange mark the extreme movers, euler and rk4; the gray "
+               "methods swap too (heun2 4th to 2nd, rk38 1st to 3rd). Floor is what the "
+               "harness measures everywhere; round-to-nearest was rerun outside the "
+               "archive as the counterfactual.")
+    return _fig(svg, caption, "", "data: key_findings.json, numbers aggregate.search_rms")
+
+
+_PROBLEM_ORDER = ("dahlquist", "damped_osc", "vanderpol_mild",
+                  "pendulum", "dc_motor", "rc_thermal", "quaternion")
+_METHOD_ORDER = ("euler", "heun2", "rk4", "rk38")
+
+
+def flip_problem_chart(kf: dict) -> str:
+    rows = _series(kf, "floor_bias_flip", "per_problem_floor_vs_round")
+    if not rows:
+        return ""
+    by = {(r["problem"], r["method"]): r for r in rows}
+    w, ml, mr = 880, 160, 26
+    xlo, xhi = 3e-5, 1.0
+    fx = lambda v: _logpos(v, xlo, xhi, ml, w - mr)
+    head_h, row_h, group_pad = 24, 22, 14
+    problems = [pr for pr in _PROBLEM_ORDER if any(k[0] == pr for k in by)]
+    H = 16 + sum(head_h + row_h * len(_METHOD_ORDER) + group_pad for _ in problems) + 34
+    p = []
+    for tv in (1e-4, 1e-3, 1e-2, 1e-1, 1):
+        px = fx(tv)
+        p.append(f'<line class="gridline" x1="{sg._fmt(px)}" y1="10" x2="{sg._fmt(px)}" y2="{H - 30}"/>')
+        p.append(f'<text x="{sg._fmt(px)}" y="{H - 12}" text-anchor="middle">{sg._pow_label(tv)}</text>')
+    y = 16
+    for pr in problems:
+        p.append(f'<text class="dlab" x="8" y="{y + 14}">{sg._esc(pr)}</text>')
+        y += head_h
+        for m in _METHOD_ORDER:
+            r = by.get((pr, m))
+            if r is None:
+                continue
+            cy = y + row_h / 2
+            fxv, rxv = fx(r["floor_error"]), fx(r["round_error"])
+            p.append(f'<text x="{ml - 10}" y="{sg._fmt(cy + 4)}" text-anchor="end">{sg._esc(m)}</text>')
+            p.append(f'<line x1="{sg._fmt(min(fxv, rxv))}" y1="{sg._fmt(cy)}" '
+                     f'x2="{sg._fmt(max(fxv, rxv))}" y2="{sg._fmt(cy)}" stroke="var(--line)" stroke-width="2"/>')
+            title = (f"{pr} / {m}: floor {_short(r['floor_error'])} (rank {r['floor_rank']}), "
+                     f"round-to-nearest {_short(r['round_error'])} (rank {r['round_rank']})")
+            p.append(f'<circle cx="{sg._fmt(fxv)}" cy="{sg._fmt(cy)}" r="4.5" fill="var(--s1)" '
+                     f'class="cellstroke"><title>{sg._esc(title)}</title></circle>')
+            p.append(f'<circle cx="{sg._fmt(rxv)}" cy="{sg._fmt(cy)}" r="4.5" fill="var(--s2)" '
+                     f'class="cellstroke"><title>{sg._esc(title)}</title></circle>')
+            y += row_h
+        y += group_pad
+    svg = (f'<svg viewBox="0 0 {w} {H}" width="{w}" height="{H}" role="img" '
+           'aria-label="Per-problem error under floor and round-to-nearest for four '
+           'classical methods, log scale">' + "".join(p) + "</svg>")
+    caption = ("One row per problem and method; the x axis is final-state error on a log "
+               "scale, so left is better. The blue dot is the error under floor, the "
+               "orange dot under round-to-nearest, and the connecting bar is what the "
+               "rounding mode alone changes. On dahlquist the three cheap methods' floor "
+               "dots sit at 4.5e-5, the reference value itself, two decades left of "
+               "their round-to-nearest dots. Hover a dot for exact values and ranks.")
+    legend = sg._legend([("var(--s1)", "floor (ASRS, as measured)"),
+                         ("var(--s2)", "round-to-nearest (counterfactual)")])
+    return _fig(svg, caption, legend, "data: key_findings.json, series per_problem_floor_vs_round")
+
+
+def crossover_chart(kf: dict) -> str:
+    sweeps = _series(kf, "crossover", "sweeps")
+    if not sweeps:
+        return ""
+    methods = kf.get("crossover", {}).get("numbers", {}).get("methods", {})
+    w, h, ml, mr, mt, mb = 880, 480, 70, 36, 44, 52
+    xlo, xhi, ylo, yhi = 0.008, 1.6, 1e-11, 1e2
+    fx = lambda v: _logpos(v, xlo, xhi, ml, w - mr)
+    fy = lambda v: h - mb - _logpos(v, ylo, yhi, 0, h - mt - mb)
+    p = []
+    for tv in (0.01, 0.05, 0.1, 0.5, 1):
+        p.append(f'<line class="gridline" x1="{sg._fmt(fx(tv))}" y1="{mt}" x2="{sg._fmt(fx(tv))}" y2="{h - mb}"/>')
+        p.append(f'<text x="{sg._fmt(fx(tv))}" y="{h - mb + 18}" text-anchor="middle">{_tickfmt(tv)}</text>')
+    for e in range(-10, 3, 2):
+        tv = 10.0 ** e
+        p.append(f'<line class="gridline" x1="{ml}" y1="{sg._fmt(fy(tv))}" x2="{w - mr}" y2="{sg._fmt(fy(tv))}"/>')
+        p.append(f'<text x="{ml - 8}" y="{sg._fmt(fy(tv) + 4)}" text-anchor="end">1e{e}</text>')
+    p.append(f'<line class="axis" x1="{ml}" y1="{h - mb}" x2="{w - mr}" y2="{h - mb}"/>')
+    p.append(f'<line class="axis" x1="{ml}" y1="{mt}" x2="{ml}" y2="{h - mb}"/>')
+    p.append(f'<text x="{sg._fmt((ml + w - mr) / 2)}" y="{h - 8}" text-anchor="middle">step size h (log; smaller steps to the left)</text>')
+    p.append(f'<text x="14" y="{sg._fmt((mt + h - mb) / 2)}" text-anchor="middle" '
+             f'transform="rotate(-90 14 {sg._fmt((mt + h - mb) / 2)})">final-state error (log)</text>')
+    colors = {"rk4": "var(--s1)", "heun2": "var(--s2)"}
+    for li, (mname, cross_label_y) in enumerate((("rk4", mt + 14), ("heun2", mt + 30))):
+        cross = methods.get(mname, {}).get("crossover_h")
+        if isinstance(cross, (int, float)) and xlo < cross < xhi:
+            px = fx(cross)
+            p.append(f'<line x1="{sg._fmt(px)}" y1="{mt}" x2="{sg._fmt(px)}" y2="{h - mb}" '
+                     'stroke="var(--text-3)" stroke-dasharray="4 3"/>')
+            p.append(f'<text class="dlab" x="{sg._fmt(px + 5)}" y="{cross_label_y}">'
+                     f'{sg._esc(mname)} crossover h = {_short(cross)}</text>')
+    for mname in ("rk4", "heun2"):
+        rows = [r for r in sweeps.get(mname, []) if r.get("h") and r["h"] <= 1.3]
+        c = colors[mname]
+        for key, dash in (("q15_error", ""), ("float_error", ' stroke-dasharray="6 4"')):
+            pts = [(r["h"], r[key]) for r in rows
+                   if isinstance(r.get(key), (int, float)) and ylo <= r[key] <= yhi]
+            if len(pts) < 2:
+                continue
+            pts.sort()
+            path = " ".join(f"{'M' if i == 0 else 'L'} {sg._fmt(fx(hv))} {sg._fmt(fy(ev))}"
+                            for i, (hv, ev) in enumerate(pts))
+            p.append(f'<path d="{path}" fill="none" stroke="{c}" stroke-width="2"{dash}/>')
+            for hv, ev in pts:
+                p.append(f'<circle cx="{sg._fmt(fx(hv))}" cy="{sg._fmt(fy(ev))}" r="3.5" fill="{c}" '
+                         f'class="cellstroke"><title>{sg._esc(mname)} '
+                         f'{"Q15" if key == "q15_error" else "float64"} at h = {_short(hv)}: '
+                         f'error {_short(ev)}</title></circle>')
+            if key == "float_error":
+                # one direct label per method, at the left end of its float64 line,
+                # where the two methods sit five decades apart
+                h0, e0 = pts[0]
+                p.append(f'<text class="dlab" x="{sg._fmt(fx(h0) + 10)}" '
+                         f'y="{sg._fmt(fy(e0) - 8)}">{sg._esc(mname)}</text>')
+    svg = (f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
+           'aria-label="Step-size sweep on damped_osc: Q15 and float64 error for rk4 and '
+           'heun2, log-log, with crossover markers">' + "".join(p) + "</svg>")
+    caption = ("Final-state error on damped_osc against step size, both axes log, one "
+               "color per method: solid lines are Q15 fixed point, dashed lines are "
+               "float64 taking exactly the same steps, so the vertical gap is pure "
+               "arithmetic. Left of each dashed vertical, the Q15 line detaches and "
+               "climbs while the float line keeps falling. Q15 points at h ≥ 1.25 "
+               "overflowed (error infinite) and are omitted.")
+    legend = sg._legend([("var(--s1)", "rk4 (solid Q15, dashed float64)"),
+                         ("var(--s2)", "heun2 (solid Q15, dashed float64)")])
+    return _fig(svg, caption, legend, "data: key_findings.json, series sweeps (falsification run)")
+
+
+_RC_ORDER = ("euler", "midpoint", "heun2", "ralston2", "heun3", "kutta3", "rk4", "rk38")
+
+
+def rc_chart(kf: dict) -> str:
+    rows = _series(kf, "rc_thermal_collapse", "per_method")
+    if not rows:
+        return ""
+    nums = kf.get("rc_thermal_collapse", {}).get("numbers", {})
+    ref = nums.get("reference_norm")
+    best = nums.get("best_discovered_rc_thermal", {})
+    by = {r["method"]: r for r in rows}
+    order = [m for m in _RC_ORDER if m in by]
+    groups = [(m, by[m]) for m in order] + ([("best discovered", None)] if best else [])
+    w, h, ml, mr, mt, mb = 880, 400, 64, 20, 24, 66
+    ymax = 0.22
+    fy = lambda v: h - mb - (v / ymax) * (h - mt - mb)
+    p = []
+    for tv in (0, 0.05, 0.10, 0.15, 0.20):
+        p.append(f'<line class="gridline" x1="{ml}" y1="{sg._fmt(fy(tv))}" x2="{w - mr}" y2="{sg._fmt(fy(tv))}"/>')
+        p.append(f'<text x="{ml - 8}" y="{sg._fmt(fy(tv) + 4)}" text-anchor="end">{_tickfmt(tv)}</text>')
+    p.append(f'<line class="axis" x1="{ml}" y1="{h - mb}" x2="{w - mr}" y2="{h - mb}"/>')
+    gw = (w - ml - mr) / len(groups)
+    bar_w, gap = 26, 4
+    for gi, (name, r) in enumerate(groups):
+        cx = ml + gw * gi + gw / 2
+        if r is not None:
+            fe, re_ = r["floor_error"], r.get("round_error")
+            bx = cx - (bar_w + gap / 2 if re_ is not None else bar_w / 2)
+            p.append(sg._round_top_bar(bx, fy(fe), bar_w, (h - mb) - fy(fe), "var(--s1)",
+                                       f"{name} floor: error {_short(fe)}; {r['steps']:,} steps; "
+                                       f"final Q15 state {tuple(r['final_state_q15'])}"))
+            if re_ is not None:
+                bx2 = cx + gap / 2
+                p.append(sg._round_top_bar(bx2, fy(re_), bar_w, (h - mb) - fy(re_), "var(--s2)",
+                                           f"{name} round-to-nearest: error {_short(re_)}"))
+                if name in ("rk38", "rk4"):
+                    p.append(f'<text class="lbl" x="{sg._fmt(bx2 + bar_w / 2)}" '
+                             f'y="{sg._fmt(fy(re_) - 5)}" text-anchor="middle">{_short(re_)}</text>')
+        else:
+            bx = cx - bar_w / 2
+            fe = best["error"]
+            p.append(sg._round_top_bar(bx, fy(fe), bar_w, (h - mb) - fy(fe), "var(--s3)",
+                                       f"best discovered (order {best.get('order')}, "
+                                       f"{best.get('stages')} stages, {best.get('cycles')} cycles/step), "
+                                       f"still under floor: error {_short(fe)}"))
+            p.append(f'<text class="lbl" x="{sg._fmt(cx)}" y="{sg._fmt(fy(fe) - 5)}" '
+                     f'text-anchor="middle">{_short(fe)}</text>')
+        if name == "best discovered":
+            p.append(f'<text x="{sg._fmt(cx)}" y="{h - mb + 18}" text-anchor="middle">best</text>')
+            p.append(f'<text x="{sg._fmt(cx)}" y="{h - mb + 34}" text-anchor="middle">discovered</text>')
+        else:
+            p.append(f'<text x="{sg._fmt(cx)}" y="{h - mb + 18}" text-anchor="middle">{sg._esc(name)}</text>')
+    if isinstance(ref, (int, float)):
+        p.append(f'<line x1="{ml}" y1="{sg._fmt(fy(ref))}" x2="{w - mr}" y2="{sg._fmt(fy(ref))}" '
+                 'stroke="var(--text-1)" stroke-dasharray="5 4" opacity=".6"/>')
+        p.append(f'<text class="dlab" x="{w - mr - 4}" y="{sg._fmt(fy(ref) - 7)}" text-anchor="end">'
+                 f'true solution norm {_short(ref)}</text>')
+    p.append(f'<text class="dlab" x="{ml + 6}" y="{sg._fmt(fy(0.156) + 22)}">'
+             'floor: 0.156–0.158 for all eight</text>')
+    svg = (f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
+           'aria-label="rc_thermal error per method under floor and round-to-nearest, '
+           'with the reference norm marked">' + "".join(p) + "</svg>")
+    caption = ("Final-state error on rc_thermal per method. Blue bars (floor) all reach "
+               "the dashed line: the state collapsed to near zero, so the reported error "
+               "is the size of the true solution itself. Orange bars are the "
+               "round-to-nearest counterfactual, measured for four methods. The green "
+               "bar is the best discovered method, which stays well under the line while "
+               "using the same floor arithmetic. Hover a bar for steps and final state.")
+    legend = sg._legend([("var(--s1)", "floor (ASRS, as measured)"),
+                         ("var(--s2)", "round-to-nearest (counterfactual)"),
+                         ("var(--s3)", "best discovered, still under floor")])
+    return _fig(svg, caption, legend, "data: key_findings.json, series per_method")
+
+
+def phase0_chart(kf: dict) -> str:
+    rows = _series(kf, "phase0_exhaustive", "all_members")
+    if not rows:
+        return ""
+    def a21val(r):
+        return float(Fraction(r["a21"]))
+    rows = sorted(rows, key=a21val)
+    w, h, ml, mr, mt, mb = 880, 380, 64, 20, 24, 58
+    ylo, yhi = 0.05, 0.145
+    fy = lambda v: h - mb - (v - ylo) / (yhi - ylo) * (h - mt - mb)
+    slot = (w - ml - mr) / len(rows)
+    p = []
+    for tv in (0.06, 0.08, 0.10, 0.12, 0.14):
+        p.append(f'<line class="gridline" x1="{ml}" y1="{sg._fmt(fy(tv))}" x2="{w - mr}" y2="{sg._fmt(fy(tv))}"/>')
+        p.append(f'<text x="{ml - 8}" y="{sg._fmt(fy(tv) + 4)}" text-anchor="end">{_tickfmt(tv)}</text>')
+    p.append(f'<line class="axis" x1="{ml}" y1="{h - mb}" x2="{w - mr}" y2="{h - mb}"/>')
+    p.append(f'<text x="{sg._fmt((ml + w - mr) / 2)}" y="{h - 8}" text-anchor="middle">'
+             'a21, ordered by value (each dot is one of the 16 exactly representable tableaus)</text>')
+    for i, r in enumerate(rows):
+        cx = ml + slot * i + slot / 2
+        cy = fy(r["heldout_error"])
+        named = r.get("name")
+        fill = "var(--s1)" if r["rank"] == 1 else ("var(--s2)" if named else "var(--text-3)")
+        title = (f"a21 = {r['a21']}, b = ({r['b'][0]}, {r['b'][1]}): held-out error "
+                 f"{_short(r['heldout_error'])}, {r['cycles']} cycles/step, rank {r['rank']} of 16"
+                 + (f" ({named})" if named else ""))
+        p.append(f'<circle cx="{sg._fmt(cx)}" cy="{sg._fmt(cy)}" r="6" fill="{fill}" class="cellstroke">'
+                 f'<title>{sg._esc(title)}</title></circle>')
+        if r["rank"] == 1:
+            p.append(f'<circle cx="{sg._fmt(cx)}" cy="{sg._fmt(cy)}" r="11" fill="none" '
+                     'stroke="var(--s1)" stroke-width="1.5"/>')
+            p.append(f'<text class="dlab" x="{sg._fmt(cx)}" y="{sg._fmt(cy - 18)}" '
+                     f'text-anchor="middle">optimum {_short(r["heldout_error"])}</text>')
+        elif r["rank"] == 2:
+            p.append(f'<text class="dlab" x="{sg._fmt(cx)}" y="{sg._fmt(cy + 26)}" '
+                     f'text-anchor="middle">near-tie {_short(r["heldout_error"])}</text>')
+        elif named:
+            dy = -12 if named == "heun2" else 22
+            p.append(f'<text class="dlab" x="{sg._fmt(cx)}" y="{sg._fmt(cy + dy)}" '
+                     f'text-anchor="middle">{sg._esc(named)}</text>')
+        p.append(f'<text x="{sg._fmt(cx)}" y="{h - mb + 18}" text-anchor="middle" '
+                 f'class="mono" style="font-size:12px">{sg._esc(r["a21"])}</text>')
+    svg = (f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
+           'aria-label="Phase 0 exhaustive: held-out error for all sixteen 2-stage '
+           'order-2 tableaus, ordered by a21">' + "".join(p) + "</svg>")
+    caption = ("All sixteen members of the phase-0 space, ordered by a21; y is held-out "
+               "error at the shared budget (linear, lower is better). Blue is the "
+               "optimum, orange marks the two members that are textbook methods, gray is "
+               "everything else. Because the space was enumerated in full, the blue dot "
+               "is a proof, not a sample. Hover a dot for its b weights and rank.")
+    return _fig(svg, caption, "", "data: key_findings.json, series all_members")
+
+
+# ----------------------------------------------------------------------------- run charts
+
+def _linear_line(points, w, h, xlabel, ylabel, aria) -> str:
     xlo, xhi = 0, max(x for x, _ in points) or 1
     ylo, yhi = 0, max(y for _, y in points) * 1.06 or 1
-    ml, mr, mt, mb = 56, 14, 10, 34
+    ml, mr, mt, mb = 62, 14, 10, 38
     fx = lambda v: ml + (v - xlo) / (xhi - xlo) * (w - ml - mr)
     fy = lambda v: h - mb - (v - ylo) / (yhi - ylo) * (h - mt - mb)
     p = []
     for i in range(5):
         yv = ylo + (yhi - ylo) * i / 4
         p.append(f'<line class="gridline" x1="{ml}" y1="{sg._fmt(fy(yv))}" x2="{w - mr}" y2="{sg._fmt(fy(yv))}"/>')
-        p.append(f'<text x="{ml - 6}" y="{sg._fmt(fy(yv) + 3.5)}" text-anchor="end">{int(yv)}</text>')
+        p.append(f'<text x="{ml - 6}" y="{sg._fmt(fy(yv) + 4)}" text-anchor="end">{int(yv):,}</text>')
     for i in range(6):
         xv = xlo + (xhi - xlo) * i / 5
-        p.append(f'<text x="{sg._fmt(fx(xv))}" y="{h - mb + 14}" text-anchor="middle">{int(xv)}</text>')
+        p.append(f'<text x="{sg._fmt(fx(xv))}" y="{h - mb + 16}" text-anchor="middle">{int(xv)}</text>')
     p.append(f'<line class="axis" x1="{ml}" y1="{h - mb}" x2="{w - mr}" y2="{h - mb}"/>')
-    path = " ".join(f"{'M' if i == 0 else 'L'} {sg._fmt(fx(x))} {sg._fmt(fy(y))}" for i, (x, y) in enumerate(points))
+    path = " ".join(f"{'M' if i == 0 else 'L'} {sg._fmt(fx(x))} {sg._fmt(fy(y))}"
+                    for i, (x, y) in enumerate(points))
     p.append(f'<path d="{path}" fill="none" stroke="var(--s1)" stroke-width="2"/>')
     last = points[-1]
     p.append(f'<circle cx="{sg._fmt(fx(last[0]))}" cy="{sg._fmt(fy(last[1]))}" r="4" fill="var(--s1)" class="cellstroke">'
-             f'<title>cycle {int(last[0])}: {int(last[1])} records</title></circle>')
-    p.append(f'<text class="lbl" x="{sg._fmt(fx(last[0]) - 8)}" y="{sg._fmt(fy(last[1]) - 8)}" text-anchor="end">{int(last[1])}</text>')
+             f'<title>cycle {int(last[0])}: {int(last[1]):,} records</title></circle>')
+    p.append(f'<text class="lbl" x="{sg._fmt(fx(last[0]) - 8)}" y="{sg._fmt(fy(last[1]) - 8)}" '
+             f'text-anchor="end">{int(last[1]):,}</text>')
     p.append(f'<text x="{sg._fmt((ml + w - mr) / 2)}" y="{h - 6}" text-anchor="middle">{sg._esc(xlabel)}</text>')
     p.append(f'<text x="12" y="{sg._fmt((mt + h - mb) / 2)}" text-anchor="middle" '
              f'transform="rotate(-90 12 {sg._fmt((mt + h - mb) / 2)})">{sg._esc(ylabel)}</text>')
@@ -260,27 +926,27 @@ def records_chart(records) -> str:
         pts.append((float(c), float(total)))
     if not pts:
         return ""
-    svg = _linear_line(pts, 620, 300, "cycle", "records (cumulative)",
+    svg = _linear_line(pts, 640, 310, "cycle", "records (cumulative)",
                        "Cumulative archive records against cycle number")
-    return ('<figure><figcaption>Archive growth. The jumps are the exhaustive phases; the flat '
-            "stretch is the order-4 dry spell before the projection fallback landed."
-            f"</figcaption>{svg}</figure>")
+    return ('<figure><figcaption>Archive growth. The jumps are the exhaustive phases; '
+            "the flat stretch is the order-4 dry spell before the projection fallback "
+            f"landed.</figcaption>{svg}</figure>")
 
 
-def _count_bars(counts: list[tuple[str, int]], w, aria, sw="var(--s1)") -> str:
+def _count_bars(counts, w, aria, sw="var(--s1)") -> str:
     if not counts:
         return ""
     vmax = max(v for _k, v in counts)
-    row_h, ml = 26, 168
+    row_h, ml = 28, 190
     h = 12 + row_h * len(counts) + 8
     p = []
     for i, (k, v) in enumerate(counts):
         y = 8 + row_h * i
-        bw = (v / vmax) * (w - ml - 70) if vmax else 0
-        p.append(f'<text x="{ml - 6}" y="{sg._fmt(y + 13)}" text-anchor="end">{sg._esc(k)}</text>')
-        p.append(f'<rect x="{ml}" y="{y}" width="{sg._fmt(max(bw, 2))}" height="18" rx="4" fill="{sw}" class="cellstroke">'
-                 f'<title>{sg._esc(k)}: {v}</title></rect>')
-        p.append(f'<text class="lbl" x="{sg._fmt(ml + max(bw, 2) + 6)}" y="{sg._fmt(y + 13)}">{v}</text>')
+        bw = (v / vmax) * (w - ml - 76) if vmax else 0
+        p.append(f'<text x="{ml - 6}" y="{sg._fmt(y + 14)}" text-anchor="end">{sg._esc(k)}</text>')
+        p.append(f'<rect x="{ml}" y="{y}" width="{sg._fmt(max(bw, 2))}" height="19" rx="4" fill="{sw}" class="cellstroke">'
+                 f'<title>{sg._esc(k)}: {v:,}</title></rect>')
+        p.append(f'<text class="lbl" x="{sg._fmt(ml + max(bw, 2) + 6)}" y="{sg._fmt(y + 14)}">{v:,}</text>')
     return (f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" aria-label="{sg._esc(aria)}">'
             + "".join(p) + "</svg>")
 
@@ -302,45 +968,7 @@ def reject_chart(events) -> str:
             + _count_bars(rows, 560, "Rejections per verifier code", sw="var(--s2)") + "</figure>")
 
 
-def rounding_chart(data: dict) -> str:
-    if not data:
-        return ""
-    search = ("dahlquist", "damped_osc", "vanderpol_mild")
-    def rms(mode, method):
-        vals = [data[mode][method][p] for p in search if isinstance(data[mode][method].get(p), (int, float))]
-        return math.sqrt(sum(v * v for v in vals) / len(vals)) if vals else None
-    methods = ["euler", "heun2", "rk4", "rk38"]
-    w, h, ml, mb, mt = 620, 300, 56, 40, 14
-    vals = {m: (rms("floor", m), rms("round_to_nearest", m)) for m in methods}
-    vmax = max(v for pair in vals.values() for v in pair if v)
-    plot_h = h - mb - mt
-    scale = plot_h / (vmax * 1.2)
-    group_w = (w - ml - 20) / len(methods)
-    bar_w, gap = 52, 2
-    p = [f'<line class="axis" x1="{ml}" y1="{h - mb}" x2="{w - 10}" y2="{h - mb}"/>']
-    for gi, m in enumerate(methods):
-        cx = ml + group_w * gi + group_w / 2
-        for k, (label, v, sw) in enumerate((("floor (ASRS)", vals[m][0], "var(--s1)"),
-                                            ("round-to-nearest", vals[m][1], "var(--s2)"))):
-            if v is None:
-                continue
-            bx = cx - bar_w - gap / 2 + k * (bar_w + gap)
-            bh = v * scale
-            p.append(sg._round_top_bar(bx, h - mb - bh, bar_w, bh, sw,
-                                       f"{m}, {label}: search-set RMS error {v:.4f}"))
-            p.append(f'<text class="lbl" x="{sg._fmt(bx + bar_w / 2)}" y="{sg._fmt(h - mb - bh - 5)}" '
-                     f'text-anchor="middle">{v:.3f}</text>')
-        p.append(f'<text x="{sg._fmt(cx)}" y="{h - mb + 16}" text-anchor="middle">{sg._esc(m)}</text>')
-    svg = (f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
-           'aria-label="Search-set RMS error under floor and round-to-nearest rounding, per method">'
-           + "".join(p) + "</svg>")
-    return ("<figure><figcaption>Rounding mode changes the ranking: under the mandated floor "
-            "semantics Euler's bias-driven error undercuts rk4's; round-to-nearest restores the "
-            "textbook ordering. Same budget (65,536 cycles, m0plus_fast), same problems."
-            "</figcaption>"
-            + sg._legend([("var(--s1)", "floor (as specified: ASRS semantics)"),
-                          ("var(--s2)", "round-to-nearest (counterfactual)")]) + svg + "</figure>")
-
+# ----------------------------------------------------------------------------- phase-0 table
 
 _TIER_MEANING = {
     "heldout_verified": "better than the cell incumbent on the search and held-out aggregates, "
@@ -409,10 +1037,37 @@ def phase0_rows(records) -> str:
 
 # ----------------------------------------------------------------------------- pages
 
+def _chips(items) -> str:
+    return '<div class="chips">' + "".join(
+        f'<div class="chip"><div class="v">{sg._esc(v)}</div><div class="k">{sg._esc(k)}</div></div>'
+        for v, k in items) + "</div>"
+
+
+def _finding(slug, num, title, intro, figures, interp) -> str:
+    figs = "".join(f for f in figures if f)
+    return (f'<section class="finding" id="{slug}">'
+            f'<h2><span class="findnum">{num}</span>{sg._esc(title)}</h2>'
+            f"{intro}{figs}{interp}</section>")
+
+
+_BALANCED_TAGS = ("div", "section", "figure", "svg", "details", "table", "ul", "ol", "dl")
+
+
+def _check_balance(name: str, html_text: str) -> bool:
+    ok = True
+    for tag in _BALANCED_TAGS:
+        opens = len(re.findall(f"<{tag}[ >]", html_text))
+        closes = html_text.count(f"</{tag}>")
+        if opens != closes:
+            print(f"WARN: {name}: <{tag}> open/close mismatch ({opens} vs {closes})")
+            ok = False
+    return ok
+
+
 def build() -> None:
     records = archive.read_all()
     events = []
-    ev_path = (WS / "rk-work" / "events.jsonl")
+    ev_path = WS / "rk-work" / "events.jsonl"
     if ev_path.exists():
         for line in ev_path.read_text(encoding="utf-8", errors="replace").splitlines():
             try:
@@ -421,124 +1076,181 @@ def build() -> None:
                     events.append(ev)
             except ValueError:
                 pass
-    fr = {}
-    fr_path = HERE / "floor_round.json"
-    if fr_path.exists():
-        try:
-            fr = json.loads(fr_path.read_text(encoding="utf-8"))
-        except ValueError:
-            fr = {}
-    fals = None
-    f_path = WS / "rk-work" / "falsification.json"
-    if f_path.exists():
-        try:
-            fals = json.loads(f_path.read_text(encoding="utf-8"))
-        except ValueError:
-            fals = None
+    kf = _kf_load()
 
     DOCS.mkdir(parents=True, exist_ok=True)
     (DOCS / ".nojekyll").write_text("", encoding="utf-8")
 
-    # ---------------- index
-    body = ['<div class="hero">', T.INTRO, "</div>"]
-    body.append("<h2>Headline measurements</h2>")
-    body.append(T.HEADLINES)
-    body.append('<div class="two">')
-    body.append('<div class="panel">' + sg._anchor_bars() + "</div>")
-    if fals and isinstance(fals.get("methods"), dict) and "rk4" in fals["methods"]:
-        body.append('<div class="panel">' + sg._sweep_chart("rk4 on damped_osc (falsification run)",
-                                                            fals["methods"]["rk4"]) + "</div>")
-    body.append("</div>")
-    body.append("<h2>Reading this site</h2>")
-    body.append('<p><a href="architecture.html">Architecture</a> explains the system and its trust '
-                'boundaries; <a href="methodology.html">methodology</a> walks the validation: the '
-                'gate at container start, the pinned verifier hash, the test tiers, the pre-flight '
-                'drills, and the watchdog; <a href="design-decisions.html">design decisions</a> '
-                'records every deliberate choice and what happened to it in the build; '
-                '<a href="results.html">results</a> carries the run-level charts; the '
-                f'<a href="findings/index.html">findings snapshot ({SNAPSHOT_DATE})</a> is a frozen copy of '
-                'the machine-generated site, and the <a href="https://jgoetzmann.github.io/rk-findings/">live '
-                "findings site</a> keeps moving with the run.</p>")
-    pages = {"index.html": _page("rk — quantization-aware Runge-Kutta search", "\n".join(body),
-                                 "index.html",
-                                 "What the project is, why it exists, and what it has measured so far.")}
+    n_cycles = (max((r.cycle_id for r in records), default=-1) + 1)
+    n_rejected = sum(1 for e in events if e.get("kind") == "rejected")
+    n_phases = len({e.get("phase") for e in events if isinstance(e.get("phase"), int)})
 
-    # ---------------- architecture
-    head, rest = T.ARCH_SECTIONS.split("<h2>The cycle loop</h2>", 1)
-    body = [system_diagram(), head, "<h2>The cycle loop</h2>", cycle_diagram(), rest]
-    pages["architecture.html"] = _page("architecture", "\n".join(body), "architecture.html",
-                                       "The as-built system: boundaries, loop, arithmetic, search, host layer.")
+    # ---------------- index
+    body = [T.HERO_LEAD]
+    body.append(_chips([
+        (f"{len(records):,}", "verified tableaus archived"),
+        (f"{n_cycles:,}", "search cycles completed"),
+        (f"{n_rejected:,}", "candidates rejected by the verifier"),
+        (f"{TESTS_TOTAL}", "tests in the harness suite"),
+        (f"{GATE_TESTS}", "tests at every container start"),
+        (f"{n_phases}", "search phases exercised"),
+    ]))
+    body.append(T.INTRO)
+    body.append("<h2>The findings, in one minute</h2>")
+    body.append('<div class="teasers">' + "".join(
+        f'<a class="tease" href="results.html#{slug}"><span class="tn">{i + 1}</span>'
+        f'<span><span class="tt">{sg._esc(title)}.</span> '
+        f'<span class="td">{sg._esc(desc)}</span></span></a>'
+        for i, (slug, title, desc) in enumerate(T.TEASERS)) + "</div>")
+    body.append("<h2>The anchor result</h2>")
+    body.append('<div class="two">')
+    body.append("<div>" + T.ANCHOR_TEXT + "</div>")
+    body.append('<div class="panel">' + sg._anchor_bars() + "</div>")
+    body.append("</div>")
+    body.append("<h2>Where to go</h2>")
+    cards = [
+        ("results.html", "Key findings", "Five findings, five charts, honest verdicts."),
+        ("methodology.html", "Methodology",
+         f"The start gate, the pinned hash, {TESTS_TOTAL} tests, the executed pre-flight."),
+        ("architecture.html", "Architecture",
+         "The container boundary, the cycle loop, the four-repository split."),
+        ("design-decisions.html", "Design decisions",
+         "Fourteen choices and what the build did to them."),
+        ("findings/index.html", f"Findings snapshot ({SNAPSHOT_DATE})",
+         "The machine-generated site, frozen at the snapshot date."),
+        (LIVE_URL, "Live findings ↗",
+         "The same machine-generated site, still updating with the run."),
+    ]
+    body.append('<div class="grid-cards">' + "".join(
+        f'<a class="gcard" href="{href}"><div class="t">{sg._esc(t)}</div>'
+        f'<div class="d">{sg._esc(d)}</div></a>' for href, t, d in cards) + "</div>")
+    pages = {"index.html": _page(T.HERO_TITLE, "\n".join(body), "index.html",
+                                 "An unattended search, a hash-pinned scorer, and what the "
+                                 "numbers say so far.")}
+
+    # ---------------- results (key findings)
+    body = [T.HEADLINE_VERDICT]
+    body.append(f'<p class="note">{sg._esc(T.RESULTS_SCOPE)}</p>')
+    body.append('<ul class="toc">' + "".join(
+        f'<li><a href="#{slug}">{i + 1} · {sg._esc(title)}</a></li>'
+        for i, (slug, title, _d) in enumerate(T.TEASERS)) + "</ul>")
+    body.append(_finding(
+        "efficiency", 1, "The efficiency frontier: discovered methods beat every classical anchor",
+        T.F_EFFICIENCY_INTRO, [frontier_chart(kf)], T.F_EFFICIENCY_INTERP))
+    body.append(_finding(
+        "floor-flip", 2, "Floor rounding reorders the classical field",
+        T.F_FLIP_INTRO, [flip_slope_chart(kf), flip_problem_chart(kf)], T.F_FLIP_INTERP))
+    body.append(_finding(
+        "crossover", 3, "Where quantization overtakes truncation",
+        T.F_CROSSOVER_INTRO, [crossover_chart(kf)], T.F_CROSSOVER_INTERP))
+    body.append(_finding(
+        "rc-thermal", 4, "The rc_thermal quantization floor",
+        T.F_RC_INTRO, [rc_chart(kf)], T.F_RC_INTERP))
+    p0_table = (_howto(T.HOW_PHASE0_TABLE) + phase0_rows(records)) if records else ""
+    body.append(_finding(
+        "phase0", 5, "Phase 0, closed: an exhaustive result",
+        T.F_PHASE0_INTRO, [phase0_chart(kf)], T.F_PHASE0_INTERP + p0_table))
+    body.append("<h2>The run behind the numbers</h2>")
+    body.append(T.RUN_CHARTS_INTRO)
+    if records:
+        last_ts = max(r.timestamp for r in records)
+        body.append(f'<p class="note">Archive at this snapshot: {len(records):,} records; '
+                    f"the latest was appended {sg._esc(timefmt.fmt_ct(last_ts))}.</p>")
+    body.append(_panel(records_chart(records), T.HOW_RECORDS))
+    body.append('<div class="two">')
+    body.append(_panel(tier_chart(records), T.HOW_TIERS))
+    body.append(_panel(reject_chart(events), T.HOW_REJECTS))
+    body.append("</div>")
+    pages["results.html"] = _page("key findings", "\n".join(body), "results.html",
+                                  "What the search found, in five charts, at snapshot "
+                                  f"{SNAPSHOT_DATE}.")
 
     # ---------------- methodology
-    pages["methodology.html"] = _page("methodology", T.METHODOLOGY, "methodology.html",
-                                      "How the harness earns its numbers: the start gate, the "
-                                      "pinned hash, the drills, and the watchdog.")
+    body = [T.METH_LEAD]
+    body.append('<h2 id="gate">The gate at container start</h2>')
+    body.append(pipeline_diagram())
+    body.append(T.METH_GATE)
+    body.append("<h2>Ten files, one hash</h2>")
+    body.append(T.METH_HASH)
+    body.append("<h2>What the container cannot reach</h2>")
+    body.append(T.METH_REACH)
+    body.append(f'<h2 id="tests">The test suite: {TESTS_TOTAL} cases in seven tiers</h2>')
+    body.append(T.METH_SUITE)
+    tier_rows = "".join(f"<tr><td>{t}</td><td>{n}</td><td>{sg._esc(c)}</td></tr>"
+                        for t, n, c in SUITE_TIERS)
+    body.append('<div class="scroll"><table><thead><tr><th>tier</th><th>tests</th>'
+                "<th>covers</th></tr></thead><tbody>" + tier_rows +
+                f'<tr><td><strong>total</strong></td><td><strong>{TESTS_TOTAL}</strong></td>'
+                "<td>collected by pytest at this snapshot</td></tr></tbody></table></div>")
+    body.append('<h2 id="preflight">The pre-flight, executed as a program</h2>')
+    body.append(T.METH_PREFLIGHT)
+    body.append("<h2>The operational layer</h2>")
+    body.append(T.METH_OPS)
+    pages["methodology.html"] = _page("methodology", "\n".join(body), "methodology.html",
+                                      "How the numbers were earned: the start gate, the "
+                                      "pinned hash, the tests, and the executed pre-flight.")
+
+    # ---------------- architecture
+    body = [T.ARCH_LEAD]
+    body.append("<h2>The four repositories</h2>")
+    body.append(repo_diagram())
+    body.append(T.ARCH_REPOS)
+    body.append("<h2>Trust boundaries</h2>")
+    body.append(system_diagram())
+    body.append(T.ARCH_BOUNDARIES)
+    body.append("<h2>The cycle loop</h2>")
+    body.append(cycle_diagram())
+    body.append(T.ARCH_CYCLE)
+    body.append("<h2>Verification, in order</h2>")
+    body.append(T.ARCH_VERIFY)
+    body.append("<h2>Arithmetic, exactly</h2>")
+    body.append(T.ARCH_ARITH)
+    body.append("<h2>Where candidates come from</h2>")
+    body.append(T.ARCH_CANDIDATES)
+    body.append("<h2>The outer loop: a research partner, not a sampler</h2>")
+    body.append(T.ARCH_OUTER)
+    body.append("<h2>The host layer</h2>")
+    body.append(T.ARCH_HOST)
+    pages["architecture.html"] = _page("architecture", "\n".join(body), "architecture.html",
+                                       "The as-built system: repositories, boundaries, "
+                                       "loop, arithmetic, search, host layer.")
 
     # ---------------- design decisions
-    body = ['<p class="note">Each entry: the original decision from DESIGN.md (written before the '
-            "build), and what the working system actually does. Tags mark whether contact with "
-            "reality kept or changed it.</p>"]
+    body = [f'<p class="note">{sg._esc(T.DECISIONS_LEAD)}</p>']
     body.append(_howto(T.HOW_DECISIONS))
     body.append("<h3>Contents</h3>")
     body.append('<ul class="toc">' + "".join(
         f'<li><a href="#{slug}">{sg._esc(title)}</a></li>'
         for slug, title, _orig, _asbuilt in T.DECISIONS) + "</ul>")
     for slug, title, orig, asbuilt in T.DECISIONS:
-        changed = any(w in asbuilt.lower() for w in ("superseded", "amended", "changed"))
-        tag = ('<span class="tag tag-changed">revised in build</span>' if changed
+        tag = ('<span class="tag tag-changed">revised in build</span>'
+               if slug in REVISED_DECISIONS
                else '<span class="tag tag-kept">held up</span>')
         body.append(f'<div class="decision" id="{slug}">'
                     f'<h3><a href="#{slug}" style="color:inherit;text-decoration:none">'
                     f"{sg._esc(title)}</a>{tag}</h3>"
-                    f'<div class="orig"><strong>Original:</strong> {sg._esc(orig)}</div>'
-                    f'<div class="asbuilt"><strong>As built:</strong> {sg._esc(asbuilt)}</div>'
+                    f'<div class="orig"><strong>Original:</strong> {orig}</div>'
+                    f'<div class="asbuilt"><strong>As built:</strong> {asbuilt}</div>'
                     "</div>")
     body.append("<h2>What was deliberately cut</h2>")
     body.append(T.CUTS)
     body.append("<h2>Known prior art, and where the gap is</h2>")
     body.append(T.PRIOR_ART)
-    pages["design-decisions.html"] = _page("design decisions", "\n".join(body), "design-decisions.html",
-                                           "Every deliberate choice, annotated with what the build did to it.")
+    pages["design-decisions.html"] = _page("design decisions", "\n".join(body),
+                                           "design-decisions.html",
+                                           "Every deliberate choice, annotated with what "
+                                           "the build did to it.")
 
-    # ---------------- results
-    body = ['<p class="note">Charts computed from the archive and event stream at snapshot time '
-            f"({SNAPSHOT_DATE}, US Central); the live equivalents keep moving on rk-findings.</p>"]
-    if records:
-        last_ts = max(r.timestamp for r in records)
-        body.append(f'<p class="note">Archive at this snapshot: {len(records):,} records; the '
-                    f"latest was appended {sg._esc(timefmt.fmt_ct(last_ts))}.</p>")
-    body.append(_panel(records_chart(records), T.HOW_RECORDS))
-    body.append('<div class="two">')
-    body.append(_panel(tier_chart(records), T.HOW_TIERS))
-    body.append(_panel(reject_chart(events), T.HOW_REJECTS))
-    body.append("</div>")
-    body.append("<h2>The rounding experiment</h2>")
-    body.append(_panel(rounding_chart(fr), T.HOW_ROUNDING))
-    body.append("<h2>Phase 0, in full: the sixteen-point proof</h2>")
-    body.append('<p class="note">The complete 2-stage order-2 space with exactly representable '
-                "coefficients, cheapest to dearest under the slow multiplier. This is an "
-                "enumeration, so the ordering is a proof within the space, not a search result. "
-                "Click any row for the full archived record.</p>")
-    body.append(_howto(T.HOW_PHASE0))
-    body.append(phase0_rows(records))
-    if fals and isinstance(fals.get("methods"), dict):
-        body.append("<h2>Falsification sweeps</h2>")
-        body.append(sg._legend([("var(--s1)", "Q15 fixed point"), ("var(--s2)", "float64, same steps")]))
-        body.append(_howto(T.HOW_SWEEPS))
-        body.append('<div class="charts">')
-        for name in sorted(fals["methods"]):
-            chart = sg._sweep_chart(name, fals["methods"][name])
-            if chart:
-                body.append('<div class="panel">' + chart + "</div>")
-        body.append("</div>")
-    pages["results.html"] = _page("results", "\n".join(body), "results.html",
-                                  "Run-level charts the findings site does not carry.")
-
+    all_ok = True
     for name, text in pages.items():
+        if not _check_balance(name, text):
+            all_ok = False
         (DOCS / name).write_text(text, encoding="utf-8")
-        print("wrote", name, f"({len(text) // 1024} KB)")
+        print("wrote", name, f"({len(text.encode('utf-8')) / 1024:.0f} KB)")
+    if not all_ok:
+        raise SystemExit("tag-balance check failed; see WARN lines above")
 
-    # ---------------- findings snapshot
+    # ---------------- findings snapshot (verbatim copy of the machine-generated site)
     src = WS / "rk-findings" / "docs"
     dst = DOCS / "findings"
     if dst.exists():

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>rk — quantization-aware Runge-Kutta search</title>
+<title>Searching for Runge–Kutta methods that survive fixed-point arithmetic</title>
 <style>
 :root{
   color-scheme:light;
@@ -31,32 +31,32 @@
 body{margin:0;background:var(--surface-0);color:var(--text-1);
   font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
 .wrap{max-width:1180px;margin:0 auto;padding:0 20px 48px}
-header.site{background:var(--surface-1);border-bottom:1px solid var(--line);margin-bottom:24px}
-header.site .wrap{padding-top:18px;padding-bottom:0}
-h1{font-size:24px;margin:6px 0 2px;letter-spacing:-.01em}
-h2{font-size:17px;margin:32px 0 10px;letter-spacing:-.01em}
-h3{font-size:14px;margin:18px 0 6px;color:var(--text-2)}
+header.site{background:var(--surface-1);border-bottom:1px solid var(--line);margin-bottom:28px}
+header.site .wrap{padding-top:22px;padding-bottom:0}
+h1{font-size:26px;margin:6px 0 2px;letter-spacing:-.015em}
+h2{font-size:18px;margin:36px 0 12px;letter-spacing:-.01em}
+h3{font-size:14px;margin:20px 0 6px;color:var(--text-2)}
 p{max-width:76ch}
-.sub{color:var(--text-2);margin:0 0 12px}
-p.banner{border:1px solid var(--banner-line);border-left:4px solid var(--banner-line);
-  background:var(--banner-bg);color:var(--text-1);padding:8px 12px;border-radius:6px;
-  font-size:13px;max-width:none;margin:14px 0}
-nav.tabs{display:flex;gap:2px;flex-wrap:wrap;margin:10px 0 0}
+.sub{color:var(--text-2);margin:0 0 14px;font-size:14px}
+nav.tabs{display:flex;gap:2px;flex-wrap:wrap;margin:14px 0 0}
 nav.tabs a{padding:8px 14px;border-radius:8px 8px 0 0;color:var(--text-2);
   text-decoration:none;font-size:13.5px;border:1px solid transparent;border-bottom:none}
 nav.tabs a:hover{color:var(--text-1);background:var(--surface-0)}
-nav.tabs a.on{background:var(--surface-0);border-color:var(--line);color:var(--text-1);font-weight:600}
+nav.tabs a.on{background:var(--surface-0);border-color:var(--line);color:var(--text-1);
+  font-weight:600;box-shadow:0 1px 0 var(--surface-0)}
 a{color:var(--s1)}
-.cards{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+.cards{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;align-items:stretch}
 .card{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
-  padding:12px 16px;min-width:132px;flex:0 1 auto}
-.card .k{font-size:12px;color:var(--text-2);letter-spacing:.02em}
-.card .v{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.card .d{font-size:12px;color:var(--text-3)}
+  padding:12px 16px;min-width:148px;flex:0 1 auto;display:flex;flex-direction:column}
+.card .k{font-size:11px;color:var(--text-2);letter-spacing:.06em;text-transform:uppercase}
+.card .v{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em;line-height:1.25;margin:2px 0}
+.card .d{font-size:12px;color:var(--text-3);margin-top:auto}
 .panel{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
-  padding:14px 16px;margin:14px 0}
+  padding:16px 18px;margin:16px 0}
 figure{margin:0}
-figure figcaption{font-size:13px;color:var(--text-2);margin:4px 0 8px}
+figure figcaption{font-size:13px;color:var(--text-2);margin:0 0 10px;max-width:72ch;
+  line-height:1.5}
 .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2);margin:2px 0 6px}
 .legend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;
   vertical-align:-1px}
@@ -75,7 +75,9 @@ th,td{border-bottom:1px solid var(--line);padding:6px 10px;text-align:left;verti
 th{background:var(--surface-0);color:var(--text-2);font-weight:600;font-size:12px;
   letter-spacing:.02em;white-space:nowrap}
 tr:last-child td{border-bottom:none}
+tr:hover>td{background:var(--grid)}
 td{font-variant-numeric:tabular-nums}
+th.num,td.num{text-align:right}
 .tier,.badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;
   font-weight:600;white-space:nowrap}
 .tier-heldout_verified{background:var(--good-bg);color:var(--good-fg)}
@@ -111,35 +113,89 @@ details.fold>summary{cursor:pointer;padding:10px 16px;font-size:13.5px}
 details.fold>summary:hover{color:var(--text-1)}
 details.fold[open]>summary{border-bottom:1px solid var(--line)}
 details.fold>div{padding:6px 16px 12px}
-footer{margin-top:40px;font-size:12px;color:var(--text-3)}
+footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);
+  font-size:12px;color:var(--text-3)}
+footer p{margin:3px 0;max-width:none}
+footer p.prov a{color:var(--text-2)}
 
-.hero{font-size:17px;max-width:78ch}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+h1{font-size:27px;margin:14px 0 4px;letter-spacing:-.015em}
+h2{font-size:19px;margin:36px 0 12px}
+h3{font-size:15px;margin:20px 0 8px;color:var(--text-1)}
+.sub{font-size:14.5px}
+nav.tabs{margin-top:14px}
+nav.tabs a.on{box-shadow:inset 0 3px 0 var(--s1)}
+.herolead{font-size:17.5px;line-height:1.6;max-width:74ch}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 8px}
+.chip{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:10px 16px;min-width:120px}
+.chip .v{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em}
+.chip .k{font-size:12px;color:var(--text-2)}
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:14px;margin:16px 0}
+a.gcard{display:block;background:var(--surface-1);border:1px solid var(--line);
+  border-radius:12px;padding:14px 18px;text-decoration:none;color:inherit}
+a.gcard:hover{border-color:var(--s1)}
+a.gcard .t{font-weight:650;color:var(--s1);margin:0 0 4px;font-size:15px}
+a.gcard .d{font-size:13px;color:var(--text-2)}
+.teasers{margin:12px 0}
+a.tease{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:baseline;
+  padding:10px 14px;margin:8px 0;background:var(--surface-1);border:1px solid var(--line);
+  border-radius:10px;text-decoration:none;color:inherit}
+a.tease:hover{border-color:var(--s1)}
+a.tease .tn{display:inline-grid;place-items:center;width:26px;height:26px;
+  border-radius:8px;background:var(--s1);color:#fff;font-weight:700;font-size:14px}
+a.tease .tt{font-weight:650}
+a.tease .td{font-size:13px;color:var(--text-2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
 @media (max-width:900px){.two{grid-template-columns:1fr}}
+p.verdict{font-size:17px;line-height:1.65;max-width:82ch}
+section.finding{margin:44px 0;scroll-margin-top:16px}
+section.finding h2{font-size:20px;margin-bottom:8px}
+.findnum{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;
+  background:var(--s1);color:#fff;font-size:16px;font-weight:700;margin-right:12px;
+  vertical-align:-7px}
+figure.fig{background:var(--surface-1);border:1px solid var(--line);border-radius:12px;
+  padding:16px 18px 12px;margin:16px 0}
+figure.fig figcaption{font-size:13.5px;color:var(--text-2);margin:10px 0 2px;
+  max-width:96ch;border-top:1px solid var(--line);padding-top:10px}
+figure.fig .src{display:block;margin-top:6px;font-size:12px;color:var(--text-3)}
+figure.panel figcaption{font-size:13.5px;margin:4px 0 10px}
+svg text{font-size:13px}
+svg .lbl{font-size:13px}
+svg .dlab{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
+  stroke-width:3.5px;stroke-linejoin:round}
+svg .bt{font-weight:650;fill:var(--text-1);font-size:15px}
+svg .bs{fill:var(--text-2);font-size:14px}
+svg .alab{font-size:12.5px;fill:var(--text-3);paint-order:stroke;stroke:var(--surface-1);stroke-width:3px;stroke-linejoin:round}
+svg .box{fill:var(--surface-1);stroke:var(--line)}
+svg .boxhl{fill:var(--surface-0);stroke:var(--s1);stroke-width:1.5}
+svg .boxbad{fill:var(--bad-bg);stroke:var(--bad-fg)}
+svg .frozen{stroke-dasharray:6 4}
+svg .arrow{stroke:var(--text-3);fill:none;marker-end:url(#ah);stroke-width:1.5}
+svg .arrowdash{stroke-dasharray:6 4}
+svg .enclosure{fill:none;stroke:var(--text-3);stroke-dasharray:4 4;opacity:.7}
+svg a text{fill:var(--s1)}
+ol.checks li{margin:6px 0;max-width:82ch}
+ul.toc{columns:2;column-gap:32px;font-size:13.5px;margin:8px 0 4px;padding-left:20px}
+ul.toc li{margin:3px 0}
+@media (max-width:700px){ul.toc{columns:1}}
+details.howto{margin:8px 0 4px;font-size:13px;color:var(--text-2)}
+details.howto summary{cursor:pointer;color:var(--s1);font-size:12.5px;font-weight:600;
+  list-style-position:inside}
+details.howto>div{border-left:3px solid var(--line);padding:2px 0 2px 12px;margin-top:6px}
+details.howto p{max-width:80ch;margin:6px 0}
 .decision{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
-  padding:16px 20px;margin:14px 0}
+  padding:16px 20px;margin:14px 0;scroll-margin-top:16px}
+.decision:target{border-color:var(--s1)}
 .decision h3{margin:0 0 6px;font-size:15px;color:var(--text-1)}
-.decision .orig{color:var(--text-2);border-left:3px solid var(--line);padding-left:12px;margin:8px 0}
+.decision .orig{color:var(--text-2);border-left:3px solid var(--line);padding-left:12px;
+  margin:8px 0}
 .decision .asbuilt{margin:8px 0 0}
 .decision .tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
   font-weight:600;margin-left:8px;vertical-align:2px}
 .tag-kept{background:var(--good-bg);color:var(--good-fg)}
 .tag-changed{background:var(--warn-bg);color:var(--warn-fg)}
-svg .box{fill:var(--surface-1);stroke:var(--line)}
-svg .boxhl{fill:var(--surface-0);stroke:var(--s1);stroke-width:1.5}
-svg .arrow{stroke:var(--text-3);fill:none;marker-end:url(#ah)}
-svg .bt{font-weight:600;fill:var(--text-1)}
-svg .bs{fill:var(--text-2);font-size:10px}
-details.howto{margin:8px 0 4px;font-size:13px;color:var(--text-2)}
-details.howto summary{cursor:pointer;color:var(--s1);font-size:12.5px;font-weight:600;
-  list-style-position:inside}
-details.howto>div{border-left:3px solid var(--line);padding:2px 0 2px 12px;margin-top:6px}
-details.howto p{max-width:76ch;margin:6px 0}
-ul.toc{columns:2;column-gap:32px;font-size:13px;margin:8px 0 4px;padding-left:20px}
-ul.toc li{margin:2px 0}
-@media (max-width:700px){ul.toc{columns:1}}
-.decision{scroll-margin-top:16px}
-.decision:target{border-color:var(--s1)}
 .p0wrap{min-width:780px}
 .p0head,details.p0 summary{display:grid;
   grid-template-columns:18px 80px 130px 88px 118px 148px 1fr;
@@ -153,70 +209,57 @@ details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
 details.p0[open] summary::before{content:"\2212"}
 details.p0[open] summary{border-bottom:1px solid var(--line)}
 .p0body{padding:10px 16px 12px 40px}
+footer{border-top:1px solid var(--line);padding-top:12px;margin-top:56px}
 </style>
 </head>
 <body>
 <header class="site"><div class="wrap">
-<p class="banner">rk-overview is the human-maintained explainer for the rk project. The companion site rk-findings is generated by the harness every cycle and carries the authoritative numbers; a frozen copy from 2026-09-01 (US Central) is snapshotted under this site. Drafted with Claude, edited and owned by the author.</p>
-<h1>rk — quantization-aware Runge-Kutta search</h1>
-<p class="sub">What the project is, why it exists, and what it has measured so far.</p>
-<nav class="tabs"><a href="index.html" class="on">overview</a><a href="architecture.html">architecture</a><a href="methodology.html">methodology</a><a href="design-decisions.html">design decisions</a><a href="results.html">results</a><a href="findings/index.html">findings snapshot (2026-09-01)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+<h1>Searching for Runge–Kutta methods that survive fixed-point arithmetic</h1>
+<p class="sub">An unattended search, a hash-pinned scorer, and what the numbers say so far.</p>
+<nav class="tabs"><a href="index.html" class="on">overview</a><a href="results.html">key findings</a><a href="methodology.html">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-01)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
 </div></header>
 <div class="wrap">
-<div class="hero">
 
-<p>The <strong>rk project</strong> is an unattended, months-long search for explicit
-Runge&ndash;Kutta tableaus that minimise <em>end-to-end error in Q15 fixed-point arithmetic at a
-fixed cycle budget on Cortex-M0+</em> &mdash; instead of the textbook criterion, truncation error
-in exact real arithmetic.</p>
+<p class="herolead">An unattended, months-long search for explicit Runge&ndash;Kutta
+tableaus that minimise <strong>end-to-end error in Q15 fixed point at a fixed cycle budget
+on Cortex-M0+</strong> &mdash; not the textbook criterion of truncation error in exact
+arithmetic. The search runs inside a container that cannot edit its own scorer, and it has
+findings: <a href="results.html">discovered methods cut held-out error up to 3.0&times;
+against the best classical anchor</a>, and the mechanism is a half-LSB rounding bias that
+reorders the classical field before any search begins.</p>
 
-<p>The falsifiable claim: classical tableaus were derived assuming exact arithmetic. On an
-FPU-less microcontroller in Q15, at step sizes a real controller would use, roundoff dominates
-truncation &mdash; so the classically optimal coefficients are not the practically optimal ones,
-and nobody has searched the gap between. Prior work (RKTK and its line) searches tableaus
-numerically for order and error constants; it does not price coefficients against a hardware
-cost model, and it does not evaluate in fixed point. That narrow gap is the project.</p>
+<div class="chips"><div class="chip"><div class="v">45,658</div><div class="k">verified tableaus archived</div></div><div class="chip"><div class="v">802</div><div class="k">search cycles completed</div></div><div class="chip"><div class="v">2,816</div><div class="k">candidates rejected by the verifier</div></div><div class="chip"><div class="v">987</div><div class="k">tests in the harness suite</div></div><div class="chip"><div class="v">55</div><div class="k">tests at every container start</div></div><div class="chip"><div class="v">4</div><div class="k">search phases exercised</div></div></div>
 
-<p>Three repositories with three trust levels do the work: <code>rk-harness</code> holds the
-verifier, evaluator and cost models and is mounted <em>read-only</em> into the run container;
-<code>rk-work</code> accumulates the append-only archive of every verified tableau;
-<code>rk-findings</code> receives an auto-generated site of numbers each cycle. This site,
-<code>rk-overview</code>, is the human layer on top.</p>
+<p>The falsifiable claim behind the project: classical tableaus were derived assuming exact
+arithmetic. On an FPU-less microcontroller in Q15, at step sizes a real controller would
+use, roundoff dominates truncation, so the classically optimal coefficients are not the
+practically optimal ones, and nobody had searched the gap between. Prior work (RKTK and its
+line) searches tableaus numerically for order and error constants; it does not price
+coefficients against a hardware cost model, and it does not evaluate in fixed point. That
+narrow gap is the project.</p>
 
-</div>
-<h2>Headline measurements</h2>
+<p>The work is split across four repositories with distinct trust levels; the
+<a href="architecture.html">architecture page</a> draws the split and the container
+boundary that keeps the searching agent away from its own scorer.</p>
 
-<p>Everything below was measured by the harness; the findings snapshot carries the full tables.</p>
-<ul>
-<li><strong>The anchor result.</strong> rk4 and rk38 are both 4-stage order-4 methods with the
-same stability polynomial. Under a 1-cycle multiplier rk4 is cheaper (33 vs 36 cycles/step);
-under a 32-cycle multiplier rk38 is cheaper (64 vs 85). Which method to ship depends on which
-multiplier the chip shipped with &mdash; the thesis demonstrated in two textbook methods.</li>
-<li><strong>A proof, not a search, at order 2.</strong> The 2-stage order-2 family admits exactly
-16 exactly-representable points (a21 = m/2^s, s &le; 6). Exhaustive enumeration shows
-<code>midpoint</code> is the cheapest at 11 slow cycles &mdash; optimal within that space, with
-<code>heun2</code> two cycles behind. A neighbouring point, a21 = -1/4 with b = (3, -2), has the
-better held-out error at 16 cycles.</li>
-<li><strong>Roundoff dominates where it matters.</strong> The day-one falsification experiment:
-rk4 spends 56% of its cycles on coefficient arithmetic under the fast multiplier (36% under the
-slow one), and its Q15 error stops improving below h &asymp; 0.16 on the damped oscillator while
-float64 keeps falling &mdash; the roundoff/truncation crossover sits squarely in the practical
-range, so the project proceeds.</li>
-<li><strong>Floor rounding changes the answers.</strong> Q15 multiplies floor toward negative
-infinity (that is what ARM's <code>ASRS</code> does), and the resulting -&frac12;-LSB bias per
-term is the same order as the per-step dynamics at these budgets: at equal cycle budget Euler's
-<em>search-set</em> error undercuts rk4's, and the stiff <code>rc_thermal</code> problem
-collapses toward zero for every method. Swap floor for round-to-nearest and the ordering flips
-&mdash; see the rounding chart on the results page.</li>
-</ul>
-
+<h2>The findings, in one minute</h2>
+<div class="teasers"><a class="tease" href="results.html#efficiency"><span class="tn">1</span><span><span class="tt">Discovered methods beat every classical anchor.</span> <span class="td">13 of 14 discovered grid cells beat all classical anchors of equal or lower cost on held-out error; the best cuts error 3.0× at the same 65,536-cycle budget.</span></span></a><a class="tease" href="results.html#floor-flip"><span class="tn">2</span><span><span class="tt">Floor rounding reorders the classical field.</span> <span class="td">Under the hardware&#x27;s floor rounding, Euler&#x27;s search-set error undercuts rk4&#x27;s; swap in round-to-nearest and the textbook order returns.</span></span></a><a class="tease" href="results.html#crossover"><span class="tn">3</span><span><span class="tt">Quantization overtakes truncation inside the practical range.</span> <span class="td">rk4&#x27;s Q15 error decouples from its float error at h = 0.156 on the damped oscillator, and gets worse as steps shrink.</span></span></a><a class="tease" href="results.html#rc-thermal"><span class="tn">4</span><span><span class="tt">A stiff problem hits a quantization floor.</span> <span class="td">All eight classical methods land within 1.6% of each other on rc_thermal because each drives the state to within a few LSBs of zero; the error reported is the reference itself.</span></span></a><a class="tease" href="results.html#phase0"><span class="tn">5</span><span><span class="tt">One space closed with a proof.</span> <span class="td">The 16-point 2-stage family was enumerated in full; the optimum is not a textbook method, and it beats all eight classical anchors.</span></span></a></div>
+<h2>The anchor result</h2>
 <div class="two">
-<div class="panel"><figure><figcaption>The anchor result: the cheaper method swaps between the two multiplier models (same ISA, same stability polynomial).</figcaption><div class="legend"><span><span class="sw" style="background:var(--s1)"></span>m0plus_fast (1-cycle multiplier)</span><span><span class="sw" style="background:var(--s2)"></span>m0plus_slow (32-cycle multiplier)</span></div><svg viewBox="0 0 460 260" width="460" height="260" role="img" aria-label="Cycles per step for rk4 and rk38 under the fast and slow multiplier models"><line class="axis" x1="46" y1="220" x2="450" y2="220"/><path d="M 87.50 220.00 L 87.50 155.13 Q 87.50 151.13 91.50 151.13 L 139.50 151.13 Q 143.50 151.13 143.50 155.13 L 143.50 220.00 Z" fill="var(--s1)" class="cellstroke"><title>rk4 under m0plus_fast: 33 cycles per step</title></path><text class="lbl" x="115.50" y="146.13" text-anchor="middle">33</text><path d="M 145.50 220.00 L 145.50 46.61 Q 145.50 42.61 149.50 42.61 L 197.50 42.61 Q 201.50 42.61 201.50 46.61 L 201.50 220.00 Z" fill="var(--s2)" class="cellstroke"><title>rk4 under m0plus_slow: 85 cycles per step</title></path><text class="lbl" x="173.50" y="37.61" text-anchor="middle">85</text><text x="144.50" y="236" text-anchor="middle">rk4</text><path d="M 284.50 220.00 L 284.50 148.87 Q 284.50 144.87 288.50 144.87 L 336.50 144.87 Q 340.50 144.87 340.50 148.87 L 340.50 220.00 Z" fill="var(--s1)" class="cellstroke"><title>rk38 under m0plus_fast: 36 cycles per step</title></path><text class="lbl" x="312.50" y="139.87" text-anchor="middle">36</text><path d="M 342.50 220.00 L 342.50 90.43 Q 342.50 86.43 346.50 86.43 L 394.50 86.43 Q 398.50 86.43 398.50 90.43 L 398.50 220.00 Z" fill="var(--s2)" class="cellstroke"><title>rk38 under m0plus_slow: 64 cycles per step</title></path><text class="lbl" x="370.50" y="81.43" text-anchor="middle">64</text><text x="341.50" y="236" text-anchor="middle">rk38</text></svg></figure></div>
-<div class="panel"><figure><figcaption>rk4 on damped_osc (falsification run)</figcaption><svg viewBox="0 0 430 300" width="430" height="300" role="img" aria-label="rk4 on damped_osc (falsification run): Q15 and float64 error against step size, log-log"><line class="gridline" x1="57.37" y1="10" x2="57.37" y2="266"/><text x="57.37" y="280" text-anchor="middle">1e-2</text><line class="gridline" x1="190.25" y1="10" x2="190.25" y2="266"/><text x="190.25" y="280" text-anchor="middle">1e-1</text><line class="gridline" x1="323.12" y1="10" x2="323.12" y2="266"/><text x="323.12" y="280" text-anchor="middle">1e0</text><line class="gridline" x1="56" y1="266.00" x2="416" y2="266.00"/><text x="50" y="269.50" text-anchor="end">1e-11</text><line class="gridline" x1="56" y1="254.36" x2="416" y2="254.36"/><text x="50" y="257.86" text-anchor="end">1e-10</text><line class="gridline" x1="56" y1="242.73" x2="416" y2="242.73"/><text x="50" y="246.23" text-anchor="end">1e-9</text><line class="gridline" x1="56" y1="231.09" x2="416" y2="231.09"/><text x="50" y="234.59" text-anchor="end">1e-8</text><line class="gridline" x1="56" y1="219.45" x2="416" y2="219.45"/><text x="50" y="222.95" text-anchor="end">1e-7</text><line class="gridline" x1="56" y1="207.82" x2="416" y2="207.82"/><text x="50" y="211.32" text-anchor="end">1e-6</text><line class="gridline" x1="56" y1="196.18" x2="416" y2="196.18"/><text x="50" y="199.68" text-anchor="end">1e-5</text><line class="gridline" x1="56" y1="184.55" x2="416" y2="184.55"/><text x="50" y="188.05" text-anchor="end">1e-4</text><line class="gridline" x1="56" y1="172.91" x2="416" y2="172.91"/><text x="50" y="176.41" text-anchor="end">1e-3</text><line class="gridline" x1="56" y1="161.27" x2="416" y2="161.27"/><text x="50" y="164.77" text-anchor="end">1e-2</text><line class="gridline" x1="56" y1="149.64" x2="416" y2="149.64"/><text x="50" y="153.14" text-anchor="end">1e-1</text><line class="gridline" x1="56" y1="138.00" x2="416" y2="138.00"/><text x="50" y="141.50" text-anchor="end">1e0</text><line class="gridline" x1="56" y1="126.36" x2="416" y2="126.36"/><text x="50" y="129.86" text-anchor="end">1e1</text><line class="gridline" x1="56" y1="114.73" x2="416" y2="114.73"/><text x="50" y="118.23" text-anchor="end">1e2</text><line class="gridline" x1="56" y1="103.09" x2="416" y2="103.09"/><text x="50" y="106.59" text-anchor="end">1e3</text><line class="gridline" x1="56" y1="91.45" x2="416" y2="91.45"/><text x="50" y="94.95" text-anchor="end">1e4</text><line class="gridline" x1="56" y1="79.82" x2="416" y2="79.82"/><text x="50" y="83.32" text-anchor="end">1e5</text><line class="gridline" x1="56" y1="68.18" x2="416" y2="68.18"/><text x="50" y="71.68" text-anchor="end">1e6</text><line class="gridline" x1="56" y1="56.55" x2="416" y2="56.55"/><text x="50" y="60.05" text-anchor="end">1e7</text><line class="gridline" x1="56" y1="44.91" x2="416" y2="44.91"/><text x="50" y="48.41" text-anchor="end">1e8</text><line class="gridline" x1="56" y1="33.27" x2="416" y2="33.27"/><text x="50" y="36.77" text-anchor="end">1e9</text><line class="gridline" x1="56" y1="21.64" x2="416" y2="21.64"/><text x="50" y="25.14" text-anchor="end">1e10</text><line class="gridline" x1="56" y1="10.00" x2="416" y2="10.00"/><text x="50" y="13.50" text-anchor="end">1e11</text><line class="axis" x1="56" y1="266" x2="416" y2="266"/><line class="axis" x1="56" y1="10" x2="56" y2="266"/><text x="236.00" y="294" text-anchor="middle">step size h</text><text x="12" y="138.00" text-anchor="middle" transform="rotate(-90 12 138.00)">final-state error</text><line x1="216.00" y1="10" x2="216.00" y2="266" stroke="var(--text-3)" stroke-dasharray="4 3"/><text class="lbl" x="220.00" y="22">crossover h=0.15625</text><path d="M 296.00 171.45 L 256.00 172.30 L 216.00 168.20 L 176.00 164.99 L 136.00 159.02 L 96.00 154.29 L 56.00 156.48" fill="none" stroke="var(--s1)" stroke-width="2"/><circle cx="296.00" cy="171.45" r="4" fill="var(--s1)" class="cellstroke"><title>rk4 on damped_osc (falsification run) q15_error at h=0.625: 0.00133582</title></circle><circle cx="256.00" cy="172.30" r="4" fill="var(--s1)" class="cellstroke"><title>rk4 on damped_osc (falsification run) q15_error at h=0.3125: 0.00112763</title></circle><circle cx="216.00" cy="168.20" r="4" fill="var(--s1)" class="cellstroke"><title>rk4 on damped_osc (falsification run) q15_error at h=0.15625: 0.00253715</title></circle><circle cx="176.00" cy="164.99" r="4" fill="var(--s1)" class="cellstroke"><title>rk4 on damped_osc (falsification run) q15_error at h=0.078125: 0.00479333</title></circle><circle cx="136.00" cy="159.02" r="4" fill="var(--s1)" class="cellstroke"><title>rk4 on damped_osc (falsification run) q15_error at h=0.0390625: 0.0156265</title></circle><circle cx="96.00" cy="154.29" r="4" fill="var(--s1)" class="cellstroke"><title>rk4 on damped_osc (falsification run) q15_error at h=0.0195312: 0.0398531</title></circle><circle cx="56.00" cy="156.48" r="4" fill="var(--s1)" class="cellstroke"><title>rk4 on damped_osc (falsification run) q15_error at h=0.00976562: 0.0258308</title></circle><path d="M 416.00 17.28 L 376.00 158.40 L 336.00 160.16 L 296.00 172.81 L 256.00 186.89 L 216.00 200.96 L 176.00 215.01 L 136.00 229.04 L 96.00 243.07 L 56.00 257.08" fill="none" stroke="var(--s2)" stroke-width="2"/><circle cx="416.00" cy="17.28" r="4" fill="var(--s2)" class="cellstroke"><title>rk4 on damped_osc (falsification run) float_error at h=5: 2.37016e+10</title></circle><circle cx="376.00" cy="158.40" r="4" fill="var(--s2)" class="cellstroke"><title>rk4 on damped_osc (falsification run) float_error at h=2.5: 0.0176384</title></circle><circle cx="336.00" cy="160.16" r="4" fill="var(--s2)" class="cellstroke"><title>rk4 on damped_osc (falsification run) float_error at h=1.25: 0.0124722</title></circle><circle cx="296.00" cy="172.81" r="4" fill="var(--s2)" class="cellstroke"><title>rk4 on damped_osc (falsification run) float_error at h=0.625: 0.00101889</title></circle><circle cx="256.00" cy="186.89" r="4" fill="var(--s2)" class="cellstroke"><title>rk4 on damped_osc (falsification run) float_error at h=0.3125: 6.29326e-05</title></circle><circle cx="216.00" cy="200.96" r="4" fill="var(--s2)" class="cellstroke"><title>rk4 on damped_osc (falsification run) float_error at h=0.15625: 3.88382e-06</title></circle><circle cx="176.00" cy="215.01" r="4" fill="var(--s2)" class="cellstroke"><title>rk4 on damped_osc (falsification run) float_error at h=0.078125: 2.40922e-07</title></circle><circle cx="136.00" cy="229.04" r="4" fill="var(--s2)" class="cellstroke"><title>rk4 on damped_osc (falsification run) float_error at h=0.0390625: 1.49965e-08</title></circle><circle cx="96.00" cy="243.07" r="4" fill="var(--s2)" class="cellstroke"><title>rk4 on damped_osc (falsification run) float_error at h=0.0195312: 9.35305e-10</title></circle><circle cx="56.00" cy="257.08" r="4" fill="var(--s2)" class="cellstroke"><title>rk4 on damped_osc (falsification run) float_error at h=0.00976562: 5.83937e-11</title></circle></svg></figure></div>
+<div>
+<p>rk4 and rk38 are both 4-stage order-4 methods with the same stability polynomial;
+textbooks treat them as interchangeable. Priced against real multipliers they are not:
+under a 1-cycle multiplier rk4 is cheaper (33 vs 36 cycles per step), under a 32-cycle
+multiplier rk38 is cheaper (64 vs 85), because rk4's coefficients cost more shift-add
+work. Which method to ship depends on which multiplier the chip shipped with. That is the
+project's thesis demonstrated in two methods everyone already knows; the
+<a href="results.html">key findings</a> show what a search does with it.</p>
 </div>
-<h2>Reading this site</h2>
-<p><a href="architecture.html">Architecture</a> explains the system and its trust boundaries; <a href="methodology.html">methodology</a> walks the validation: the gate at container start, the pinned verifier hash, the test tiers, the pre-flight drills, and the watchdog; <a href="design-decisions.html">design decisions</a> records every deliberate choice and what happened to it in the build; <a href="results.html">results</a> carries the run-level charts; the <a href="findings/index.html">findings snapshot (2026-09-01)</a> is a frozen copy of the machine-generated site, and the <a href="https://jgoetzmann.github.io/rk-findings/">live findings site</a> keeps moving with the run.</p>
-<footer>rk-overview — snapshot 2026-09-01 (US Central); the live numbers are on rk-findings.</footer>
+<div class="panel"><figure><figcaption>Analytic cycles per step for rk4 and rk38 under the fast and slow multiplier cost models. Bar height is per-step cost; the printed number is the exact cycle count.</figcaption><div class="legend"><span><span class="sw" style="background:var(--s1)"></span>m0plus_fast (1-cycle multiplier)</span><span><span class="sw" style="background:var(--s2)"></span>m0plus_slow (32-cycle multiplier)</span></div><svg viewBox="0 0 460 260" width="460" height="260" role="img" aria-label="Cycles per step for rk4 and rk38 under the fast and slow multiplier models"><line class="axis" x1="46" y1="220" x2="450" y2="220"/><path d="M 87.50 220.00 L 87.50 155.13 Q 87.50 151.13 91.50 151.13 L 139.50 151.13 Q 143.50 151.13 143.50 155.13 L 143.50 220.00 Z" fill="var(--s1)" class="cellstroke"><title>rk4 under m0plus_fast: 33 cycles per step</title></path><text class="lbl" x="115.50" y="146.13" text-anchor="middle">33</text><path d="M 145.50 220.00 L 145.50 46.61 Q 145.50 42.61 149.50 42.61 L 197.50 42.61 Q 201.50 42.61 201.50 46.61 L 201.50 220.00 Z" fill="var(--s2)" class="cellstroke"><title>rk4 under m0plus_slow: 85 cycles per step</title></path><text class="lbl" x="173.50" y="37.61" text-anchor="middle">85</text><text x="144.50" y="236" text-anchor="middle">rk4</text><path d="M 284.50 220.00 L 284.50 148.87 Q 284.50 144.87 288.50 144.87 L 336.50 144.87 Q 340.50 144.87 340.50 148.87 L 340.50 220.00 Z" fill="var(--s1)" class="cellstroke"><title>rk38 under m0plus_fast: 36 cycles per step</title></path><text class="lbl" x="312.50" y="139.87" text-anchor="middle">36</text><path d="M 342.50 220.00 L 342.50 90.43 Q 342.50 86.43 346.50 86.43 L 394.50 86.43 Q 398.50 86.43 398.50 90.43 L 398.50 220.00 Z" fill="var(--s2)" class="cellstroke"><title>rk38 under m0plus_slow: 64 cycles per step</title></path><text class="lbl" x="370.50" y="81.43" text-anchor="middle">64</text><text x="341.50" y="236" text-anchor="middle">rk38</text></svg></figure></div>
+</div>
+<h2>Where to go</h2>
+<div class="grid-cards"><a class="gcard" href="results.html"><div class="t">Key findings</div><div class="d">Five findings, five charts, honest verdicts.</div></a><a class="gcard" href="methodology.html"><div class="t">Methodology</div><div class="d">The start gate, the pinned hash, 987 tests, the executed pre-flight.</div></a><a class="gcard" href="architecture.html"><div class="t">Architecture</div><div class="d">The container boundary, the cycle loop, the four-repository split.</div></a><a class="gcard" href="design-decisions.html"><div class="t">Design decisions</div><div class="d">Fourteen choices and what the build did to them.</div></a><a class="gcard" href="findings/index.html"><div class="t">Findings snapshot (2026-09-01)</div><div class="d">The machine-generated site, frozen at the snapshot date.</div></a><a class="gcard" href="https://jgoetzmann.github.io/rk-findings/"><div class="t">Live findings ↗</div><div class="d">The same machine-generated site, still updating with the run.</div></a></div>
+<footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-01 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
 </div>
 </body>
 </html>

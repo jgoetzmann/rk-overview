@@ -31,32 +31,32 @@
 body{margin:0;background:var(--surface-0);color:var(--text-1);
   font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
 .wrap{max-width:1180px;margin:0 auto;padding:0 20px 48px}
-header.site{background:var(--surface-1);border-bottom:1px solid var(--line);margin-bottom:24px}
-header.site .wrap{padding-top:18px;padding-bottom:0}
-h1{font-size:24px;margin:6px 0 2px;letter-spacing:-.01em}
-h2{font-size:17px;margin:32px 0 10px;letter-spacing:-.01em}
-h3{font-size:14px;margin:18px 0 6px;color:var(--text-2)}
+header.site{background:var(--surface-1);border-bottom:1px solid var(--line);margin-bottom:28px}
+header.site .wrap{padding-top:22px;padding-bottom:0}
+h1{font-size:26px;margin:6px 0 2px;letter-spacing:-.015em}
+h2{font-size:18px;margin:36px 0 12px;letter-spacing:-.01em}
+h3{font-size:14px;margin:20px 0 6px;color:var(--text-2)}
 p{max-width:76ch}
-.sub{color:var(--text-2);margin:0 0 12px}
-p.banner{border:1px solid var(--banner-line);border-left:4px solid var(--banner-line);
-  background:var(--banner-bg);color:var(--text-1);padding:8px 12px;border-radius:6px;
-  font-size:13px;max-width:none;margin:14px 0}
-nav.tabs{display:flex;gap:2px;flex-wrap:wrap;margin:10px 0 0}
+.sub{color:var(--text-2);margin:0 0 14px;font-size:14px}
+nav.tabs{display:flex;gap:2px;flex-wrap:wrap;margin:14px 0 0}
 nav.tabs a{padding:8px 14px;border-radius:8px 8px 0 0;color:var(--text-2);
   text-decoration:none;font-size:13.5px;border:1px solid transparent;border-bottom:none}
 nav.tabs a:hover{color:var(--text-1);background:var(--surface-0)}
-nav.tabs a.on{background:var(--surface-0);border-color:var(--line);color:var(--text-1);font-weight:600}
+nav.tabs a.on{background:var(--surface-0);border-color:var(--line);color:var(--text-1);
+  font-weight:600;box-shadow:0 1px 0 var(--surface-0)}
 a{color:var(--s1)}
-.cards{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+.cards{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;align-items:stretch}
 .card{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
-  padding:12px 16px;min-width:132px;flex:0 1 auto}
-.card .k{font-size:12px;color:var(--text-2);letter-spacing:.02em}
-.card .v{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.card .d{font-size:12px;color:var(--text-3)}
+  padding:12px 16px;min-width:148px;flex:0 1 auto;display:flex;flex-direction:column}
+.card .k{font-size:11px;color:var(--text-2);letter-spacing:.06em;text-transform:uppercase}
+.card .v{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em;line-height:1.25;margin:2px 0}
+.card .d{font-size:12px;color:var(--text-3);margin-top:auto}
 .panel{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
-  padding:14px 16px;margin:14px 0}
+  padding:16px 18px;margin:16px 0}
 figure{margin:0}
-figure figcaption{font-size:13px;color:var(--text-2);margin:4px 0 8px}
+figure figcaption{font-size:13px;color:var(--text-2);margin:0 0 10px;max-width:72ch;
+  line-height:1.5}
 .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2);margin:2px 0 6px}
 .legend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;
   vertical-align:-1px}
@@ -75,7 +75,9 @@ th,td{border-bottom:1px solid var(--line);padding:6px 10px;text-align:left;verti
 th{background:var(--surface-0);color:var(--text-2);font-weight:600;font-size:12px;
   letter-spacing:.02em;white-space:nowrap}
 tr:last-child td{border-bottom:none}
+tr:hover>td{background:var(--grid)}
 td{font-variant-numeric:tabular-nums}
+th.num,td.num{text-align:right}
 .tier,.badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;
   font-weight:600;white-space:nowrap}
 .tier-heldout_verified{background:var(--good-bg);color:var(--good-fg)}
@@ -111,35 +113,89 @@ details.fold>summary{cursor:pointer;padding:10px 16px;font-size:13.5px}
 details.fold>summary:hover{color:var(--text-1)}
 details.fold[open]>summary{border-bottom:1px solid var(--line)}
 details.fold>div{padding:6px 16px 12px}
-footer{margin-top:40px;font-size:12px;color:var(--text-3)}
+footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);
+  font-size:12px;color:var(--text-3)}
+footer p{margin:3px 0;max-width:none}
+footer p.prov a{color:var(--text-2)}
 
-.hero{font-size:17px;max-width:78ch}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+h1{font-size:27px;margin:14px 0 4px;letter-spacing:-.015em}
+h2{font-size:19px;margin:36px 0 12px}
+h3{font-size:15px;margin:20px 0 8px;color:var(--text-1)}
+.sub{font-size:14.5px}
+nav.tabs{margin-top:14px}
+nav.tabs a.on{box-shadow:inset 0 3px 0 var(--s1)}
+.herolead{font-size:17.5px;line-height:1.6;max-width:74ch}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 8px}
+.chip{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:10px 16px;min-width:120px}
+.chip .v{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em}
+.chip .k{font-size:12px;color:var(--text-2)}
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:14px;margin:16px 0}
+a.gcard{display:block;background:var(--surface-1);border:1px solid var(--line);
+  border-radius:12px;padding:14px 18px;text-decoration:none;color:inherit}
+a.gcard:hover{border-color:var(--s1)}
+a.gcard .t{font-weight:650;color:var(--s1);margin:0 0 4px;font-size:15px}
+a.gcard .d{font-size:13px;color:var(--text-2)}
+.teasers{margin:12px 0}
+a.tease{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:baseline;
+  padding:10px 14px;margin:8px 0;background:var(--surface-1);border:1px solid var(--line);
+  border-radius:10px;text-decoration:none;color:inherit}
+a.tease:hover{border-color:var(--s1)}
+a.tease .tn{display:inline-grid;place-items:center;width:26px;height:26px;
+  border-radius:8px;background:var(--s1);color:#fff;font-weight:700;font-size:14px}
+a.tease .tt{font-weight:650}
+a.tease .td{font-size:13px;color:var(--text-2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
 @media (max-width:900px){.two{grid-template-columns:1fr}}
+p.verdict{font-size:17px;line-height:1.65;max-width:82ch}
+section.finding{margin:44px 0;scroll-margin-top:16px}
+section.finding h2{font-size:20px;margin-bottom:8px}
+.findnum{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;
+  background:var(--s1);color:#fff;font-size:16px;font-weight:700;margin-right:12px;
+  vertical-align:-7px}
+figure.fig{background:var(--surface-1);border:1px solid var(--line);border-radius:12px;
+  padding:16px 18px 12px;margin:16px 0}
+figure.fig figcaption{font-size:13.5px;color:var(--text-2);margin:10px 0 2px;
+  max-width:96ch;border-top:1px solid var(--line);padding-top:10px}
+figure.fig .src{display:block;margin-top:6px;font-size:12px;color:var(--text-3)}
+figure.panel figcaption{font-size:13.5px;margin:4px 0 10px}
+svg text{font-size:13px}
+svg .lbl{font-size:13px}
+svg .dlab{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
+  stroke-width:3.5px;stroke-linejoin:round}
+svg .bt{font-weight:650;fill:var(--text-1);font-size:15px}
+svg .bs{fill:var(--text-2);font-size:14px}
+svg .alab{font-size:12.5px;fill:var(--text-3);paint-order:stroke;stroke:var(--surface-1);stroke-width:3px;stroke-linejoin:round}
+svg .box{fill:var(--surface-1);stroke:var(--line)}
+svg .boxhl{fill:var(--surface-0);stroke:var(--s1);stroke-width:1.5}
+svg .boxbad{fill:var(--bad-bg);stroke:var(--bad-fg)}
+svg .frozen{stroke-dasharray:6 4}
+svg .arrow{stroke:var(--text-3);fill:none;marker-end:url(#ah);stroke-width:1.5}
+svg .arrowdash{stroke-dasharray:6 4}
+svg .enclosure{fill:none;stroke:var(--text-3);stroke-dasharray:4 4;opacity:.7}
+svg a text{fill:var(--s1)}
+ol.checks li{margin:6px 0;max-width:82ch}
+ul.toc{columns:2;column-gap:32px;font-size:13.5px;margin:8px 0 4px;padding-left:20px}
+ul.toc li{margin:3px 0}
+@media (max-width:700px){ul.toc{columns:1}}
+details.howto{margin:8px 0 4px;font-size:13px;color:var(--text-2)}
+details.howto summary{cursor:pointer;color:var(--s1);font-size:12.5px;font-weight:600;
+  list-style-position:inside}
+details.howto>div{border-left:3px solid var(--line);padding:2px 0 2px 12px;margin-top:6px}
+details.howto p{max-width:80ch;margin:6px 0}
 .decision{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
-  padding:16px 20px;margin:14px 0}
+  padding:16px 20px;margin:14px 0;scroll-margin-top:16px}
+.decision:target{border-color:var(--s1)}
 .decision h3{margin:0 0 6px;font-size:15px;color:var(--text-1)}
-.decision .orig{color:var(--text-2);border-left:3px solid var(--line);padding-left:12px;margin:8px 0}
+.decision .orig{color:var(--text-2);border-left:3px solid var(--line);padding-left:12px;
+  margin:8px 0}
 .decision .asbuilt{margin:8px 0 0}
 .decision .tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
   font-weight:600;margin-left:8px;vertical-align:2px}
 .tag-kept{background:var(--good-bg);color:var(--good-fg)}
 .tag-changed{background:var(--warn-bg);color:var(--warn-fg)}
-svg .box{fill:var(--surface-1);stroke:var(--line)}
-svg .boxhl{fill:var(--surface-0);stroke:var(--s1);stroke-width:1.5}
-svg .arrow{stroke:var(--text-3);fill:none;marker-end:url(#ah)}
-svg .bt{font-weight:600;fill:var(--text-1)}
-svg .bs{fill:var(--text-2);font-size:10px}
-details.howto{margin:8px 0 4px;font-size:13px;color:var(--text-2)}
-details.howto summary{cursor:pointer;color:var(--s1);font-size:12.5px;font-weight:600;
-  list-style-position:inside}
-details.howto>div{border-left:3px solid var(--line);padding:2px 0 2px 12px;margin-top:6px}
-details.howto p{max-width:76ch;margin:6px 0}
-ul.toc{columns:2;column-gap:32px;font-size:13px;margin:8px 0 4px;padding-left:20px}
-ul.toc li{margin:2px 0}
-@media (max-width:700px){ul.toc{columns:1}}
-.decision{scroll-margin-top:16px}
-.decision:target{border-color:var(--s1)}
 .p0wrap{min-width:780px}
 .p0head,details.p0 summary{display:grid;
   grid-template-columns:18px 80px 130px 88px 118px 148px 1fr;
@@ -153,63 +209,63 @@ details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
 details.p0[open] summary::before{content:"\2212"}
 details.p0[open] summary{border-bottom:1px solid var(--line)}
 .p0body{padding:10px 16px 12px 40px}
+footer{border-top:1px solid var(--line);padding-top:12px;margin-top:56px}
 </style>
 </head>
 <body>
 <header class="site"><div class="wrap">
-<p class="banner">rk-overview is the human-maintained explainer for the rk project. The companion site rk-findings is generated by the harness every cycle and carries the authoritative numbers; a frozen copy from 2026-09-01 (US Central) is snapshotted under this site. Drafted with Claude, edited and owned by the author.</p>
 <h1>design decisions</h1>
 <p class="sub">Every deliberate choice, annotated with what the build did to it.</p>
-<nav class="tabs"><a href="index.html">overview</a><a href="architecture.html">architecture</a><a href="methodology.html">methodology</a><a href="design-decisions.html" class="on">design decisions</a><a href="results.html">results</a><a href="findings/index.html">findings snapshot (2026-09-01)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="methodology.html">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html" class="on">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-01)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
 </div></header>
 <div class="wrap">
 <p class="note">Each entry: the original decision from DESIGN.md (written before the build), and what the working system actually does. Tags mark whether contact with reality kept or changed it.</p>
 <details class="howto"><summary>How to read this</summary><div>
 <p>Each card is one decision from DESIGN.md, written before any code existed. "Original"
-condenses what the design said; "As built" records what the working system does today. The tag
-is assigned mechanically: "revised in build" appears when the as-built text admits the plan
-changed (it contains "superseded", "amended" or "changed"), "held up" otherwise. Two of the
-fourteen were revised; the rest survived contact with the build. Every card has a stable
-anchor, so a link like <code>design-decisions.html#credentials</code> lands on the exact
-decision.</p>
+condenses what the design said; "As built" records what the working system does today.
+Cards tagged "revised in build" are the two whose plan changed on contact with the
+build; the rest held up. Every
+card has a stable anchor, so a link like
+<code>design-decisions.html#credentials</code> lands on the exact decision.</p>
 </div></details>
 <h3>Contents</h3>
 <ul class="toc"><li><a href="#quantization">The problem is quantization, not coefficient prettiness</a></li><li><a href="#dyadic-theorem">Order ≥ 3 admits no all-dyadic tableau</a></li><li><a href="#static-counting">Static cycle counting, not simulation, not hardware</a></li><li><a href="#targets">Cortex-M0+ primary; AVR advisory; two M0+ multiplier variants</a></li><li><a href="#q15-overflow">Q15, wrapping semantics, overflow as a rejection</a></li><li><a href="#inner-outer">Classical optimizer in the inner loop, LLM in the outer loop</a></li><li><a href="#heldout-split">Search/held-out split, enforced structurally</a></li><li><a href="#map-elites">MAP-Elites, one grid per order</a></li><li><a href="#equal-budget">Equal cycle budget, never equal step size</a></li><li><a href="#resource-limits">Fixed resource limits plus a pause watchdog</a></li><li><a href="#credentials">Credentials outside the container; harness mounted read-only</a></li><li><a href="#numbers-not-claims">Auto-publish numbers, never claims</a></li><li><a href="#encourager">The encourager may change direction but not stop</a></li><li><a href="#falsification-first">Falsification experiment first</a></li></ul>
-<div class="decision" id="quantization"><h3><a href="#quantization" style="color:inherit;text-decoration:none">The problem is quantization, not coefficient prettiness</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> In floating point, h·b constant-folds and 1/3 costs the same as 0.25; the premise only survives in fixed point on an FPU-less MCU, where a power-of-two coefficient becomes a shift. Scope narrowed accordingly.</div><div class="asbuilt"><strong>As built:</strong> Kept, and measured: the falsification run puts coefficient arithmetic at 56% of rk4&#x27;s cycles under the fast multiplier (36% slow) with a roundoff/truncation crossover at h ≈ 0.16 on the damped oscillator — comfortably above the 15% kill line.</div></div>
-<div class="decision" id="dyadic-theorem"><h3><a href="#dyadic-theorem" style="color:inherit;text-decoration:none">Order ≥ 3 admits no all-dyadic tableau</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> Dyadic rationals are closed under + and ×; Σ b·c² = 1/3 is not dyadic. The objective is minimising non-dyadic multiplies subject to order, encoded as reject code DYADIC_IMPOSSIBLE so the search never wastes a cycle on an empty region.</div><div class="asbuilt"><strong>As built:</strong> Kept — and it shaped the search space itself: A is snapped to dyadics but b is solved exactly over the rationals from the b-linear order conditions, because snapping b would run into this very theorem. The verifier rejects all-dyadic order-3 claims without evaluating them (tests V5–V7).</div></div>
+<div class="decision" id="quantization"><h3><a href="#quantization" style="color:inherit;text-decoration:none">The problem is quantization, not coefficient prettiness</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> In floating point, h·b constant-folds and 1/3 costs the same as 0.25; the premise only survives in fixed point on an FPU-less MCU, where a power-of-two coefficient becomes a shift. Scope narrowed accordingly.</div><div class="asbuilt"><strong>As built:</strong> Kept, and measured: coefficient arithmetic is 50&ndash;56% of per-step cycles under the fast multiplier, with a roundoff/truncation crossover inside the practical step-size range (<a href="results.html#crossover">key finding 3</a>).</div></div>
+<div class="decision" id="dyadic-theorem"><h3><a href="#dyadic-theorem" style="color:inherit;text-decoration:none">Order ≥ 3 admits no all-dyadic tableau</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> Dyadic rationals are closed under + and ×; Σ b·c² = 1/3 is not dyadic. The objective is minimising non-dyadic multiplies subject to order, encoded as reject code DYADIC_IMPOSSIBLE so the search never wastes a cycle on an empty region.</div><div class="asbuilt"><strong>As built:</strong> Kept, and it shaped the search space itself: A is snapped to dyadics but b is solved exactly over the rationals from the b-linear order conditions, because snapping b would run into this very theorem. The verifier rejects all-dyadic order-3 claims without evaluating them (tests V5&ndash;V7).</div></div>
 <div class="decision" id="static-counting"><h3><a href="#static-counting" style="color:inherit;text-decoration:none">Static cycle counting, not simulation, not hardware</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> The inner loop is branchless straight-line code, so summing ISA cycle costs gives an exact count and a genuine WCET figure; host contention cannot corrupt the metric.</div><div class="asbuilt"><strong>As built:</strong> Kept, sharpened: the count is fully analytic from the tableau (no compiler or disassembly in the loop). The model is anchored to hardware by one hand-counted ARMv6-M sequence (13 cycles fast / 75 slow) that a test reproduces exactly, and emit_c exists for a one-time human cross-check.</div></div>
-<div class="decision" id="targets"><h3><a href="#targets" style="color:inherit;text-decoration:none">Cortex-M0+ primary; AVR advisory; two M0+ multiplier variants</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> M0+ has no FPU/divide/long-multiply, so fixed point is forced; running a 1-cycle and a 32-cycle multiplier model costs nothing and turns hardware-aware into a demonstrated effect if the ranking changes.</div><div class="asbuilt"><strong>As built:</strong> Kept — the ranking does change (rk4 33 vs rk38 36 fast; rk38 64 vs rk4 85 slow). AVR stays advisory in a stronger sense than planned: after a live candidate was rejected on an AVR-column infinity, verification was restricted to primary-model columns only; the slow/AVR numbers are archive breadth.</div></div>
-<div class="decision" id="q15-overflow"><h3><a href="#q15-overflow" style="color:inherit;text-decoration:none">Q15, wrapping semantics, overflow as a rejection</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> Q31 must be synthesized on M0+; saturation costs a compare-and-branch and destroys exact counting. Overflow at 2× amplitude is a verifier rejection — a property of the method, not a runtime cost.</div><div class="asbuilt"><strong>As built:</strong> Kept, with one addition the spec missed: rc_thermal&#x27;s derivative (−11 at t=0) times its state scale exceeds Q15, so derivatives carry a per-problem power-of-two scale (DERIV_SCALE, 1/8 there) undone in the step via h. Floor rounding turned out to be a first-class experimental variable — see the rounding chart.</div></div>
+<div class="decision" id="targets"><h3><a href="#targets" style="color:inherit;text-decoration:none">Cortex-M0+ primary; AVR advisory; two M0+ multiplier variants</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> M0+ has no FPU/divide/long-multiply, so fixed point is forced; running a 1-cycle and a 32-cycle multiplier model costs nothing and turns hardware-aware into a demonstrated effect if the ranking changes.</div><div class="asbuilt"><strong>As built:</strong> Kept; the ranking does change (rk4 33 vs rk38 36 fast; rk38 64 vs rk4 85 slow; the anchor result on the <a href="index.html">overview</a>). AVR stays advisory in a stronger sense than planned: after a live candidate was rejected on an AVR-column infinity, verification was restricted to primary-model columns only; the slow/AVR numbers are archive breadth.</div></div>
+<div class="decision" id="q15-overflow"><h3><a href="#q15-overflow" style="color:inherit;text-decoration:none">Q15, wrapping semantics, overflow as a rejection</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> Q31 must be synthesized on M0+; saturation costs a compare-and-branch and destroys exact counting. Overflow at 2× amplitude is a verifier rejection: a property of the method, not a runtime cost.</div><div class="asbuilt"><strong>As built:</strong> Kept, with one addition the spec missed: rc_thermal's derivative (&minus;11 at t=0) times its state scale exceeds Q15, so derivatives carry a per-problem power-of-two scale (DERIV_SCALE, 1/8 there) undone in the step via h. Floor rounding turned out to be a first-class experimental variable (<a href="results.html#floor-flip">key finding 2</a>).</div></div>
 <div class="decision" id="inner-outer"><h3><a href="#inner-outer" style="color:inherit;text-decoration:none">Classical optimizer in the inner loop, LLM in the outer loop</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> A 6-parameter space has gradients; CMA-ES beats an LLM mutation operator for free. The LLM decides what to search and interprets what came back.</div><div class="asbuilt"><strong>As built:</strong> Kept, and the boundary held under pressure: when order-4 islands yielded nothing (exact order-4 b rarely solvable over dyadic A), the fix was a projection fallback in the optimizer, not more LLM. The outer loop grew: directives every N cycles with reuse between, a plan-usage cap, model-proposed hypotheses, and a web literature loop feeding every prompt.</div></div>
-<div class="decision" id="heldout-split"><h3><a href="#heldout-split" style="color:inherit;text-decoration:none">Search/held-out split, enforced structurally</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> The optimizer has no code path that reads HELDOUT_SET; the held-out gap is a first-class dashboard metric so it cannot rot unnoticed.</div><div class="asbuilt"><strong>As built:</strong> Kept literally: a test walks the optimizer&#x27;s import graph and fails on any load of the name. The D5 drill — deliberately feeding the optimizer the held-out set — collapses the gap to zero and restores it on revert, so the metric measures what it claims to. The gap is also the honest headline so far: search error transfers poorly to held-out.</div></div>
-<div class="decision" id="map-elites"><h3><a href="#map-elites" style="color:inherit;text-decoration:none">MAP-Elites, one grid per order</a><span class="tag tag-changed">revised in build</span></h3><div class="orig"><strong>Original:</strong> Descriptors are stage count and cycle-cost bucket; a table of results rather than a single champion.</div><div class="asbuilt"><strong>As built:</strong> Kept unchanged; the grids are the spine of the findings site (heatmaps + tables), and cell incumbency is what tier assignment compares against.</div></div>
-<div class="decision" id="equal-budget"><h3><a href="#equal-budget" style="color:inherit;text-decoration:none">Equal cycle budget, never equal step size</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> A 2-stage method gets twice the steps of a 4-stage method for the same cost; equal-h comparisons are the most common route to a wrong conclusion.</div><div class="asbuilt"><strong>As built:</strong> Kept — and it produced the project&#x27;s most counterintuitive measurement: at equal budget under floor rounding, Euler&#x27;s search-set error undercuts rk4&#x27;s, because the floor bias per arithmetic term dominates truncation at these step counts.</div></div>
-<div class="decision" id="resource-limits"><h3><a href="#resource-limits" style="color:inherit;text-decoration:none">Fixed resource limits plus a pause watchdog</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> Low cpu-shares plus docker pause on contention stays out of the way in ~40 lines; no dynamic allocation, no GPU.</div><div class="asbuilt"><strong>As built:</strong> Kept, grown modestly: the watchdog also pauses on battery (owner&#x27;s rule), hard-stops on spend/disk, kills on a stale heartbeat, and pushes the two writable repos from the host. Thresholds live in config.json rather than in code.</div></div>
-<div class="decision" id="credentials"><h3><a href="#credentials" style="color:inherit;text-decoration:none">Credentials outside the container; harness mounted read-only</a><span class="tag tag-changed">revised in build</span></h3><div class="orig"><strong>Original:</strong> If the agent can write the verifier, the shortest path to a high score is editing the scorer. PAT scoped to rk-work and rk-findings; the 403 on rk-harness is an acceptance test.</div><div class="asbuilt"><strong>As built:</strong> Half-kept, half-superseded. The read-only mount and pinned verifier hash stand. The PAT scoping did not survive contact: the owner&#x27;s token had contents-write everywhere, and the handoff&#x27;s 403 probe passed for the wrong reason (missing Administration permission). As built, the credential simply never enters the container — a filtered env file plus host-side pushes — which makes the guarantee independent of token scope; the scope probe is kept as an advisory check.</div></div>
-<div class="decision" id="numbers-not-claims"><h3><a href="#numbers-not-claims" style="color:inherit;text-decoration:none">Auto-publish numbers, never claims</a><span class="tag tag-changed">revised in build</span></h3><div class="orig"><strong>Original:</strong> The site emits values with mechanically-assigned tiers; a wrong result should be a wrong number in a table, not a claim requiring retraction.</div><div class="asbuilt"><strong>As built:</strong> Amended by the owner, with the guard intact: the findings site now also publishes model-written interpretation and web-researched literature digests — clearly labelled, and passed through a softener that replaces priority-claim words before storage. The banned-words guard still hard-fails any page it doesn&#x27;t like, and it proved itself by blocking builds over a hypothesis containing &#x27;beats&#x27; until the softener existed.</div></div>
+<div class="decision" id="heldout-split"><h3><a href="#heldout-split" style="color:inherit;text-decoration:none">Search/held-out split, enforced structurally</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> The optimizer has no code path that reads HELDOUT_SET; the held-out gap is a first-class dashboard metric so it cannot rot unnoticed.</div><div class="asbuilt"><strong>As built:</strong> Kept literally: a test walks the optimizer's import graph and fails on any load of the name. The D5 drill deliberately feeds the optimizer the held-out set, watches the gap collapse to zero, and restores it on revert, so the metric measures what it claims to. The gap is also an honest caveat on the champion numbers (<a href="results.html#efficiency">key finding 1</a>).</div></div>
+<div class="decision" id="map-elites"><h3><a href="#map-elites" style="color:inherit;text-decoration:none">MAP-Elites, one grid per order</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> Descriptors are stage count and cycle-cost bucket; a table of results rather than a single champion.</div><div class="asbuilt"><strong>As built:</strong> Kept unchanged; the grids are the spine of the findings site (heatmaps + tables), and cell incumbency is what tier assignment compares against.</div></div>
+<div class="decision" id="equal-budget"><h3><a href="#equal-budget" style="color:inherit;text-decoration:none">Equal cycle budget, never equal step size</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> A 2-stage method gets twice the steps of a 4-stage method for the same cost; equal-h comparisons are the most common route to a wrong conclusion.</div><div class="asbuilt"><strong>As built:</strong> Kept, and it is the frame for every result on the <a href="results.html">key findings page</a>: the rank flips and the efficiency frontier only exist at equal budget.</div></div>
+<div class="decision" id="resource-limits"><h3><a href="#resource-limits" style="color:inherit;text-decoration:none">Fixed resource limits plus a pause watchdog</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> Low cpu-shares plus docker pause on contention stays out of the way in ~40 lines; no dynamic allocation, no GPU.</div><div class="asbuilt"><strong>As built:</strong> Kept, grown modestly: the watchdog also pauses on battery (owner's rule), hard-stops on spend/disk, kills on a stale heartbeat, and pushes the two writable repos from the host. Thresholds live in config.json rather than in code.</div></div>
+<div class="decision" id="credentials"><h3><a href="#credentials" style="color:inherit;text-decoration:none">Credentials outside the container; harness mounted read-only</a><span class="tag tag-changed">revised in build</span></h3><div class="orig"><strong>Original:</strong> If the agent can write the verifier, the shortest path to a high score is editing the scorer. PAT scoped to rk-work and rk-findings; the 403 on rk-harness is an acceptance test.</div><div class="asbuilt"><strong>As built:</strong> Half-kept, half-superseded. The read-only mount and pinned verifier hash stand. The PAT scoping did not survive contact: the owner's token had contents-write everywhere, and the handoff's 403 probe passed for the wrong reason (missing Administration permission). As built, the credential simply never enters the container: a filtered env file plus host-side pushes, which makes the guarantee independent of token scope. The scope probe is kept as an advisory check.</div></div>
+<div class="decision" id="numbers-not-claims"><h3><a href="#numbers-not-claims" style="color:inherit;text-decoration:none">Auto-publish numbers, never claims</a><span class="tag tag-changed">revised in build</span></h3><div class="orig"><strong>Original:</strong> The site emits values with mechanically-assigned tiers; a wrong result should be a wrong number in a table, not a claim requiring retraction.</div><div class="asbuilt"><strong>As built:</strong> Amended by the owner, with the guard intact: the findings site now also publishes model-written interpretation and web-researched literature digests, clearly labelled and passed through a softener that replaces priority-claim words before storage. The banned-words guard still hard-fails any page it doesn't like, and it proved itself by blocking builds over a hypothesis containing 'beats' until the softener existed.</div></div>
 <div class="decision" id="encourager"><h3><a href="#encourager" style="color:inherit;text-decoration:none">The encourager may change direction but not stop</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> Before the calendar date it can only redirect, widen, hypothesize, or advance phase; set-and-forget systems without a calendar run until the operator gets bored.</div><div class="asbuilt"><strong>As built:</strong> Kept: PACKAGE (re-verify everything, no new directions) opens 2026-11-20 and FREEZE 2026-12-05, property-tested over a thousand random states and exercised through the real clock path.</div></div>
-<div class="decision" id="falsification-first"><h3><a href="#falsification-first" style="color:inherit;text-decoration:none">Falsification experiment first</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> If coefficient arithmetic is swamped by derivative evaluation the thesis is dead; find out in week one, not month three.</div><div class="asbuilt"><strong>As built:</strong> Kept, run, recorded either-way as promised: proceed for rk4 on both counts; heun2 under the slow model sits at 14.8%, a hair under the 15% line, so the verdict is stored as &#x27;mixed&#x27; rather than rounded up.</div></div>
+<div class="decision" id="falsification-first"><h3><a href="#falsification-first" style="color:inherit;text-decoration:none">Falsification experiment first</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> If coefficient arithmetic is swamped by derivative evaluation the thesis is dead; find out in week one, not month three.</div><div class="asbuilt"><strong>As built:</strong> Kept, run, recorded either-way as promised: proceed for rk4 on both counts; heun2 under the slow model sits at 14.8%, a hair under the 15% line, so the verdict is stored as 'mixed' rather than rounded up (<a href="results.html#crossover">key finding 3</a>).</div></div>
 <h2>What was deliberately cut</h2>
 
 <p>Adaptive step size and Newton-iteration implicit methods break the execution-time
-certificate hard real-time requires — wrong for the target, not merely unaffordable. Order &gt; 4
-and linear multistep multiply the space with no reason to expect a larger quantisation effect.
-Rosenbrock methods remain the natural second project. One addition to the cut list from the
-build: alternative rounding modes (round-to-nearest, stochastic rounding) are deliberately a
-<em>measured comparison</em> on the results page, not a search dimension — changing the
-arithmetic changes every score in the archive, so it is pinned by the verifier hash.</p>
+certificate hard real-time requires; wrong for the target, not merely unaffordable.
+Order &gt; 4 and linear multistep multiply the space with no reason to expect a larger
+quantisation effect. Rosenbrock methods remain the natural second project. One addition
+to the cut list from the build: alternative rounding modes (round-to-nearest, stochastic
+rounding) are deliberately a <em>measured comparison</em> on the key findings page, not a
+search dimension, because changing the arithmetic changes every score in the archive, so
+it is pinned by the verifier hash.</p>
 
 <h2>Known prior art, and where the gap is</h2>
 
 <p>RKTK (Zhang, 2019) already performs unstructured numerical search over Butcher order
 conditions and holds an order-10 stage-count record; numerical tableau search is not the
 contribution. That line optimises order, stages and error constants in exact arithmetic.
-Nobody prices coefficients against a hardware cost model, and nobody evaluates end-to-end in
-fixed point — that is the gap, and it is narrow enough to finish. The literature loop keeps
-collecting adjacent work (fixed-point ODE solvers, CSD constant multiplication, rounding-error
-analysis) into the findings site's literature page as the run proceeds.</p>
+Nobody prices coefficients against a hardware cost model, and nobody evaluates end-to-end
+in fixed point; that is the gap, and it is narrow enough to finish. The literature loop
+keeps collecting adjacent work (fixed-point ODE solvers, CSD constant multiplication,
+rounding-error analysis) into the findings site's literature page as the run proceeds.</p>
 
-<footer>rk-overview — snapshot 2026-09-01 (US Central); the live numbers are on rk-findings.</footer>
+<footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-01 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
 </div>
 </body>
 </html>

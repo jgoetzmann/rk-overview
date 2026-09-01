@@ -31,32 +31,32 @@
 body{margin:0;background:var(--surface-0);color:var(--text-1);
   font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
 .wrap{max-width:1180px;margin:0 auto;padding:0 20px 48px}
-header.site{background:var(--surface-1);border-bottom:1px solid var(--line);margin-bottom:24px}
-header.site .wrap{padding-top:18px;padding-bottom:0}
-h1{font-size:24px;margin:6px 0 2px;letter-spacing:-.01em}
-h2{font-size:17px;margin:32px 0 10px;letter-spacing:-.01em}
-h3{font-size:14px;margin:18px 0 6px;color:var(--text-2)}
+header.site{background:var(--surface-1);border-bottom:1px solid var(--line);margin-bottom:28px}
+header.site .wrap{padding-top:22px;padding-bottom:0}
+h1{font-size:26px;margin:6px 0 2px;letter-spacing:-.015em}
+h2{font-size:18px;margin:36px 0 12px;letter-spacing:-.01em}
+h3{font-size:14px;margin:20px 0 6px;color:var(--text-2)}
 p{max-width:76ch}
-.sub{color:var(--text-2);margin:0 0 12px}
-p.banner{border:1px solid var(--banner-line);border-left:4px solid var(--banner-line);
-  background:var(--banner-bg);color:var(--text-1);padding:8px 12px;border-radius:6px;
-  font-size:13px;max-width:none;margin:14px 0}
-nav.tabs{display:flex;gap:2px;flex-wrap:wrap;margin:10px 0 0}
+.sub{color:var(--text-2);margin:0 0 14px;font-size:14px}
+nav.tabs{display:flex;gap:2px;flex-wrap:wrap;margin:14px 0 0}
 nav.tabs a{padding:8px 14px;border-radius:8px 8px 0 0;color:var(--text-2);
   text-decoration:none;font-size:13.5px;border:1px solid transparent;border-bottom:none}
 nav.tabs a:hover{color:var(--text-1);background:var(--surface-0)}
-nav.tabs a.on{background:var(--surface-0);border-color:var(--line);color:var(--text-1);font-weight:600}
+nav.tabs a.on{background:var(--surface-0);border-color:var(--line);color:var(--text-1);
+  font-weight:600;box-shadow:0 1px 0 var(--surface-0)}
 a{color:var(--s1)}
-.cards{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+.cards{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;align-items:stretch}
 .card{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
-  padding:12px 16px;min-width:132px;flex:0 1 auto}
-.card .k{font-size:12px;color:var(--text-2);letter-spacing:.02em}
-.card .v{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.card .d{font-size:12px;color:var(--text-3)}
+  padding:12px 16px;min-width:148px;flex:0 1 auto;display:flex;flex-direction:column}
+.card .k{font-size:11px;color:var(--text-2);letter-spacing:.06em;text-transform:uppercase}
+.card .v{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em;line-height:1.25;margin:2px 0}
+.card .d{font-size:12px;color:var(--text-3);margin-top:auto}
 .panel{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
-  padding:14px 16px;margin:14px 0}
+  padding:16px 18px;margin:16px 0}
 figure{margin:0}
-figure figcaption{font-size:13px;color:var(--text-2);margin:4px 0 8px}
+figure figcaption{font-size:13px;color:var(--text-2);margin:0 0 10px;max-width:72ch;
+  line-height:1.5}
 .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2);margin:2px 0 6px}
 .legend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;
   vertical-align:-1px}
@@ -75,7 +75,9 @@ th,td{border-bottom:1px solid var(--line);padding:6px 10px;text-align:left;verti
 th{background:var(--surface-0);color:var(--text-2);font-weight:600;font-size:12px;
   letter-spacing:.02em;white-space:nowrap}
 tr:last-child td{border-bottom:none}
+tr:hover>td{background:var(--grid)}
 td{font-variant-numeric:tabular-nums}
+th.num,td.num{text-align:right}
 .tier,.badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;
   font-weight:600;white-space:nowrap}
 .tier-heldout_verified{background:var(--good-bg);color:var(--good-fg)}
@@ -111,21 +113,38 @@ details.fold>summary{cursor:pointer;padding:10px 16px;font-size:13.5px}
 details.fold>summary:hover{color:var(--text-1)}
 details.fold[open]>summary{border-bottom:1px solid var(--line)}
 details.fold>div{padding:6px 16px 12px}
-footer{margin-top:40px;font-size:12px;color:var(--text-3)}
+footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);
+  font-size:12px;color:var(--text-3)}
+footer p{margin:3px 0;max-width:none}
+footer p.prov a{color:var(--text-2)}
 </style>
 </head>
 <body>
 <header class="site"><div class="wrap">
-<p class="banner">Automatically generated. Not reviewed by a human. See rk-overview for interpretation.</p>
 <h1>literature digest</h1>
 <p class="sub">Web-researched background that feeds the directive and hypothesis prompts.</p>
 <nav class="tabs"><a href="index.html">overview</a><a href="methodology.html">methodology</a><a href="costmodel.html">cost model</a><a href="falsification.html">falsification</a><a href="hypotheses.html">hypotheses</a><a href="literature.html" class="on">literature</a><a href="interpretation.html">interpretation</a><a href="glossary.html">glossary</a></nav>
 </div></header>
 <div class="wrap">
 <p class="lead">Digests of published work the model researched on the web during the run, newest at the top. They exist to inform the <a href="glossary.html#directive">directive</a> and <a href="glossary.html#hypothesis-ledger">hypothesis</a> prompts; nothing on this page is a measurement from this project. Click an entry for its full text and sources.</p>
-<p class="note">Model-written text. Sources are model-collected citations; verify them before relying on them. See rk-overview for the human view.</p>
 <details class="explain"><summary>How to read this</summary><div><p>Each entry is one digest: the model was given a topic, searched the web, and wrote the summary and key points itself, attaching the sources it found. The stored text is shown as written (after a vocabulary pass that keeps this site's banned words out), with its stored UTC collection time displayed in US Central alongside the run cycle it fed into.</p><p>Because both the summaries and the citations are model-collected, treat them as leads to verify against the linked sources, not as established results. The measured pages of this site never depend on anything written here.</p></div></details>
+<p class="note">Model-written text. Sources are model-collected citations; verify them before relying on them. See rk-overview for the human view.</p>
 <details class="fold entry" open>
+<summary><strong>Cortex-M0+ constant-multiply costs</strong> <span class="when">collected 2026-09-01 14:42 CT, cycle 800</span></summary>
+<div>
+<p>Arm documents two implementation-time multiplier options for Cortex-M0+: a fast single-cycle array multiplier and a small 32-cycle iterative multiplier. MULS computes the low 32 bits of a 32-by-32-bit product; ordinary adds, subtracts, and immediate or register shifts take one cycle under the manual’s zero-wait-state assumptions. Thus a single generic Cortex-M0+ multiplication cost is not valid: on the fast variant, replacing MULS with several shift/add instructions normally increases instruction cycles, whereas on the iterative variant a short shift/add sequence can be substantially cheaper. Loads, branches, pipeline effects, and memory wait states must be accounted for separately.</p>
+<ul><li>Cortex-M0+ has selectable single-cycle and 32-cycle MULS implementations.</li><li>MULS returns only the least-significant 32 product bits.</li><li>Arm lists basic add, subtract, and shift instructions as one cycle with zero wait states.</li><li>Q15 products of two signed 16-bit values fit in a signed 32-bit intermediate.</li><li>An arithmetic right shift sign-extends and naturally implements floor division by a power of two.</li><li>CSD represents constants with digits -1, 0, and 1 and minimizes nonzero signed digits.</li><li>CSD often reduces additions versus ordinary binary expansion but does not guarantee the shortest software instruction sequence.</li><li>Constant loading, register pressure, reused intermediates, and final Q15 rescaling affect realized cycle cost.</li></ul>
+<p>sources:</p><ul><li><a href="https://documentation-service.arm.com/static/60411750ee937942ba301773">Cortex-M0+ Technical Reference Manual</a></li><li><a href="https://documentation-service.arm.com/static/5f04abc8dbdee951c1cdc9f7">Cortex-M0+ Devices Generic User Guide</a></li><li><a href="https://www.keil.com/dd/docs/datashts/arm/cortex_m0p/r0p1/ddi0484c_cortex_m0p_r0p1_trm.pdf">Cortex-M0+ Technical Reference Manual, instruction cycle timing</a></li><li><a href="https://publications.lib.chalmers.se/records/fulltext/202866/202866.pdf">Single Constant Multiplication</a></li><li><a href="https://users.utcluj.ro/~baruch/resources/JBits/RR2000-18.pdf">Constant Multiplication Using Minimum Add/Subtract Operations</a></li></ul>
+</div></details>
+<details class="fold entry">
+<summary><strong>Search-based optimization of low-order RK tableaus</strong> <span class="when">collected 2026-09-01 14:28 CT, cycle 800</span></summary>
+<div>
+<p>Classical Runge–Kutta order conditions are nonlinear polynomial constraints on the Butcher coefficients. Explicit methods have about s(s+1)/2 coefficients, and orders one through four can be attained with s=p stages. Additional stages therefore create degrees of freedom that can be used to reduce principal truncation-error norms, enlarge a relevant stability region, satisfy low-storage constraints, or construct embedded formulas. The literature treats these goals as constrained optimization problems, commonly using multistart searches because the feasible sets are nonconvex and contain many local minima.</p>
+<p>RK-Opt separates some designs into optimization of a stability polynomial followed by recovery of a compatible tableau; it can also minimize principal error norms subject to order, stability-polynomial, and implementation constraints. RKTK similarly automates rooted-tree enumeration, Butcher-weight evaluation, derivatives, order-condition residuals, and parallel nonlinear searches. Published comparisons caution that principal error constants are directly comparable only between methods of the same order, and application tests can diverge from rankings based on asymptotic constants or stability alone. Consequently, the stated cross-order hypotheses require held-out measurements at the actual cycle budget: neither formal order nor stage count by itself determines the winner, especially because the consulted optimization literature does not model Q15 floor rounding.</p>
+<ul><li>Orders up to four are attainable with the same number of explicit stages as the order.</li><li>Extra stages supply free coefficients for objectives beyond satisfying order conditions.</li><li>Principal error norm, stability extent, storage form, and embedded estimation are distinct optimization objectives.</li><li>Tableau searches are nonlinear and nonconvex, so multistart numerical optimization is common.</li><li>RK-Opt supports order constraints, stability-polynomial targets, error minimization, and implementation constraints.</li><li>RKTK computes rooted-tree order residuals and gradients for parallel searches.</li><li>Principal error constants alone do not justify comparisons between different formal orders.</li><li>Q15 floor-rounding behavior must be evaluated separately from real-arithmetic order conditions.</li></ul>
+<p>sources:</p><ul><li><a href="https://doi.org/10.1016/S0377-0427(00)00455-6">Numerical methods for ordinary differential equations in the 20th century</a></li><li><a href="https://rk-opt.readthedocs.io/_/downloads/en/latest/pdf/">RK-Opt User Manual</a></li><li><a href="https://joss.theoj.org/papers/10.21105/joss.02514">RK-Opt: A package for the design of numerical ODE solvers</a></li><li><a href="https://juliapackages.com/p/rungekuttatoolkit">RungeKuttaToolKit.jl and RKTK</a></li><li><a href="https://arxiv.org/abs/1207.5830">Optimized explicit Runge-Kutta schemes for the spectral difference method applied to wave propagation problems</a></li><li><a href="https://doi.org/10.1016/S0377-0427(01)00492-7">Practical symplectic partitioned Runge–Kutta and Runge–Kutta–Nyström methods</a></li></ul>
+</div></details>
+<details class="fold entry">
 <summary><strong>Quantized Runge–Kutta error and implementation</strong> <span class="when">collected 2026-09-01 07:18 CT, cycle 750</span></summary>
 <div>
 <p>Fixed-point ODE studies report that rounding mode can materially change solver behavior. Hopkins et al. found that GCC&#x27;s default downward rounding for fixed-point constants and multiplication harmed accuracy; round-to-nearest improved results, while stochastic rounding generally reduced systematic drift further. In their neural ODE experiments, six random residual bits were sufficient for stochastic rounding, but replacing round-to-nearest added about 30% overhead in an RK2 benchmark. Thus stochastic rounding may be unsuitable for a strict Cortex-M0+ cycle budget, while floor rounding creates a directional error that should be evaluated explicitly rather than modeled as zero-mean noise.</p>
@@ -174,7 +193,10 @@ footer{margin-top:40px;font-size:12px;color:var(--text-3)}
 <ul><li>Floor quantization has a one-sided error and therefore introduces systematic negative bias.</li><li>RK stage perturbations can be amplified within a single step, depending on coefficients and implementation form.</li><li>Accumulated perturbations can dominate truncation error as the step size is reduced.</li><li>Small quantized increments can vanish, causing stagnation or frozen state components.</li><li>Stochastic rounding removes earliest-order rounding bias in expectation but adds random-number and comparison costs.</li><li>Q15 uses 16-bit storage with 15 fractional bits; wider intermediates can postpone narrowing and saturation.</li><li>Saturation and rounding are distinct error mechanisms and should be measured separately.</li><li>Cortex-M0+ implementations may have either one-cycle or 32-cycle multiplication, materially affecting cycle estimates.</li></ul>
 <p>sources:</p><ul><li><a href="https://arxiv.org/abs/1309.1317">Propagation of internal errors in explicit Runge–Kutta methods and internal stability of SSP and extrapolation methods</a></li><li><a href="https://www.sciencedirect.com/science/article/pii/S0168927496000402">Error propagation in Runge-Kutta methods</a></li><li><a href="https://arxiv.org/abs/2010.16225">Effects of round-to-nearest and stochastic rounding in the numerical solution of the heat equation in low precision</a></li><li><a href="https://arm-software.github.io/CMSIS-DSP/main/group__FIXED.html">CMSIS-DSP: Fixed point datatypes</a></li><li><a href="https://developer.arm.com/-/media/Arm%20Developer%20Community/PDF/Processor%20Datasheets/Arm%20Cortex-M0%20plus%20Processor%20Datasheet.pdf">Arm Cortex-M0+ Processor Datasheet</a></li></ul>
 </div></details>
-<footer>rk-harness findings — Q15 fixed point, equal cycle budget, Cortex-M0+ cost models.</footer>
+<footer>
+<p>rk-harness findings: Q15 fixed point, equal cycle budget, Cortex-M0+ cost models.</p>
+<p class="prov">Generated from run data by the harness; no human review. Human interpretation is at <a href="https://jgoetzmann.github.io/rk-overview/">the rk-overview site</a>.</p>
+</footer>
 </div>
 </body>
 </html>

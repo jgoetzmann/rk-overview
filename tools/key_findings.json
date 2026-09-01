@@ -1,0 +1,1364 @@
+{
+ "_meta": {
+  "script": "rk-overview/tools/key_findings.py",
+  "sources": [
+   "rk-work/archive/*.jsonl (via rk_harness.archive.replay)",
+   "rk-work/falsification.json",
+   "rk-overview/tools/floor_round.json"
+  ],
+  "budget_cycles": 65536,
+  "cost_model": "m0plus_fast",
+  "rounding_mode": "floor (ASRS), per HANDOFF 4.2",
+  "archive_records": 45658,
+  "archive_last_cycle_id": 801,
+  "archive_dates": [
+   "2026-08-29",
+   "2026-08-30",
+   "2026-08-31",
+   "2026-09-01"
+  ],
+  "classical_seed_check": "all 8 classical anchors identified by tableau content-hash; each appears exactly once, at cycle_id 0 / seed 0",
+  "floor_round_vs_archive_max_rel_diff": 0.0,
+  "schema": "top-level key per finding; each finding has 'verdict' (honest one-liner), 'numbers' (scalar facts), 'series' (chart-ready arrays; non-empty or {'absent': reason})",
+  "nonfinite_written_as_null": 6
+ },
+ "efficiency": {
+  "verdict": "Yes. At the shared 65,536-cycle budget under floor-rounded Q15, 13 of 14 archive cells holding a discovered method beat every classical anchor of equal or lower per-step cost on held-out error; the best discovered method (order 2, 3 stages, 22 cycles/step) reaches held-out error 0.0286 against 0.0844 for the best classical anchor (midpoint), a 3.0x reduction. The remaining classical cells are euler (sole order-1 entry) and rk38, which no discovered 4-stage order-4 method displaced in its own cell.",
+  "numbers": {
+   "budget_cycles": 65536,
+   "cost_model": "m0plus_fast",
+   "rounding_mode": "floor (ASRS)",
+   "archive_records": 45658,
+   "unique_tableaus": 45658,
+   "last_cycle_id": 801,
+   "grid_cells_total": 16,
+   "cells_held_by_discovered": 14,
+   "cells_held_by_classical": 2,
+   "cells_where_discovered_beats_all_cheaper_or_equal_anchors": 13,
+   "median_error_ratio_discovered_over_anchor": 0.715213015277578,
+   "median_error_ratio_winning_cells": 0.7145267355507311,
+   "best_error_ratio": 0.338892529701108,
+   "best_discovered": {
+    "order": 2,
+    "stages": 3,
+    "cycles": 22,
+    "heldout_error": 0.02861808365520825,
+    "search_error": 0.011468375122318679,
+    "measured_order": 2.017872170787744,
+    "tier": "unreplicated",
+    "tableau_hash": "11e898cbab591a7f432670d4040b788f4c00cc646a005d4f967505578e2c0033",
+    "tableau": {
+     "A": [
+      [
+       "0/1",
+       "0/1",
+       "0/1"
+      ],
+      [
+       "13/16",
+       "0/1",
+       "0/1"
+      ],
+      [
+       "5/32",
+       "11/32",
+       "0/1"
+      ]
+     ],
+     "b": [
+      "0/1",
+      "0/1",
+      "1/1"
+     ],
+     "c": [
+      "0/1",
+      "13/16",
+      "1/2"
+     ]
+    },
+    "per_problem_heldout": {
+     "pendulum": 0.004744384784578245,
+     "dc_motor": 0.027647584508691654,
+     "rc_thermal": 0.046087531063901954,
+     "quaternion": 0.019105502156982923
+    },
+    "ratio_vs_best_classical_anchor": 0.338892529701108
+   },
+   "classical_anchors": [
+    {
+     "name": "euler",
+     "cycles": 5,
+     "heldout_error": 0.32026831291564534,
+     "search_error": 0.012890031734667783,
+     "measured_order": 0.984858142857499
+    },
+    {
+     "name": "midpoint",
+     "cycles": 11,
+     "heldout_error": 0.0844458969940956,
+     "search_error": 0.01314931345982402,
+     "measured_order": 2.010939664047258
+    },
+    {
+     "name": "heun2",
+     "cycles": 13,
+     "heldout_error": 0.09610240384926588,
+     "search_error": 0.017404867046941882,
+     "measured_order": 2.010939664077968
+    },
+    {
+     "name": "ralston2",
+     "cycles": 16,
+     "heldout_error": 0.09185029578172949,
+     "search_error": 0.023707893797839535,
+     "measured_order": 2.010939664108535
+    },
+    {
+     "name": "heun3",
+     "cycles": 23,
+     "heldout_error": 0.085178885467726,
+     "search_error": 0.016372045325699153,
+     "measured_order": 3.040408793816297
+    },
+    {
+     "name": "kutta3",
+     "cycles": 26,
+     "heldout_error": 0.08726723129662106,
+     "search_error": 0.0545340467376036,
+     "measured_order": 3.0404087939813516
+    },
+    {
+     "name": "rk4",
+     "cycles": 33,
+     "heldout_error": 0.09190123466683545,
+     "search_error": 0.05901725153467999,
+     "measured_order": 4.070626424711394
+    },
+    {
+     "name": "rk38",
+     "cycles": 36,
+     "heldout_error": 0.08525221988024427,
+     "search_error": 0.021942383665270307,
+     "measured_order": 4.070626426317067
+    }
+   ],
+   "note_on_comparison": "Every heldout_error is evaluated at the same total budget of 65536 cycles, so cheaper methods take more steps; 'cycles' is the per-step coefficient-arithmetic cost at n_states=1 under m0plus_fast. The cheapest anchor with the lowest error is midpoint (11 cycles), which is cheaper than every discovered elite, so beating all cheaper-or-equal anchors here equals beating every anchor outright.",
+   "caveats": [
+    "Cell elites are selected by held-out error among 45k+ unique candidates, so the champion values carry selection (winner's curse) bias; the CMA-ES search itself optimizes only the search-set error.",
+    "Tier labels are mechanical insertion-time comparisons against the then-incumbent, not a validation grade of the final elite; the overall best cell is tier 'unreplicated'.",
+    "rc_thermal saturates near 0.156 for every classical method (see rc_thermal_collapse), so classical held-out RMS values are floored near 0.078; discovered winners break that floor."
+   ]
+  },
+  "series": {
+   "frontier_cycles_vs_heldout": [
+    {
+     "kind": "classical",
+     "name": "euler",
+     "order": 1,
+     "stages": 1,
+     "cycle_bucket": 0,
+     "cycles": 5,
+     "heldout_error": 0.32026831291564534,
+     "tier": "unreplicated",
+     "tableau_hash": "ff5d6ff6768ca543f76e1311813e3f39263a2e4c630c0b5980e14def29e3021b"
+    },
+    {
+     "kind": "classical",
+     "name": "midpoint",
+     "order": null,
+     "stages": 2,
+     "cycle_bucket": null,
+     "cycles": 11,
+     "heldout_error": 0.0844458969940956,
+     "tier": "unreplicated",
+     "tableau_hash": "5bbff5a88c0924e50f2e32401966c76205b2dae85d282a78ec50eac38408c896"
+    },
+    {
+     "kind": "classical",
+     "name": "heun2",
+     "order": null,
+     "stages": 2,
+     "cycle_bucket": null,
+     "cycles": 13,
+     "heldout_error": 0.09610240384926588,
+     "tier": "unreplicated",
+     "tableau_hash": "205fa13b1cf02de0b783c05ca2fa47967a78ed39a2bfa7358f4c586e59b2d003"
+    },
+    {
+     "kind": "discovered",
+     "name": null,
+     "order": 2,
+     "stages": 2,
+     "cycle_bucket": 0,
+     "cycles": 15,
+     "heldout_error": 0.0613276429988836,
+     "tier": "unreplicated",
+     "tableau_hash": "2d2c2b75d7193bbca80707ea30a28e7d7f7314c4dffc32a28920582921efa210",
+     "best_cheaper_or_equal_anchor_error": 0.0844458969940956,
+     "error_ratio_vs_best_cheaper_anchor": 0.7262359117716707
+    },
+    {
+     "kind": "classical",
+     "name": "ralston2",
+     "order": null,
+     "stages": 2,
+     "cycle_bucket": null,
+     "cycles": 16,
+     "heldout_error": 0.09185029578172949,
+     "tier": "unreplicated",
+     "tableau_hash": "790fd510596624b6228630dbed114e38c2037a4a320d9926f8d32e4cdee79e5f"
+    },
+    {
+     "kind": "discovered",
+     "name": null,
+     "order": 2,
+     "stages": 2,
+     "cycle_bucket": 1,
+     "cycles": 17,
+     "heldout_error": 0.09020671562852632,
+     "tier": "heldout_verified",
+     "tableau_hash": "91b27380696d9bfe8cc3f7f114452b678138cdce64a8a99123540170c9cee090",
+     "best_cheaper_or_equal_anchor_error": 0.0844458969940956,
+     "error_ratio_vs_best_cheaper_anchor": 1.068219047218286
+    },
+    {
+     "kind": "discovered",
+     "name": null,
+     "order": 2,
+     "stages": 3,
+     "cycle_bucket": 1,
+     "cycles": 22,
+     "heldout_error": 0.02861808365520825,
+     "tier": "unreplicated",
+     "tableau_hash": "11e898cbab591a7f432670d4040b788f4c00cc646a005d4f967505578e2c0033",
+     "best_cheaper_or_equal_anchor_error": 0.0844458969940956,
+     "error_ratio_vs_best_cheaper_anchor": 0.338892529701108
+    },
+    {
+     "kind": "classical",
+     "name": "heun3",
+     "order": null,
+     "stages": 3,
+     "cycle_bucket": null,
+     "cycles": 23,
+     "heldout_error": 0.085178885467726,
+     "tier": "unreplicated",
+     "tableau_hash": "387f8c5072d25e82b8770c60028a88171622058cb3cf5f1104a7f119f8f72bfe"
+    },
+    {
+     "kind": "classical",
+     "name": "kutta3",
+     "order": null,
+     "stages": 3,
+     "cycle_bucket": null,
+     "cycles": 26,
+     "heldout_error": 0.08726723129662106,
+     "tier": "unreplicated",
+     "tableau_hash": "7ec1ae0bd3c9dab28388eb7ed4247cb1ec1ed840c894e11752255a64d5ec8585"
+    },
+    {
+     "kind": "discovered",
+     "name": null,
+     "order": 3,
+     "stages": 3,
+     "cycle_bucket": 1,
+     "cycles": 29,
+     "heldout_error": 0.04766612383579887,
+     "tier": "unreplicated",
+     "tableau_hash": "4f501ec6a5ce8c6258fc99ab267807e5d5f35445e222252b1b5a82a15671416c",
+     "best_cheaper_or_equal_anchor_error": 0.0844458969940956,
+     "error_ratio_vs_best_cheaper_anchor": 0.5644575465772085
+    },
+    {
+     "kind": "classical",
+     "name": "rk4",
+     "order": null,
+     "stages": 4,
+     "cycle_bucket": null,
+     "cycles": 33,
+     "heldout_error": 0.09190123466683545,
+     "tier": "unreplicated",
+     "tableau_hash": "9e77874726d61a21f880b9c5caca1634c0c9c5fbb445b114e80a8ad0cb5e0f13"
+    },
+    {
+     "kind": "classical",
+     "name": "rk38",
+     "order": 4,
+     "stages": 4,
+     "cycle_bucket": 2,
+     "cycles": 36,
+     "heldout_error": 0.08525221988024427,
+     "tier": "unreplicated",
+     "tableau_hash": "05ef8dc28c8266b20b2ee188b8fc4628c6bfd6db0c076f32cdc4a33ee80447ea"
+    },
+    {
+     "kind": "discovered",
+     "name": null,
+     "order": 2,
+     "stages": 4,
+     "cycle_bucket": 2,
+     "cycles": 39,
+     "heldout_error": 0.058654135070242204,
+     "tier": "heldout_verified",
+     "tableau_hash": "2bceb12dc1c2f86d811231fcf0bbea6781a8eb6720ae778047e28f9bedc920f0",
+     "best_cheaper_or_equal_anchor_error": 0.0844458969940956,
+     "error_ratio_vs_best_cheaper_anchor": 0.6945764940402405
+    },
+    {
+     "kind": "discovered",
+     "name": null,
+     "order": 3,
+     "stages": 4,
+     "cycle_bucket": 2,
+     "cycles": 43,
+     "heldout_error": 0.06810768997921897,
+     "tier": "heldout_verified",
+     "tableau_hash": "d24de927fd09fd3b8b0cba7bd9b96683f9546f8fde3759e8ad43bceee2e7b641",
+     "best_cheaper_or_equal_anchor_error": 0.0844458969940956,
+     "error_ratio_vs_best_cheaper_anchor": 0.8065245607371665
+    },
+    {
+     "kind": "discovered",
+     "name": null,
+     "order": 2,
+     "stages": 5,
+     "cycle_bucket": 2,
+     "cycles": 57,
+     "heldout_error": 0.05326864255287738,
+     "tier": "heldout_verified",
+     "tableau_hash": "6d0004de713f0a8e38ede54c91b635a5843a38e5480b66a9eb80359d49171a19",
+     "best_cheaper_or_equal_anchor_error": 0.0844458969940956,
+     "error_ratio_vs_best_cheaper_anchor": 0.630802021756035
+    },
+    {
+     "kind": "discovered",
+     "name": null,
+     "order": 3,
+     "stages": 5,
+     "cycle_bucket": 2,
+     "cycles": 59,
+     "heldout_error": 0.058737071476212724,
+     "tier": "unreplicated",
+     "tableau_hash": "2745637283599f204094828537c5ee96e28d45618b69641031d1431320d25bd0",
+     "best_cheaper_or_equal_anchor_error": 0.0844458969940956,
+     "error_ratio_vs_best_cheaper_anchor": 0.6955586187961219
+    },
+    {
+     "kind": "discovered",
+     "name": null,
+     "order": 4,
+     "stages": 6,
+     "cycle_bucket": 2,
+     "cycles": 63,
+     "heldout_error": 0.06033885110984443,
+     "tier": "unreplicated",
+     "tableau_hash": "196b1d17d0b708c06c798239ed34bd466fa7e9b6ba7e59797ec5d22645b2ab03",
+     "best_cheaper_or_equal_anchor_error": 0.0844458969940956,
+     "error_ratio_vs_best_cheaper_anchor": 0.7145267355507311
+    },
+    {
+     "kind": "discovered",
+     "name": null,
+     "order": 3,
+     "stages": 6,
+     "cycle_bucket": 2,
+     "cycles": 63,
+     "heldout_error": 0.08224801589210298,
+     "tier": "unreplicated",
+     "tableau_hash": "c10bc5417b5b06a1efdd56aa9fa2e56a7bc73b0a3f24b019aa0ca4c180e4ac6b",
+     "best_cheaper_or_equal_anchor_error": 0.0844458969940956,
+     "error_ratio_vs_best_cheaper_anchor": 0.9739729083327009
+    },
+    {
+     "kind": "discovered",
+     "name": null,
+     "order": 3,
+     "stages": 5,
+     "cycle_bucket": 3,
+     "cycles": 65,
+     "heldout_error": 0.06039680461696688,
+     "tier": "unreplicated",
+     "tableau_hash": "407c65d767230fad1f7d8d92ee2562c0732e1cdb36f8a03c608d24762b479154",
+     "best_cheaper_or_equal_anchor_error": 0.0844458969940956,
+     "error_ratio_vs_best_cheaper_anchor": 0.715213015277578
+    },
+    {
+     "kind": "discovered",
+     "name": null,
+     "order": 2,
+     "stages": 5,
+     "cycle_bucket": 3,
+     "cycles": 65,
+     "heldout_error": 0.06387410423750851,
+     "tier": "unreplicated",
+     "tableau_hash": "935100ec0e46e81640884f5afb636fb14bb3564044f7ddc92b2eadc444d42d68",
+     "best_cheaper_or_equal_anchor_error": 0.0844458969940956,
+     "error_ratio_vs_best_cheaper_anchor": 0.7563908551054238
+    },
+    {
+     "kind": "discovered",
+     "name": null,
+     "order": 3,
+     "stages": 6,
+     "cycle_bucket": 3,
+     "cycles": 75,
+     "heldout_error": 0.03765508267933201,
+     "tier": "heldout_verified",
+     "tableau_hash": "42863b93bf7d570f7f6fd94033452451bf70bb8adf803e7f2c965f612914472e",
+     "best_cheaper_or_equal_anchor_error": 0.0844458969940956,
+     "error_ratio_vs_best_cheaper_anchor": 0.44590778261215963
+    },
+    {
+     "kind": "discovered",
+     "name": null,
+     "order": 4,
+     "stages": 6,
+     "cycle_bucket": 3,
+     "cycles": 77,
+     "heldout_error": 0.08079379056212986,
+     "tier": "unreplicated",
+     "tableau_hash": "013ba302005178e171210c1a413783da41ee1e912f1761cce539e52c1cc5c4b1",
+     "best_cheaper_or_equal_anchor_error": 0.0844458969940956,
+     "error_ratio_vs_best_cheaper_anchor": 0.9567521151179068
+    }
+   ],
+   "chart_hint": "log-log scatter, x=cycles, y=heldout_error, color by kind, label classical points by name"
+  }
+ },
+ "floor_bias_flip": {
+  "verdict": "Floor rounding reorders the field at the 65,536-cycle budget. On the three search problems euler's RMS error is 0.0129 under floor against 0.0590 for rk4 (4.6x worse), while under round-to-nearest rk4 beats euler (0.0289 vs 0.0469): euler moves from rank 3 to rank 1 and rk4 from rank 2 to rank 4 of 4. Over all 7 problems rk38 stays first in both modes, but the floor-mode spread between methods collapses.",
+  "numbers": {
+   "budget_cycles": 65536,
+   "cost_model": "m0plus_fast",
+   "aggregate": {
+    "floor": {
+     "search_rms": {
+      "error": {
+       "euler": 0.012890031734667783,
+       "heun2": 0.017404867046941882,
+       "rk38": 0.021942383665270307,
+       "rk4": 0.05901725153467999
+      },
+      "rank": {
+       "euler": 1,
+       "heun2": 2,
+       "rk38": 3,
+       "rk4": 4
+      }
+     },
+     "heldout_rms": {
+      "error": {
+       "euler": 0.32026831291564534,
+       "heun2": 0.09610240384926588,
+       "rk38": 0.08525221988024427,
+       "rk4": 0.09190123466683545
+      },
+      "rank": {
+       "rk38": 1,
+       "rk4": 2,
+       "heun2": 3,
+       "euler": 4
+      }
+     },
+     "all7_rms": {
+      "error": {
+       "euler": 0.24224710754153997,
+       "heun2": 0.07353471123333985,
+       "rk38": 0.06602615129172015,
+       "rk4": 0.07949164885991672
+      },
+      "rank": {
+       "rk38": 1,
+       "heun2": 2,
+       "rk4": 3,
+       "euler": 4
+      }
+     }
+    },
+    "round_to_nearest": {
+     "search_rms": {
+      "error": {
+       "euler": 0.04690821309778167,
+       "heun2": 0.06103999926821567,
+       "rk38": 0.019646408590134716,
+       "rk4": 0.028869238162980072
+      },
+      "rank": {
+       "rk38": 1,
+       "rk4": 2,
+       "euler": 3,
+       "heun2": 4
+      }
+     },
+     "heldout_rms": {
+      "error": {
+       "euler": 0.28691644717121506,
+       "heun2": 0.10569019227009818,
+       "rk38": 0.026331784684440862,
+       "rk4": 0.0337441625536516
+      },
+      "rank": {
+       "rk38": 1,
+       "rk4": 2,
+       "heun2": 3,
+       "euler": 4
+      }
+     },
+     "all7_rms": {
+      "error": {
+       "euler": 0.21905163513834922,
+       "heun2": 0.0893302952133682,
+       "rk38": 0.023698690892544422,
+       "rk4": 0.03174670458065945
+      },
+      "rank": {
+       "rk38": 1,
+       "rk4": 2,
+       "heun2": 3,
+       "euler": 4
+      }
+     }
+    }
+   },
+   "dahlquist_note": "Under floor, euler/heun2/rk38 hit dahlquist error 4.539993e-05, which equals exp(-10), the full reference value: the Q15 state decays to exactly 0 and the true answer is below one LSB, so floor's downward bias lands on the right answer. Under round-to-nearest the state stalls in a dead zone above zero (errors 0.033 to 0.092, up to 2032x worse).",
+   "mechanism": "Each Q15 multiply floors, injecting a -0.5 LSB expected bias per product. rk4 spends more multiplies per unit of simulated time and takes larger steps at equal budget, so its order advantage is spent absorbing bias; cheap low-order methods take more, smaller steps and win on problems whose solutions decay."
+  },
+  "series": {
+   "per_problem_floor_vs_round": [
+    {
+     "problem": "dahlquist",
+     "method": "euler",
+     "floor_error": 4.5399929762484854e-05,
+     "round_error": 0.07991065475773751,
+     "floor_rank": 1,
+     "round_rank": 3
+    },
+    {
+     "problem": "dahlquist",
+     "method": "heun2",
+     "floor_error": 4.5399929762484854e-05,
+     "round_error": 0.09223975632023751,
+     "floor_rank": 2,
+     "round_rank": 4
+    },
+    {
+     "problem": "dahlquist",
+     "method": "rk38",
+     "floor_error": 4.5399929762484854e-05,
+     "round_error": 0.033279795382737516,
+     "floor_rank": 3,
+     "round_rank": 1
+    },
+    {
+     "problem": "dahlquist",
+     "method": "rk4",
+     "floor_error": 0.00016747024226248486,
+     "round_error": 0.036209482882737516,
+     "floor_rank": 4,
+     "round_rank": 2
+    },
+    {
+     "problem": "damped_osc",
+     "method": "euler",
+     "floor_error": 0.01420474495373885,
+     "round_error": 0.008008549327178212,
+     "floor_rank": 3,
+     "round_rank": 3
+    },
+    {
+     "problem": "damped_osc",
+     "method": "heun2",
+     "floor_error": 0.005542856617862107,
+     "round_error": 0.013035239880741168,
+     "floor_rank": 1,
+     "round_rank": 4
+    },
+    {
+     "problem": "damped_osc",
+     "method": "rk38",
+     "floor_error": 0.00817433518563924,
+     "round_error": 0.0005331638629503505,
+     "floor_rank": 2,
+     "round_rank": 1
+    },
+    {
+     "problem": "damped_osc",
+     "method": "rk4",
+     "floor_error": 0.01592481589265515,
+     "round_error": 0.007359123803889368,
+     "floor_rank": 4,
+     "round_rank": 2
+    },
+    {
+     "problem": "vanderpol_mild",
+     "method": "euler",
+     "floor_error": 0.017224456856685954,
+     "round_error": 0.012300071623552605,
+     "floor_rank": 1,
+     "round_rank": 2
+    },
+    {
+     "problem": "vanderpol_mild",
+     "method": "heun2",
+     "floor_error": 0.02963212564304778,
+     "round_error": 0.04999554387368987,
+     "floor_rank": 2,
+     "round_rank": 4
+    },
+    {
+     "problem": "vanderpol_mild",
+     "method": "rk38",
+     "floor_error": 0.0371158023739345,
+     "round_error": 0.007079199605176021,
+     "floor_rank": 3,
+     "round_rank": 1
+    },
+    {
+     "problem": "vanderpol_mild",
+     "method": "rk4",
+     "floor_error": 0.10097267020647743,
+     "round_error": 0.033689989351977576,
+     "floor_rank": 4,
+     "round_rank": 3
+    },
+    {
+     "problem": "pendulum",
+     "method": "euler",
+     "floor_error": 0.5942848111443483,
+     "round_error": 0.5538720172239101,
+     "floor_rank": 4,
+     "round_rank": 4
+    },
+    {
+     "problem": "pendulum",
+     "method": "heun2",
+     "floor_error": 0.004214897111370254,
+     "round_error": 0.00116041179880806,
+     "floor_rank": 3,
+     "round_rank": 1
+    },
+    {
+     "problem": "pendulum",
+     "method": "rk38",
+     "floor_error": 0.001100483753618598,
+     "round_error": 0.0024416252949300025,
+     "floor_rank": 1,
+     "round_rank": 2
+    },
+    {
+     "problem": "pendulum",
+     "method": "rk4",
+     "floor_error": 0.0040323428220641975,
+     "round_error": 0.002765217641793491,
+     "floor_rank": 2,
+     "round_rank": 3
+    },
+    {
+     "problem": "dc_motor",
+     "method": "euler",
+     "floor_error": 0.1710447625539884,
+     "round_error": 0.01623550300369505,
+     "floor_rank": 4,
+     "round_rank": 3
+    },
+    {
+     "problem": "dc_motor",
+     "method": "heun2",
+     "floor_error": 0.09741163194331529,
+     "round_error": 0.07181090291603405,
+     "floor_rank": 3,
+     "round_rank": 4
+    },
+    {
+     "problem": "dc_motor",
+     "method": "rk38",
+     "floor_error": 0.05199695242231674,
+     "round_error": 0.011398690466783773,
+     "floor_rank": 1,
+     "round_rank": 1
+    },
+    {
+     "problem": "dc_motor",
+     "method": "rk4",
+     "floor_error": 0.07635890248163581,
+     "round_error": 0.012088185234060142,
+     "floor_rank": 2,
+     "round_rank": 2
+    },
+    {
+     "problem": "rc_thermal",
+     "method": "euler",
+     "floor_error": 0.1559050126465386,
+     "round_error": 0.1486355365820598,
+     "floor_rank": 1,
+     "round_rank": 3
+    },
+    {
+     "problem": "rc_thermal",
+     "method": "heun2",
+     "floor_error": 0.1559050126465386,
+     "round_error": 0.1969129734070993,
+     "floor_rank": 2,
+     "round_rank": 4
+    },
+    {
+     "problem": "rc_thermal",
+     "method": "rk38",
+     "floor_error": 0.15611574711712428,
+     "round_error": 0.05105368618724063,
+     "floor_rank": 3,
+     "round_rank": 1
+    },
+    {
+     "problem": "rc_thermal",
+     "method": "rk4",
+     "floor_error": 0.15815914382342158,
+     "round_error": 0.06631716157221952,
+     "floor_rank": 4,
+     "round_rank": 2
+    },
+    {
+     "problem": "quaternion",
+     "method": "euler",
+     "floor_error": 0.05958228351610484,
+     "round_error": 0.012404228025449049,
+     "floor_rank": 4,
+     "round_rank": 3
+    },
+    {
+     "problem": "quaternion",
+     "method": "heun2",
+     "floor_error": 0.05594214635311068,
+     "round_error": 0.02736412869391991,
+     "floor_rank": 3,
+     "round_rank": 4
+    },
+    {
+     "problem": "quaternion",
+     "method": "rk38",
+     "floor_error": 0.04466254979733597,
+     "round_error": 0.005575032459760543,
+     "floor_rank": 1,
+     "round_rank": 2
+    },
+    {
+     "problem": "quaternion",
+     "method": "rk4",
+     "floor_error": 0.054056370405000886,
+     "round_error": 0.0017139007946047613,
+     "floor_rank": 2,
+     "round_rank": 1
+    }
+   ],
+   "chart_hint": "paired bars or slope chart per problem, log y; a second slope chart for aggregate ranks (search_rms)"
+  }
+ },
+ "crossover": {
+  "verdict": "On damped_osc, rk4's Q15 error decouples from its float truncation error at h = 0.15625 (float error keeps falling as h^4; Q15 error rises from 1.13e-03 to 2.58e-02 as h shrinks to 0.0097656); heun2 decouples later, at h = 0.039062. The stored falsification verdict is 'mixed': coefficient arithmetic is 50-56% of per-step cycles on m0plus_fast (above the 0.30 proceed threshold) but 14.8% for heun2 on m0plus_slow (below the 0.15 kill threshold). At the equal 65,536-cycle budget under floor, rk4 wins 0 of 7 problems outright (under round-to-nearest: 1 of 7, with rk38 taking 5).",
+  "numbers": {
+   "problem": "damped_osc",
+   "t_end": 40.0,
+   "models": [
+    "m0plus_fast",
+    "m0plus_slow"
+   ],
+   "stored_verdict": "mixed",
+   "thresholds": {
+    "kill_fraction": 0.15,
+    "practical_h_max": 1.0,
+    "practical_h_min": 0.001,
+    "proceed_fraction": 0.3
+   },
+   "methods": {
+    "heun2": {
+     "stages": 2,
+     "crossover_h": 0.0390625,
+     "crossover_practical": true,
+     "coefficient_fraction": {
+      "m0plus_fast": 0.5,
+      "m0plus_slow": 0.14772727272727273
+     },
+     "cycles_per_step": {
+      "m0plus_fast": 26,
+      "m0plus_slow": 26
+     },
+     "derivative_cost": {
+      "m0plus_fast": 13,
+      "m0plus_slow": 75
+     },
+     "min_q15_error": 0.0029709624841080576,
+     "q15_error_at_smallest_h": 0.027605204093685495
+    },
+    "rk4": {
+     "stages": 4,
+     "crossover_h": 0.15625,
+     "crossover_practical": true,
+     "coefficient_fraction": {
+      "m0plus_fast": 0.559322033898305,
+      "m0plus_slow": 0.3617021276595745
+     },
+     "cycles_per_step": {
+      "m0plus_fast": 66,
+      "m0plus_slow": 170
+     },
+     "derivative_cost": {
+      "m0plus_fast": 13,
+      "m0plus_slow": 75
+     },
+     "min_q15_error": 0.0011276339211315962,
+     "q15_error_at_smallest_h": 0.02583084404068834
+    }
+   },
+   "rk4_wins_at_budget": {
+    "floor": {
+     "fraction": "0/7",
+     "problems": [],
+     "best_method_per_problem": {
+      "dahlquist": "euler",
+      "damped_osc": "heun2",
+      "vanderpol_mild": "euler",
+      "pendulum": "rk38",
+      "dc_motor": "rk38",
+      "rc_thermal": "euler",
+      "quaternion": "rk38"
+     }
+    },
+    "round_to_nearest": {
+     "fraction": "1/7",
+     "problems": [
+      "quaternion"
+     ],
+     "best_method_per_problem": {
+      "dahlquist": "rk38",
+      "damped_osc": "rk38",
+      "vanderpol_mild": "rk38",
+      "pendulum": "heun2",
+      "dc_motor": "rk38",
+      "rc_thermal": "rk38",
+      "quaternion": "rk4"
+     }
+    },
+    "note": "computed from floor_round.json over the four methods it covers (euler, heun2, rk4, rk38) at budget 65536, m0plus_fast"
+   }
+  },
+  "series": {
+   "sweeps": {
+    "heun2": [
+     {
+      "n": 8,
+      "h": 5.0,
+      "q15_error": null,
+      "float_error": 441467703.3340454
+     },
+     {
+      "n": 16,
+      "h": 2.5,
+      "q15_error": null,
+      "float_error": 36767760.80920368
+     },
+     {
+      "n": 32,
+      "h": 1.25,
+      "q15_error": null,
+      "float_error": 17.473796137501722
+     },
+     {
+      "n": 64,
+      "h": 0.625,
+      "q15_error": 0.04669684583367464,
+      "float_error": 0.04673953135521949
+     },
+     {
+      "n": 128,
+      "h": 0.3125,
+      "q15_error": 0.012754253389141329,
+      "float_error": 0.012337288647742011
+     },
+     {
+      "n": 256,
+      "h": 0.15625,
+      "q15_error": 0.004005365433236916,
+      "float_error": 0.0031269496223140718
+     },
+     {
+      "n": 512,
+      "h": 0.078125,
+      "q15_error": 0.0029709624841080576,
+      "float_error": 0.0007860605750068425
+     },
+     {
+      "n": 1024,
+      "h": 0.0390625,
+      "q15_error": 0.006420725472237357,
+      "float_error": 0.00019668005840999943
+     },
+     {
+      "n": 2048,
+      "h": 0.01953125,
+      "q15_error": 0.01263412309910694,
+      "float_error": 4.915106014002267e-05
+     },
+     {
+      "n": 4096,
+      "h": 0.009765625,
+      "q15_error": 0.027605204093685495,
+      "float_error": 1.2282336675459784e-05
+     }
+    ],
+    "rk4": [
+     {
+      "n": 8,
+      "h": 5.0,
+      "q15_error": null,
+      "float_error": 23701561365.1371
+     },
+     {
+      "n": 16,
+      "h": 2.5,
+      "q15_error": null,
+      "float_error": 0.017638366398950913
+     },
+     {
+      "n": 32,
+      "h": 1.25,
+      "q15_error": null,
+      "float_error": 0.01247217092554969
+     },
+     {
+      "n": 64,
+      "h": 0.625,
+      "q15_error": 0.0013358159502710532,
+      "float_error": 0.0010188938037773321
+     },
+     {
+      "n": 128,
+      "h": 0.3125,
+      "q15_error": 0.0011276339211315962,
+      "float_error": 6.293258904841706e-05
+     },
+     {
+      "n": 256,
+      "h": 0.15625,
+      "q15_error": 0.0025371506975046987,
+      "float_error": 3.883824773719522e-06
+     },
+     {
+      "n": 512,
+      "h": 0.078125,
+      "q15_error": 0.004793330098197475,
+      "float_error": 2.4092203037013574e-07
+     },
+     {
+      "n": 1024,
+      "h": 0.0390625,
+      "q15_error": 0.015626464715168938,
+      "float_error": 1.4996521055800507e-08
+     },
+     {
+      "n": 2048,
+      "h": 0.01953125,
+      "q15_error": 0.03985306538437665,
+      "float_error": 9.353050463242288e-10
+     },
+     {
+      "n": 4096,
+      "h": 0.009765625,
+      "q15_error": 0.02583084404068834,
+      "float_error": 5.839372788231957e-11
+     }
+    ]
+   },
+   "chart_hint": "log-log lines, x=h, y=error; per method one solid (q15_error) and one dashed (float_error) line; null q15 values are overflow (error was infinite)"
+  }
+ },
+ "rc_thermal_collapse": {
+  "verdict": "All 8 classical methods land within 1.6% of one another on rc_thermal under floor (errors 0.1558 to 0.1582) because every one of them drives the Q15 state into a dead zone 4 to 18 LSBs from the origin while the true solution still has norm 0.1592: the reported error is essentially the reference itself, a quantization floor, not a method property. Under round-to-nearest the same methods separate (rk38 reaches 0.0511), and the best discovered method reaches 0.0461 while still using floor.",
+  "numbers": {
+   "problem": "rc_thermal",
+   "t_end": 4.0,
+   "scale": 0.25,
+   "deriv_scale": 0.125,
+   "lsb_physical": 0.0001220703125,
+   "reference_at_t_end": [
+    0.08343023824006568,
+    0.08986371363008513,
+    0.10146463436181417
+   ],
+   "reference_norm": 0.15915766932938138,
+   "floor_error_min": 0.1557632379378313,
+   "floor_error_max": 0.15823691889515895,
+   "floor_error_spread_relative": 0.015881031943589557,
+   "best_discovered_rc_thermal": {
+    "error": 0.046087531063901954,
+    "cycles": 22,
+    "order": 2,
+    "stages": 3
+   },
+   "mechanism": "rc_thermal decays toward equilibrium and its derivative is stored scaled by 1/8 (DERIV_SCALE), so late in the run the quantized derivative terms are a few LSBs; floor rounding turns them into extra decay, and every classical method's state collapses to near zero instead of tracking the slow mode. Error metric is ||y - ref(4)||/peak, so everyone reports about ||ref(4)|| = 0.159 minus a small residual."
+  },
+  "series": {
+   "per_method": [
+    {
+     "method": "euler",
+     "steps": 4369,
+     "final_state_q15": [
+      14,
+      15,
+      17
+     ],
+     "final_state_lsbs_from_origin": 17,
+     "floor_error": 0.1559050126465386,
+     "round_error": 0.1486355365820598,
+     "archive_error": 0.1559050126465386
+    },
+    {
+     "method": "heun2",
+     "steps": 1680,
+     "final_state_q15": [
+      14,
+      15,
+      17
+     ],
+     "final_state_lsbs_from_origin": 17,
+     "floor_error": 0.1559050126465386,
+     "round_error": 0.1969129734070993,
+     "archive_error": 0.1559050126465386
+    },
+    {
+     "method": "heun3",
+     "steps": 949,
+     "final_state_q15": [
+      14,
+      15,
+      16
+     ],
+     "final_state_lsbs_from_origin": 16,
+     "floor_error": 0.155982860818894,
+     "round_error": null,
+     "archive_error": 0.155982860818894
+    },
+    {
+     "method": "kutta3",
+     "steps": 840,
+     "final_state_q15": [
+      4,
+      4,
+      5
+     ],
+     "final_state_lsbs_from_origin": 5,
+     "floor_error": 0.15823691889515895,
+     "round_error": null,
+     "archive_error": 0.15823691889515895
+    },
+    {
+     "method": "midpoint",
+     "steps": 1985,
+     "final_state_q15": [
+      15,
+      15,
+      18
+     ],
+     "final_state_lsbs_from_origin": 18,
+     "floor_error": 0.1557632379378313,
+     "round_error": null,
+     "archive_error": 0.1557632379378313
+    },
+    {
+     "method": "ralston2",
+     "steps": 1365,
+     "final_state_q15": [
+      14,
+      15,
+      17
+     ],
+     "final_state_lsbs_from_origin": 17,
+     "floor_error": 0.1559050126465386,
+     "round_error": null,
+     "archive_error": 0.1559050126465386
+    },
+    {
+     "method": "rk38",
+     "steps": 606,
+     "final_state_q15": [
+      13,
+      14,
+      16
+     ],
+     "final_state_lsbs_from_origin": 16,
+     "floor_error": 0.15611574711712428,
+     "round_error": 0.05105368618724063,
+     "archive_error": 0.15611574711712428
+    },
+    {
+     "method": "rk4",
+     "steps": 661,
+     "final_state_q15": [
+      4,
+      4,
+      6
+     ],
+     "final_state_lsbs_from_origin": 6,
+     "floor_error": 0.15815914382342158,
+     "round_error": 0.06631716157221952,
+     "archive_error": 0.15815914382342158
+    }
+   ],
+   "chart_hint": "grouped bars per method: floor_error vs round_error, with a horizontal line at reference_norm"
+  }
+ },
+ "phase0_exhaustive": {
+  "verdict": "Closed result: the phase-0 space (2-stage, a21 on the dyadic lattice s<=6, |a21|<=2: 256 candidates, 16 with exactly representable b) was enumerated in full and all 16 members are in the archive. Nothing in it beats a21 = -1/8, b = (5/1, -4/1) at 15 cycles/step with held-out error 0.0613, a near-tie with a21 = -1/4 (0.0614); within the same family midpoint ranks 7 and heun2 ranks 12 of 16. The optimum also beats all 8 classical anchors (best: midpoint, 0.0844) at the equal budget.",
+  "numbers": {
+   "lattice_candidates": 256,
+   "valid_tableaus": 16,
+   "all_in_archive": true,
+   "missing_from_archive": [],
+   "optimum": {
+    "a21": "-1/8",
+    "b": [
+     "5/1",
+     "-4/1"
+    ],
+    "name": null,
+    "in_archive": true,
+    "cycles": 15,
+    "heldout_error": 0.0613276429988836,
+    "tableau_hash": "2d2c2b75d7193bbca80707ea30a28e7d7f7314c4dffc32a28920582921efa210",
+    "rank": 1
+   },
+   "runner_up": {
+    "a21": "-1/4",
+    "b": [
+     "3/1",
+     "-2/1"
+    ],
+    "name": null,
+    "in_archive": true,
+    "cycles": 15,
+    "heldout_error": 0.061351818475320535,
+    "tableau_hash": "48e02f78ce704d1633a9bf10dc44fc2b3495aeb1ee972c0b3e4ba6006ef714a6",
+    "rank": 2
+   },
+   "midpoint_rank": 7,
+   "heun2_rank": 12,
+   "best_classical_anchor": {
+    "name": "midpoint",
+    "heldout_error": 0.0844458969940956
+   },
+   "closure_note": "Phase 0 is exhaustive by construction (events.jsonl records 'enumeration complete'), so this optimum is over the whole space, not a sample: no 2-stage tableau in the lattice does better at this budget under these semantics."
+  },
+  "series": {
+   "all_members": [
+    {
+     "a21": "-1/8",
+     "b": [
+      "5/1",
+      "-4/1"
+     ],
+     "name": null,
+     "in_archive": true,
+     "cycles": 15,
+     "heldout_error": 0.0613276429988836,
+     "tableau_hash": "2d2c2b75d7193bbca80707ea30a28e7d7f7314c4dffc32a28920582921efa210",
+     "rank": 1
+    },
+    {
+     "a21": "-1/4",
+     "b": [
+      "3/1",
+      "-2/1"
+     ],
+     "name": null,
+     "in_archive": true,
+     "cycles": 15,
+     "heldout_error": 0.061351818475320535,
+     "tableau_hash": "48e02f78ce704d1633a9bf10dc44fc2b3495aeb1ee972c0b3e4ba6006ef714a6",
+     "rank": 2
+    },
+    {
+     "a21": "-1/32",
+     "b": [
+      "17/1",
+      "-16/1"
+     ],
+     "name": null,
+     "in_archive": true,
+     "cycles": 15,
+     "heldout_error": 0.07099453332225676,
+     "tableau_hash": "1401580d7d93ab826bc457b4e38b3befe1221b3969761cfd926a927a1c8c6bc3",
+     "rank": 3
+    },
+    {
+     "a21": "1/8",
+     "b": [
+      "-3/1",
+      "4/1"
+     ],
+     "name": null,
+     "in_archive": true,
+     "cycles": 15,
+     "heldout_error": 0.07628193704091181,
+     "tableau_hash": "784e5c6b78baeb2adb051e6904fa6590d7cf780c60d8f786e1b1eb4025dbcfb9",
+     "rank": 4
+    },
+    {
+     "a21": "1/4",
+     "b": [
+      "-1/1",
+      "2/1"
+     ],
+     "name": null,
+     "in_archive": true,
+     "cycles": 13,
+     "heldout_error": 0.0780525278519792,
+     "tableau_hash": "ef7ab78b85501c91009b96c456f18dfed3ab9ac49c390c15f0cb7f5327ae9622",
+     "rank": 5
+    },
+    {
+     "a21": "-1/2",
+     "b": [
+      "2/1",
+      "-1/1"
+     ],
+     "name": null,
+     "in_archive": true,
+     "cycles": 13,
+     "heldout_error": 0.07806870854694108,
+     "tableau_hash": "892bd5b10e398f805728c6c060f344e0bc7c480341f6638fc4f13abc92b4a64a",
+     "rank": 6
+    },
+    {
+     "a21": "1/2",
+     "b": [
+      "0/1",
+      "1/1"
+     ],
+     "name": "midpoint",
+     "in_archive": true,
+     "cycles": 11,
+     "heldout_error": 0.0844458969940956,
+     "tableau_hash": "5bbff5a88c0924e50f2e32401966c76205b2dae85d282a78ec50eac38408c896",
+     "rank": 7
+    },
+    {
+     "a21": "-1/64",
+     "b": [
+      "33/1",
+      "-32/1"
+     ],
+     "name": null,
+     "in_archive": true,
+     "cycles": 15,
+     "heldout_error": 0.08494523080731724,
+     "tableau_hash": "d6984882797e3af43493335868d164e68c9ffe251c978ff6516177e89b96358b",
+     "rank": 8
+    },
+    {
+     "a21": "-1/16",
+     "b": [
+      "9/1",
+      "-8/1"
+     ],
+     "name": null,
+     "in_archive": true,
+     "cycles": 15,
+     "heldout_error": 0.08886889061844895,
+     "tableau_hash": "6c8f825bda85525865b9b1b8a1ac68fb530be36b1507410f27aed9190b228251",
+     "rank": 9
+    },
+    {
+     "a21": "1/32",
+     "b": [
+      "-15/1",
+      "16/1"
+     ],
+     "name": null,
+     "in_archive": true,
+     "cycles": 15,
+     "heldout_error": 0.08979991464081374,
+     "tableau_hash": "ceefe45d862e18daf431222ff84f6b347067c7e57a115211246a56ec5952528b",
+     "rank": 10
+    },
+    {
+     "a21": "2/1",
+     "b": [
+      "3/4",
+      "1/4"
+     ],
+     "name": null,
+     "in_archive": true,
+     "cycles": 15,
+     "heldout_error": 0.093704603841954,
+     "tableau_hash": "546336ddd9b0228cf0becdf5befe3b0e76e6d5764f15e87350b29e82ebb77582",
+     "rank": 11
+    },
+    {
+     "a21": "1/1",
+     "b": [
+      "1/2",
+      "1/2"
+     ],
+     "name": "heun2",
+     "in_archive": true,
+     "cycles": 13,
+     "heldout_error": 0.09610240384926588,
+     "tableau_hash": "205fa13b1cf02de0b783c05ca2fa47967a78ed39a2bfa7358f4c586e59b2d003",
+     "rank": 12
+    },
+    {
+     "a21": "1/16",
+     "b": [
+      "-7/1",
+      "8/1"
+     ],
+     "name": null,
+     "in_archive": true,
+     "cycles": 15,
+     "heldout_error": 0.10169225807527146,
+     "tableau_hash": "d3f13d07deefaf7efb9f8a1720fc3772f0a60bbeede66fdc5fd29102875a6188",
+     "rank": 13
+    },
+    {
+     "a21": "-2/1",
+     "b": [
+      "5/4",
+      "-1/4"
+     ],
+     "name": null,
+     "in_archive": true,
+     "cycles": 15,
+     "heldout_error": 0.10919800750081247,
+     "tableau_hash": "af14a3770d53bfb7b6f990fb5de46d6534424f770842fe2e8b8d179d7089eb0a",
+     "rank": 14
+    },
+    {
+     "a21": "-1/1",
+     "b": [
+      "3/2",
+      "-1/2"
+     ],
+     "name": null,
+     "in_archive": true,
+     "cycles": 14,
+     "heldout_error": 0.11026444717636405,
+     "tableau_hash": "56945e03d577257f0559898055735939c190053fe746914b8c2470f4c5557ac7",
+     "rank": 15
+    },
+    {
+     "a21": "1/64",
+     "b": [
+      "-31/1",
+      "32/1"
+     ],
+     "name": null,
+     "in_archive": true,
+     "cycles": 15,
+     "heldout_error": 0.13571392737442647,
+     "tableau_hash": "a79596858510035b0c3a60da2c8c758e26943dd4d128b655485f8e7ea641675c",
+     "rank": 16
+    }
+   ],
+   "chart_hint": "dot plot: x=a21 (categorical, ordered by value), y=heldout_error, highlight optimum, midpoint, heun2"
+  }
+ }
+}
