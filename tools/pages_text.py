@@ -7,9 +7,10 @@ disagrees with it is wrong here.
 
 Redundancy policy (one home per fact):
   index            -> teasers and links, the hero numbers, the anchor result
-  results          -> the five key findings and the run-level charts
-  methodology      -> everything about validation and testing
-  architecture     -> structure, boundaries, the repo split
+  results          -> the six key findings and the run-level charts
+  methodology      -> the method: setup, measurement, protocol, trust, testing
+  architecture     -> the technical deep dive: structure, boundaries, arithmetic,
+                      cost model, search machinery, archive
   design-decisions -> rationale, cuts, prior art
 Where another page needs a fact that lives elsewhere, it links instead of repeating.
 """
@@ -75,6 +76,10 @@ TEASERS = [
     ("phase0", "One space closed with a proof",
      "The 16-point 2-stage family was enumerated in full; the optimum is not a textbook "
      "method, and it beats all eight classical anchors."),
+    ("validation", "Discovered methods hold up on practical problems",
+     "Five equations from real embedded domains, seen by no search and feeding no archive "
+     "statistic: the discovered methods carry lower Q15 error on four of the five, median "
+     "error ratio 0.475."),
 ]
 
 # ---------------------------------------------------------------------------- results page
@@ -85,7 +90,8 @@ RESULTS_SCOPE = (
     "All numbers on this page share one setting unless a figure says otherwise: total "
     "budget 65,536 cycles, m0plus_fast cost model, Q15 fixed point with floor (ASRS) "
     "rounding, held-out problems. Cheaper methods therefore take more, smaller steps. "
-    "Every chart is built from tools/key_findings.json, recomputed from the archive.")
+    "Charts are built from tools/key_findings.json, recomputed from the archive; finding 6 "
+    "reads rk-work/validation/results.json and uses its own practical problems.")
 
 HEADLINE_VERDICT = """
 <p class="verdict">At a fixed budget of 65,536 cycles on a Cortex-M0+ cost model, the
@@ -96,8 +102,10 @@ classical field before any search begins. The evidence below: an efficiency fron
 where 13 of 14 discovered cells beat every classical anchor of equal or lower cost; a
 rounding-mode experiment in which Euler outranks rk4; the measured step size where
 quantization noise overtakes truncation error; a stiff problem where every classical
-method reports the reference norm as its error; and one search space small enough to
-close with an exhaustive proof.</p>
+method reports the reference norm as its error; one search space small enough to
+close with an exhaustive proof; and a validation suite of five practical problems from
+embedded applications, unseen by any search, where the discovered methods carry the
+lower error on four.</p>
 """
 
 # Each finding: slug (also the section anchor), title, intro paragraphs (before the
@@ -215,7 +223,43 @@ The pattern favours small negative a21: a probe step taken slightly backwards, w
 large-coefficient correction, which under floor rounding partially cancels the accumulated
 downward bias.</p>
 <p>Every row below expands to the full archived record for that point, including the
-per-problem errors and the exact coefficient representations.</p>
+per-problem errors and the exact coefficient representations. Rows are ordered
+cheapest-first under the 32-cycle multiplier, and the last column names a point when it
+coincides with a textbook method.</p>
+"""
+
+F_VALIDATION_INTRO = """
+<p>Everything above is measured on the archive's own seven problems, so a fair question
+remains: do methods selected there transfer to dynamics nobody tuned for? The validation
+suite asks that directly, with five equations taken from real embedded application
+domains &mdash; an averaged buck converter (power electronics), a Li-ion 2RC battery
+equivalent circuit, a linear single-track vehicle model, a type-2 PLL acquiring lock, and
+the Bergman glucose minimal model &mdash; none of which any optimizer saw and none of
+which feeds any archive statistic. Discovered methods from the live archive and the
+classical anchors run each problem at the same 65,536-cycle budget in Q15 with floor
+rounding, scored against independent references: closed forms where the systems are
+linear, a high-precision integration elsewhere. The protocol is described under
+<a href="methodology.html#practical">practical validation</a> on the methodology
+page.</p>
+"""
+
+F_VALIDATION_INTERP = """
+<p>The discovered methods carry the lower error on four of the five problems, with a
+median best-discovered to best-classical error ratio of 0.475. The margin runs from
+decisive on the buck converter (0.00198 vs 0.0208 for rk38, a 10.5&times; gap) to
+moderate on glucose (ratio 0.556). On three of the four wins the winner is the same
+3-stage order-2 champion from finding 1, coefficients unchanged; on the vehicle model an
+order-4 discovered method wins instead. The fifth problem is the honest miss: on the PLL,
+rk38 reaches 0.0128 against the champion's 0.0159 (ratio 1.24), so the transfer is
+strong, not universal.</p>
+<p>Two checks keep the comparison clean. Float64 runs of the same tableaus at the same
+step counts land between 4e-14 and 8e-5 error, in every case hundreds of times below the
+Q15 number, so every error above measures quantization &mdash; exactly the regime the
+search selects for. And the largest raw Q15 value seen anywhere is 20,130 of the int16
+limit 32,767, so no run leaned on overflow luck. Full tables, tableaus, per-problem
+provenance and the verbatim verdict line are on the
+<a href="https://jgoetzmann.github.io/rk-findings/validation.html">findings validation
+page</a>, generated from the same results file.</p>
 """
 
 RUN_CHARTS_INTRO = """
@@ -294,14 +338,79 @@ consistent slope run.</li>
 ARCH_ARITH = """
 <p>States are Q15: int16 at scale 2<sup>&minus;15</sup>. A multiply is
 <code>(a*b) &gt;&gt; 15</code> with an arithmetic shift, flooring toward negative
-infinity; that matches ARM's ASRS and deliberately does not match C's truncation.
-Addition overflow raises rather than wraps, so overflow becomes a verifier rejection
-instead of a silent wrong answer.</p>
-<p>Coefficients are not Q15. Each is an integer-and-shift pair m/2<sup>s</sup> (rk4's 1
-and kutta3's 2 do not fit [&minus;1, 1)), and inexact representations contribute a
-recorded quantisation error. Cost is driven by CSD (non-adjacent-form) weight: 3/8 is
-dyadic yet costs two shifts and an add, and every coefficient is priced at min(shift-add
-expansion, hardware multiply).</p>
+infinity; that matches ARM's ASRS and deliberately does not match C's truncation,
+which rounds toward zero. The two conventions disagree on every negative product with
+a nonzero remainder (q15_mul(&minus;1, 1) is &minus;1 under floor, 0 under
+truncation), and getting this wrong would bias every result in the project, so the
+divergence vectors are pinned as fixtures. Nothing saturates and nothing wraps:
+operands and results are range-checked, anything outside int16 raises, and the
+pipeline turns the exception into a verifier rejection instead of a silent wrong
+answer. Skipping saturation mirrors the hardware rather than cutting a corner: M0+
+has no SSAT instruction, and saturating in software needs a compare and branch, which
+would destroy both branchlessness and exact cycle counting.</p>
+<p>Floor rounding is one-sided: the computed product never exceeds the exact product,
+and the discarded bits average about half an LSB of deficit per term.
+Round-to-nearest would make the per-term error zero-mean and let errors partially
+cancel; flooring accumulates the bias in one direction across every coefficient
+application and every step. A fixed-step integration at the standard budget performs
+thousands of such products, so at small step sizes the drift, not roundoff variance,
+dominates Q15 error. The harness keeps the hardware semantics because shipped code on
+this target would floor too; the measured consequences are
+<a href="results.html#floor-flip">key finding 2</a>.</p>
+<p>Coefficients are not Q15. Each is an integer-and-shift pair m/2<sup>s</sup> with
+|m| &le; 32767 and 0 &le; s &le; 20 (rk4's 1 and kutta3's 2 do not fit
+[&minus;1, 1)), applied as <code>(v*m) &gt;&gt; s</code>. When no exact pair exists,
+1/3 for instance, the closest pair is used and the gap is recorded as a quantisation
+error: a measured property, never a rejection.</p>
+<p>Derivatives get one extra mechanism. The Q15 right-hand side wraps the physical
+float64 derivative: state out to physical units, derivative in float64, result scaled
+back into Q15. A derivative can be larger than the state it drives; rc_thermal's is
+&minus;11 at t = 0, which times the state scale 0.25 leaves Q15 range. Such a problem
+stores its derivative with an extra power-of-two factor (DERIV_SCALE = 1/8 there, 1
+everywhere else), and the step undoes it by inflating the step-size constant,
+h_q = q15(h / DERIV_SCALE). The compensation is exact because both factors are powers
+of two.</p>
+<p>The Q15 integrator takes n equal steps of the budgeted size. Within a step, each
+stage stores h times its derivative (the multiply by h_q happens once, at
+evaluation), so applying a coefficient is a single (m, s) multiply-and-add per
+nonzero entry, and the b combination works the same way. The simulator tracks the
+largest absolute integer seen anywhere in the trajectory, which becomes the overflow
+margin, 1 / (2 &middot; max|q| / 32768): above 1.0 exactly when everything stayed
+under half of full scale, the 2&times; headroom the verifier demands. A float64 twin
+of the integrator exists for the convergence study only and plays no part in scoring
+Q15 error.</p>
+"""
+
+ARCH_COSTMODEL = """
+<p>Costs are counted analytically: no compiler, no emulator, no board in the loop, so
+the cycle count is a pure function of the tableau and identical on every machine.
+Three models assign cycles to five operation classes:</p>
+<div class="scroll"><table>
+<thead><tr><th>model</th><th>mul</th><th>add</th><th>shift</th><th>load</th><th>store</th><th>role</th></tr></thead>
+<tbody>
+<tr><td>m0plus_fast</td><td>1</td><td>1</td><td>1</td><td>2</td><td>2</td><td>M0+ with single-cycle multiplier; primary</td></tr>
+<tr><td>m0plus_slow</td><td>32</td><td>1</td><td>1</td><td>2</td><td>2</td><td>M0+ with iterative multiplier; primary</td></tr>
+<tr><td>avr_approx</td><td>14</td><td>2</td><td>8</td><td>2</td><td>2</td><td>8-bit AVR approximation; advisory only</td></tr>
+</tbody></table></div>
+<p>Applying a coefficient (m, s) costs nothing when it is 0 (the term is omitted) or
+&plusmn;1 (a copy whose sign folds into the add). Otherwise it costs the cheaper of
+two implementations: a shift-add expansion of w shifts plus w &minus; 1 adds, where w
+is the CSD weight of m (the minimum number of nonzero signed powers of two in its
+non-adjacent form; 3/8 is dyadic yet costs two shifts and an add), or one hardware
+multiply plus one shift. Taking the minimum is the point of the model: with a 1-cycle
+multiplier the multiply nearly always wins and coefficient structure barely matters,
+while with a 32-cycle multiplier the shift-add expansion wins up to about w = 10,
+making low-weight coefficients dramatically cheaper. Per stage with any nonzero A
+entry, and once more for the b combination, the model charges a load, the coefficient
+cost plus an add per nonzero entry, and a store, all times the state count.
+Derivative evaluation is excluded: identical across methods at the same stage count,
+it only shifts every method by the same constant.</p>
+<p>Two cross-checks anchor the model to hardware. A pinned, hand-counted ARMv6-M
+assembly sequence must count to exactly 13 cycles under m0plus_fast and 75 under
+m0plus_slow, and a reference C emitter can print the step function a compiler would
+see, for one-off human comparison; the harness never compiles or executes it. The
+rk4-versus-rk38 comparison on the <a href="index.html">overview page</a> is pinned
+the same way, as golden test G21: twelve numbers verified before any search ran.</p>
 """
 
 ARCH_CANDIDATES = """
@@ -313,217 +422,235 @@ b-linear order conditions; snapping b would make order &ge; 3 impossible by the 
 theorem. When the requested order is not exactly solvable for a snapped A (order 4 rarely
 is), the projection falls back to the highest solvable order &ge; 2 and the candidate is
 verified at the order it actually achieves.</p>
+<p>The projection, exactly: a CMA-ES sample is s(s&minus;1)/2 free A entries plus s
+guesses for b. The A entries snap to the lattice k/D, where D is the directive's
+dyadic denominator cap; the abscissae c are then the exact row sums of A. The order
+conditions up to the target order, linear in b once A and c are fixed, are assembled
+as an exact system over Fractions (one row per rooted tree, right-hand side
+1/&gamma;(tree)) and solved by Gaussian elimination over Fractions: determined
+components come out as exact rationals, leftover degrees of freedom take the CMA
+guess snapped to the same lattice, and an inconsistent system returns no tableau.
+Non-dyadic weights like 1/6 survive as exact fractions and are later applied through
+their closest (m, s) pair, with the gap recorded as quantisation error.</p>
+<p>Around the projection, CMA-ES (initial step size 0.3) minimises the search-set RMS
+at the shared budget plus a 1e6 quadratic penalty on the order-condition residuals,
+with 1e9 assigned to anything that overflows or cannot be projected; only the three
+search problems are reachable from this loop. On stagnation it restarts with a
+derived seed (seed + 1000k for restart k), improving tableaus are deduplicated by
+content hash, and islands running under different seeds exchange the record with the
+lowest held-out error, using scores already computed downstream by the evaluator,
+never by the search itself.</p>
+<p>The enumerated spaces are lattices, counted before they are walked. Phase 0's one
+free parameter runs over 256 dyadic values, of which exactly 16 yield exactly
+representable b weights; that space is closed as
+<a href="results.html#phase0">key finding 5</a>. Phase 1 parameterises the 3-stage
+order-3 family by its two abscissae, each over a 1,024-value lattice: 1,048,576
+ordered pairs, well under the module's 100,000,000-candidate cap (past the cap, the
+code would fall back to CMA-ES and record that it did). Pairs survive only when the
+induced matrix entries and c<sub>2</sub> are exactly representable, every emitted
+tableau is asserted to satisfy the order-3 residuals exactly, and 5,094 make it
+through.</p>
+"""
+
+ARCH_ARCHIVE = """
+<p>Every verified candidate becomes one JSON line in a per-day file, appended with
+write-then-fsync: the tableau as exact fractions, its sha256 content hash, the full
+score vector, the mechanically assigned tier, the cycle id and seed, the verifier
+hash in force when it was scored, the directive and hypothesis ids that motivated it,
+and a UTC timestamp. Replay validates as it rebuilds: a line that fails JSON parsing
+or schema validation is dropped, a record whose stored hash disagrees with its
+recomputed tableau hash is rejected, and a tier string outside the closed three-value
+set fails validation.</p>
+<p>The working structure over the records is MAP-Elites: one grid per symbolic order,
+each cell keyed by stage count and a log2 band of the m0plus_fast cycle count (below
+16 is bucket 0, 16&ndash;31 is 1, 32&ndash;63 is 2, and so on up to bucket 7 at 1024
+and above). Within a cell the elite is the record with strictly the lowest held-out
+error; ties and non-finite comparisons keep the earlier record. Replay also maintains
+Welford running statistics per (order, stages) cell for each model and metric, which
+is what the hypothesis ledger's predicates read. Problems admitted from quarantine
+run in shadow for 10 cycles, evaluated and recorded but excluded from tier decisions,
+before they count.</p>
 """
 
 ARCH_OUTER = """
 <p>The LLM (Codex, plan-billed, authenticated on the host, mounted read-only) never
 touches the inner loop. It emits JSON directives that can only narrow the search: target
 order, stage counts, structural constraints, validated against a schema where unknown
-keys are rejections. Directives are requested every few cycles and on every escalation,
+keys are rejections. Beyond the schema, hand-applied rules bound every field: order 1
+to 4, at most three stage counts between 2 and 6, force-zero positions strictly below
+the diagonal, a dyadic denominator cap that is a power of two at most 32768, islands 1
+to 8, a budget of 5 to 120 minutes, a rationale under 500 characters. A malformed
+directive is discarded and logged, and a deterministic fallback searches the emptiest
+grid cell instead. Directives are requested every few cycles and on every escalation,
 and reused in between; calls stop at a plan-usage cap.</p>
 <p>On HYPOTHESIZE escalations it proposes falsifiable hypotheses whose ids and verdicts
-are assigned by code and whose predicates must parse under a closed grammar (a
-hand-written parser; no eval anywhere near model output). A literature loop web-searches
-a rotating topic every ~50 cycles and feeds the digest into every prompt. The digests and
-the model's prose interpretation are published on the findings site, clearly labelled and
-passed through a softener so the site's banned-words guard holds.</p>
+are assigned by code and whose predicates must parse under a closed grammar: a
+hand-written tokenizer and recursive-descent parser with a 2,000-character cap and a
+control-character ban, no eval anywhere near model output (a grep canary enforces
+that), and a dunder call is a syntax error, not code. The grammar, in full:</p>
+<pre class="grammar">expr    := term (("AND" | "OR") term)*
+term    := field op field | field op number
+field   := model "." cell "." metric
+model   := "fast" | "slow" | "avr_approx"
+cell    := "p" digit "s" digit
+metric  := "heldout" | "search" | "cycles" | "order"
+op      := "&lt;" | "&gt;" | "&lt;=" | "&gt;=" | "=="</pre>
+<p>A field such as fast.p3s4.heldout resolves against the archive's cell statistics:
+the minimum of the metric over every cycle bucket at that (order, stages), except the
+order metric, which uses the mean. How verdicts are then assigned is protocol, not
+machinery, and lives on the <a href="methodology.html#protocol">methodology page</a>.
+A literature loop web-searches a rotating topic every ~50 cycles and feeds the digest
+into every prompt. The digests and the model's prose interpretation are published on
+the findings site, clearly labelled and passed through a softener so the site's
+banned-words guard holds.</p>
 """
 
 ARCH_HOST = """
 <p>A PowerShell watchdog polls every 10 seconds: stale heartbeat &rarr; kill; spend over
 cap or disk under 5 GB &rarr; stop; laptop on battery or foreground CPU load &rarr; pause
-and resume; plus the host-side pushes. Operational knobs (container resources, auto-stop,
-LLM throttles, watchdog thresholds) live in a workspace <code>config.json</code> edited
-by <code>configure.py</code>. Scientific thresholds are deliberately not configurable:
-changing them would invalidate the archive, so they live in the hash-pinned code. A
-read-only watcher window renders the whole state live; Ctrl+C in it cannot touch the
-run.</p>
+and resume; plus the host-side pushes. A wrongful kill self-heals, because the restart
+policy brings the container back and the start gate re-runs; spend and disk stops stay
+down; pause is atomic, so the run resumes mid-cycle exactly where it stopped.
+Operational knobs (container resources, auto-stop, LLM throttles, watchdog thresholds)
+live in a workspace <code>config.json</code> edited by <code>configure.py</code>.
+Scientific thresholds are deliberately not configurable: changing them would invalidate
+the archive, so they live in the hash-pinned code. A read-only watcher window renders
+the whole state live; Ctrl+C in it cannot touch the run. One bookkeeping rule ties the
+layer together: storage is UTC everywhere, and only human-facing display converts to US
+Central, through one small module; the watchdog's staleness arithmetic and the
+archive's determinism both depend on it.</p>
 <p class="note">Three pre-flight drills changed this system before the run started; that
 story is on the <a href="methodology.html#preflight">methodology page</a>.</p>
 """
 
 # ---------------------------------------------------------------------------- methodology
+# One skeleton, shared with the findings methodology page: experimental setup,
+# measurement, statistical protocol (incl. practical validation), verification and
+# trust, testing, reproducibility, limitations. Human voice here; the formal version
+# is the findings page, the technical depth is architecture.html.
 
 METH_LEAD = """
 <p>Numbers from an unattended, partly model-steered search are worth exactly as much as
-the guarantees around them. This page is those guarantees: what runs at every container
-start, what is pinned, what the test suite proves, and what the executed pre-flight
-actually caught. The machine-generated counterpart, always current on constants and
+the method behind them. This page is that method: what the experiment fixes in advance,
+what gets measured, how a claim earns a verdict, what stands between the model and the
+scorer, and what was tested. The formal version, always current on constants and
 thresholds, is the findings methodology page
 (<a href="findings/methodology.html">snapshot</a>,
-<a href="https://jgoetzmann.github.io/rk-findings/methodology.html">live</a>).</p>
+<a href="https://jgoetzmann.github.io/rk-findings/methodology.html">live</a>); the
+system internals live on the <a href="architecture.html">architecture page</a>.</p>
+"""
+
+METH_SETUP = """
+<p>Everything scientific is fixed before the run: explicit Runge&ndash;Kutta tableaus
+of orders 1 to 4 and 2 to 6 stages, scored in Q15 fixed point under an analytic
+Cortex-M0+ cycle model, at a budget of 65,536 cycles per problem. Methods compete at
+equal budget, never equal step size, so a cheap method earns its ranking by taking
+more, smaller steps. Seven fixed test problems drive every error number: three the
+optimizer sees, four held out to catch overfitting. The split is structural, not a
+convention; a test walks the optimizer's import graph and fails on any load of the
+held-out set's name.</p>
+"""
+
+METH_MEASURE = """
+<p>A method's score is the error at the end of each integration: distance to the
+reference solution, scaled by the problem's amplitude, or drift in an invariant
+(energy for the pendulum, norm for the quaternion). Alongside it the harness measures
+the order each tableau actually delivers, fitting error against step size and letting
+the data pick the fitting window; rk4 comes out at 4.07, and a broken implementation
+reads 2 or 3 instead. Before any of that counts, nine verifier checks gate the
+candidate, cheap structural checks ahead of any simulation; the annotated list is on
+the <a href="architecture.html">architecture page</a>.</p>
+"""
+
+METH_PROTOCOL = """
+<p>Confidence is assigned by code at the moment a record is written: heldout_verified,
+search_only, or unreplicated, by comparison against the incumbent of the record's grid
+cell. The model can propose hypotheses, but only as machine-checkable predicates in a
+closed grammar, and it never writes the verdict: cells with no data mean inconclusive,
+effects below Cohen's d of 0.2 mean inconclusive, and every refuted hypothesis is fed
+back into later prompts so it stays refuted. The project's premise went through the
+same discipline: a falsification experiment with kill and proceed thresholds committed
+in advance, run before the search started, its verdict ("mixed") published either way
+(<a href="results.html#crossover">key finding 3</a>).</p>
+"""
+
+METH_PRACTICAL = """
+<p>A practical validation suite runs outside the search entirely: equations taken from
+real applications, which no optimizer ever saw and no archive statistic includes.
+Champions and classical anchors run on them at the same 65,536-cycle budget, under the
+same arithmetic and cost model. The point is to ask whether methods selected on the
+fixed suite hold up on dynamics nobody tuned for. The outcome is
+<a href="results.html#validation">key finding 6</a>; the full tables live on the
+<a href="https://jgoetzmann.github.io/rk-findings/validation.html">findings validation
+page</a>.</p>
 """
 
 METH_GATE = """
-<p>The container refuses to run science before proving its environment, in a fixed order.
-It writes a heartbeat first; the gate takes long enough that the watchdog once killed a
-fresh container fourteen seconds after start because the heartbeat on disk predated the
-restart, and the fix is the first line of the entrypoint, not a longer timeout. It then
-probes its own mount: if <code>/harness</code> accepts a write, the container exits
-rather than run with a writable scorer. It recomputes the verifier hash against the
-pinned value. Finally it runs the golden and canary tests against the harness as mounted:
-55 cases at the pre-flight run, passing in under four seconds. Any failure is exit 1 and
-the runner never starts.</p>
-<p>Running tests at start rather than at build time is the point. "The tests passed when
-the image was built" claims nothing about the harness mounted today. The gate re-earns
-the claim on every start, including every automatic restart after a kill.</p>
+<p>The container refuses to run science before proving its environment, in the fixed
+order the diagram shows: heartbeat, a probe that the harness mount rejects writes, the
+verifier hash against its pinned value, then the golden and canary tests against the
+harness as mounted (55 cases, under four seconds). Any failure is exit 1 and the
+runner never starts. Running the tests at start, not at build time, is the point: the
+gate re-earns the claim on every start, including every restart after a kill.</p>
 """
 
 METH_HASH = """
-<p>Six modules decide every score: coefficient representation, order conditions, verifier,
-cost model, evaluator, problems. Four fixture files pin their golden values. A sha256 over
-those ten files, concatenated in a fixed order, is pinned in <code>VERIFIER_HASH</code>;
-the entrypoint recomputes and compares it, and every archive record stores the hash that
-scored it. A change to any byte is loud twice over: the container refuses to start, and a
-record produced under a different hash would advertise the fact in its own row.</p>
-<p>This was drilled, not assumed. Pre-flight item A3 altered one line of
-<code>coeffrep.py</code> and started the container: exit 1, "VERIFIER HASH MISMATCH &mdash;
-refusing to run". Restored, the same container gated green.</p>
+<p>Six modules decide every score, and four fixture files pin their golden values. A
+sha256 over those ten files is pinned in <code>VERIFIER_HASH</code>; the entrypoint
+recomputes it, and every archive record stores the hash that scored it, so a change to
+any byte is loud twice over. Drilled, not assumed: pre-flight item A3 altered one line
+of <code>coeffrep.py</code> and the container refused with "VERIFIER HASH MISMATCH";
+restored, it gated green.</p>
 """
 
 METH_REACH = """
-<p>The harness mount is read-only (<code>:ro</code> on the docker command line, re-checked
-by the entrypoint's write probe). The GitHub credential never enters the container: the
-env file is filtered on the host and drops every <code>GITHUB_TOKEN</code> line, the
-runner only ever commits into the mounted checkouts, and the host watchdog pushes those
-commits with the owner's own credentials. The Codex OAuth file is mounted read-only for
-the plan-billed planning calls.</p>
-<p>An earlier design scoped a token instead and did not survive its pre-flight probe;
-the full story is under <a href="design-decisions.html#credentials">credentials outside
-the container</a>.</p>
+<p>The GitHub credential never enters the container: the env file is filtered on the
+host, the runner only commits into the mounted checkouts, and the host watchdog pushes
+with the owner's own credentials (an earlier token-scoping design failed its probe;
+see <a href="design-decisions.html#credentials">credentials outside the container</a>).
+Model-written problems execute only after the quarantine's admission checks, join the
+held-out set alone, and shadow for 10 cycles; the check list is on the
+<a href="architecture.html">architecture page</a>.</p>
 """
 
 METH_SUITE = """
-<p>The suite collects <strong>987 tests</strong> in seven numbered tiers that mirror the
-dependency stack, cheapest and most foundational first. Golden tests (G-numbered) pin
-behaviour to fixture values written before the build: rk4's measured order comes out
-4.0706 from 3 fit points, the hand-counted ARMv6-M multiply sequence costs 13 cycles fast
-and 75 slow, and the eleven coefficient representations reproduce bit for bit. Canary
-tests (K-numbered) are anti-gaming: K1 plants a candidate tuned on the search set and
-asserts it can earn search_only but never heldout_verified; K2 asserts that a
-single-family winner that is worse on both aggregates stays unreplicated.</p>
+<p>The suite collects <strong>1,038 tests</strong> in nine numbered tiers that mirror
+the dependency stack. Golden tests (G-numbered) pin behaviour to fixture values written
+before the build existed, down to exact measured orders and cycle counts. Canary tests
+(K-numbered) are anti-gaming: K1 plants a candidate tuned on the search set and asserts
+it can earn search_only but never heldout_verified; K2 asserts a single-family winner
+stays unreplicated.</p>
 """
 
 METH_PREFLIGHT = """
-<p>The pre-flight checklist (docs/REVIEW.md in the harness repo) is not a document anyone
-initials. <code>scripts/preflight.py</code> executes every machine-checkable item, prints
-the measured value next to each verdict, and writes the signed report
-(docs/REVIEW-REPORT.md). The full run, suite and docker drills included, was executed on
-2026-08-30: <strong>91 PASS, 0 FAIL</strong>, 8 items marked MANUAL (they need the host,
-hardware, or a human, and carry their instructions in the report), 1 advisory INFO. All
-twelve sections green.</p>
-<p>The drills are where the exercise paid for itself, because they act instead of
-asserting. A1 writes to <code>/harness</code> from inside a running container and expects
-"Read-only file system". A3 tampers with a verifier file and expects the hash refusal. D5
-deliberately feeds the optimizer the held-out set and checks the search/held-out gap
-collapses to zero, then returns on revert; that is what shows the gap metric measures
-what it claims.</p>
-<p>Three drills changed the system before the run started. The crash-recovery drill
-exposed that a runner killed mid-seeding never finished writing the classical baselines
-(fixed: seeding is idempotent per hash, every cycle). The trust-boundary probe caught
-the token scoping failure retold under
-<a href="design-decisions.html#credentials">credentials outside the container</a>. And
-the first live archive build tripped the banned-words guard on model-written text, an
-incident told in full under
-<a href="design-decisions.html#numbers-not-claims">auto-publish numbers, never
-claims</a>.</p>
+<p>The pre-flight checklist is not a document anyone initials.
+<code>scripts/preflight.py</code> executes every machine-checkable item and writes the
+signed report: <strong>91 PASS, 0 FAIL</strong>, 8 MANUAL, 1 advisory INFO on the
+2026-08-30 run. The drills act instead of asserting: A1 writes to
+<code>/harness</code> from a running container and expects "Read-only file system";
+D5 feeds the optimizer the held-out set and watches the search/held-out gap collapse
+to zero, then return on revert. Three drills changed the system before the run
+started; those stories are under <a href="design-decisions.html">design
+decisions</a>.</p>
 """
 
-METH_OPS = """
-<p>Once running, the container answers to a host watchdog that polls every ten seconds
-and holds every kill switch outside the container. A heartbeat older than two minutes is
-a <code>docker kill</code>; a wrongful kill self-heals because the restart policy brings
-the container back and the start gate re-runs. Spend over the monthly cap, or free disk
-under five gigabytes, is a stop that stays down. On battery is a pause; plugged back in,
-an unpause. Pause is atomic, so the run resumes mid-cycle exactly where it stopped.</p>
-<p>The run also throttles itself: auto-stop limits end the run at the next cycle
-boundary; the LLM is asked for a fresh directive every five cycles and on every
-escalation, with reuse in between; calls stop at 80% of the weekly plan. One bookkeeping
-rule ties the layer together: everything stored is UTC, and only human-facing display
-converts to US Central, through one small module. The watchdog's staleness arithmetic and
-the archive's determinism both depend on storage never carrying a local time.</p>
+METH_REPRO = """
+<p>The same seed produces byte-identical archives, and an acceptance test requires it.
+The evaluator reads no clock and draws no random numbers; the archive is append-only
+JSONL whose derived state replays from the files alone; every record stores the hash
+of the scoring code that produced it. Storage is UTC everywhere, and only display code
+converts to Central time. The findings site is a pure function of the archive: same
+records, same bytes.</p>
 """
 
-# ------------------------------------------------------------ "how to read this" blocks
-
-HOW_SYSTEM = """
-<p>Three columns, left to right: the Windows host, the docker container, and the services
-the run talks to. On the host, the watchdog is the only process holding push credentials.
-Inside the container, the highlighted box is <code>rk-harness</code>: mounted read-only,
-hash-checked at start, home of every rule that decides a score. The runner drives the
-cycle loop and is the only component that calls the LLM; <code>rk-work</code> is the one
-writable mount. The arrows carry the trust story: "docker run" is all the host does to
-start the science, and no arrow carries a GitHub credential into the middle column.</p>
-"""
-
-HOW_CYCLE = """
-<p>Ten stages, left to right, top row then bottom. "replay" rebuilds all state from the
-append-only archive, which is what lets the loop be killed anywhere. "verify &times;9" is
-the nine-check gate, cheap checks first. "evaluate" runs survivors in Q15 under three cost
-models at equal cycle budget; "tier" compares against the cell's incumbent; "append"
-fsyncs the record. A crash between any two boxes loses at most the current cycle: nothing
-before "append" has side effects, and everything after it can be regenerated from the
-archive.</p>
-"""
-
-HOW_REPOS = """
-<p>Each box is a git repository; the container boundary is the dashed enclosure. Solid
-arrows are continuous flows that happen every cycle while the run is alive; the dashed
-arrow is a one-time copy. The two right-hand boxes are the published sites: rk-findings
-is rebuilt by the run itself and keeps changing; rk-overview (this site) was generated by
-hand on the snapshot date, and its copy of the findings pages is frozen at that date.</p>
-"""
-
-HOW_PIPELINE = """
-<p>The vertical chain is the container's entrypoint, in execution order; every box must
-succeed before the next runs, and any failure takes the exit-1 branch on the right, so
-the runner only ever starts on a proven environment. The chain re-runs on every container
-start, including automatic restarts after a watchdog kill.</p>
-"""
-
-HOW_RECORDS = """
-<p>The x axis is the cycle number; the y axis is the running total of archive records,
-meaning every candidate that passed all nine verifier checks and was appended. Rejected
-candidates never appear here (they are counted in the rejection chart). Steep stretches
-are the exhaustive phases, where hundreds of enumerated points get verified per cycle;
-near-flat stretches are CMA-ES territory, where most sampled tableaus fail a check and
-the archive grows by survivors only.</p>
-"""
-
-HOW_TIERS = """
-<p>One bar per confidence tier, assigned by code the moment a record is appended, by
-comparison with the incumbent of its cell: <em>heldout_verified</em> means better than
-the incumbent on the search and held-out aggregates, improving at least two problem
-families; <em>search_only</em> means better on search but not held-out, the signature of
-overfitting; <em>unreplicated</em> is everything else, including every record landing in
-an empty cell. No model output touches the assignment.</p>
-"""
-
-HOW_REJECTS = """
-<p>One bar per verifier rejection code, counted over the whole event stream. The nine
-checks run in a fixed cheap-to-expensive order and stop at the earliest failure, so each
-rejected candidate is counted once, under the check that killed it. The mix is dominated
-by the expensive tail because the cheap structural failures mostly cannot occur by
-construction: enumeration emits only valid points, and the CMA-ES projection solves b
-exactly so the order conditions already hold.</p>
-"""
-
-HOW_PHASE0_TABLE = """
-<p>Each row is one of the sixteen tableaus, cheapest first under the 32-cycle multiplier
-(the fast-model cycles in the chart above differ slightly). a21 fixes everything else:
-the order conditions force b = (1 &minus; 1/(2a21), 1/(2a21)) and c = (0, a21). The tier
-badge is the record's mechanically assigned confidence tier; the last column names the
-point when it coincides with a textbook method. Click any row for the full archived score
-vector.</p>
-"""
-
-HOW_DECISIONS = """
-<p>Each card is one decision from DESIGN.md, written before any code existed. "Original"
-condenses what the design said; "As built" records what the working system does today.
-Cards tagged "revised in build" are the two whose plan changed on contact with the
-build; the rest held up. Every
-card has a stable anchor, so a link like
-<code>design-decisions.html#credentials</code> lands on the exact decision.</p>
+METH_LIMITS = """
+<p>The honest edges, briefly: the cycle model is analytic and has never been closed
+against a physical chip inside the loop; measured order comes from one scalar problem
+in float64; error is judged at the final time, not along the trajectory; and floor is
+one hardware convention among several. Optimality claims from the enumerated phases
+hold only within their lattices, and four held-out problems make a strong filter, not
+a statistical guarantee. The full list, with reasoning, is on the
+<a href="findings/methodology.html">findings methodology page</a>.</p>
 """
 
 # ---------------------------------------------------------------------- design decisions

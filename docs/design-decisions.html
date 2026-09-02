@@ -118,12 +118,6 @@ footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);
 footer p{margin:3px 0;max-width:none}
 footer p.prov a{color:var(--text-2)}
 
-h1{font-size:27px;margin:14px 0 4px;letter-spacing:-.015em}
-h2{font-size:19px;margin:36px 0 12px}
-h3{font-size:15px;margin:20px 0 8px;color:var(--text-1)}
-.sub{font-size:14.5px}
-nav.tabs{margin-top:14px}
-nav.tabs a.on{box-shadow:inset 0 3px 0 var(--s1)}
 .herolead{font-size:17.5px;line-height:1.6;max-width:74ch}
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 8px}
 .chip{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
@@ -155,12 +149,7 @@ section.finding h2{font-size:20px;margin-bottom:8px}
 .findnum{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;
   background:var(--s1);color:#fff;font-size:16px;font-weight:700;margin-right:12px;
   vertical-align:-7px}
-figure.fig{background:var(--surface-1);border:1px solid var(--line);border-radius:12px;
-  padding:16px 18px 12px;margin:16px 0}
-figure.fig figcaption{font-size:13.5px;color:var(--text-2);margin:10px 0 2px;
-  max-width:96ch;border-top:1px solid var(--line);padding-top:10px}
-figure.fig .src{display:block;margin-top:6px;font-size:12px;color:var(--text-3)}
-figure.panel figcaption{font-size:13.5px;margin:4px 0 10px}
+figure .src{display:block;margin-top:6px;font-size:12px;color:var(--text-3)}
 svg text{font-size:13px}
 svg .lbl{font-size:13px}
 svg .dlab{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
@@ -180,11 +169,6 @@ ol.checks li{margin:6px 0;max-width:82ch}
 ul.toc{columns:2;column-gap:32px;font-size:13.5px;margin:8px 0 4px;padding-left:20px}
 ul.toc li{margin:3px 0}
 @media (max-width:700px){ul.toc{columns:1}}
-details.howto{margin:8px 0 4px;font-size:13px;color:var(--text-2)}
-details.howto summary{cursor:pointer;color:var(--s1);font-size:12.5px;font-weight:600;
-  list-style-position:inside}
-details.howto>div{border-left:3px solid var(--line);padding:2px 0 2px 12px;margin-top:6px}
-details.howto p{max-width:80ch;margin:6px 0}
 .decision{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
   padding:16px 20px;margin:14px 0;scroll-margin-top:16px}
 .decision:target{border-color:var(--s1)}
@@ -209,25 +193,16 @@ details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
 details.p0[open] summary::before{content:"\2212"}
 details.p0[open] summary{border-bottom:1px solid var(--line)}
 .p0body{padding:10px 16px 12px 40px}
-footer{border-top:1px solid var(--line);padding-top:12px;margin-top:56px}
 </style>
 </head>
 <body>
 <header class="site"><div class="wrap">
 <h1>design decisions</h1>
 <p class="sub">Every deliberate choice, annotated with what the build did to it.</p>
-<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="methodology.html">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html" class="on">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-01)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="methodology.html">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html" class="on">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-02)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
 </div></header>
 <div class="wrap">
 <p class="note">Each entry: the original decision from DESIGN.md (written before the build), and what the working system actually does. Tags mark whether contact with reality kept or changed it.</p>
-<details class="howto"><summary>How to read this</summary><div>
-<p>Each card is one decision from DESIGN.md, written before any code existed. "Original"
-condenses what the design said; "As built" records what the working system does today.
-Cards tagged "revised in build" are the two whose plan changed on contact with the
-build; the rest held up. Every
-card has a stable anchor, so a link like
-<code>design-decisions.html#credentials</code> lands on the exact decision.</p>
-</div></details>
 <h3>Contents</h3>
 <ul class="toc"><li><a href="#quantization">The problem is quantization, not coefficient prettiness</a></li><li><a href="#dyadic-theorem">Order ≥ 3 admits no all-dyadic tableau</a></li><li><a href="#static-counting">Static cycle counting, not simulation, not hardware</a></li><li><a href="#targets">Cortex-M0+ primary; AVR advisory; two M0+ multiplier variants</a></li><li><a href="#q15-overflow">Q15, wrapping semantics, overflow as a rejection</a></li><li><a href="#inner-outer">Classical optimizer in the inner loop, LLM in the outer loop</a></li><li><a href="#heldout-split">Search/held-out split, enforced structurally</a></li><li><a href="#map-elites">MAP-Elites, one grid per order</a></li><li><a href="#equal-budget">Equal cycle budget, never equal step size</a></li><li><a href="#resource-limits">Fixed resource limits plus a pause watchdog</a></li><li><a href="#credentials">Credentials outside the container; harness mounted read-only</a></li><li><a href="#numbers-not-claims">Auto-publish numbers, never claims</a></li><li><a href="#encourager">The encourager may change direction but not stop</a></li><li><a href="#falsification-first">Falsification experiment first</a></li></ul>
 <div class="decision" id="quantization"><h3><a href="#quantization" style="color:inherit;text-decoration:none">The problem is quantization, not coefficient prettiness</a><span class="tag tag-kept">held up</span></h3><div class="orig"><strong>Original:</strong> In floating point, h·b constant-folds and 1/3 costs the same as 0.25; the premise only survives in fixed point on an FPU-less MCU, where a power-of-two coefficient becomes a shift. Scope narrowed accordingly.</div><div class="asbuilt"><strong>As built:</strong> Kept, and measured: coefficient arithmetic is 50&ndash;56% of per-step cycles under the fast multiplier, with a roundoff/truncation crossover inside the practical step-size range (<a href="results.html#crossover">key finding 3</a>).</div></div>
@@ -265,7 +240,7 @@ in fixed point; that is the gap, and it is narrow enough to finish. The literatu
 keeps collecting adjacent work (fixed-point ODE solvers, CSD constant multiplication,
 rounding-error analysis) into the findings site's literature page as the run proceeds.</p>
 
-<footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-01 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
+<footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-02 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
 </div>
 </body>
 </html>

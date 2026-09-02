@@ -118,12 +118,6 @@ footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);
 footer p{margin:3px 0;max-width:none}
 footer p.prov a{color:var(--text-2)}
 
-h1{font-size:27px;margin:14px 0 4px;letter-spacing:-.015em}
-h2{font-size:19px;margin:36px 0 12px}
-h3{font-size:15px;margin:20px 0 8px;color:var(--text-1)}
-.sub{font-size:14.5px}
-nav.tabs{margin-top:14px}
-nav.tabs a.on{box-shadow:inset 0 3px 0 var(--s1)}
 .herolead{font-size:17.5px;line-height:1.6;max-width:74ch}
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 8px}
 .chip{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
@@ -155,12 +149,7 @@ section.finding h2{font-size:20px;margin-bottom:8px}
 .findnum{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;
   background:var(--s1);color:#fff;font-size:16px;font-weight:700;margin-right:12px;
   vertical-align:-7px}
-figure.fig{background:var(--surface-1);border:1px solid var(--line);border-radius:12px;
-  padding:16px 18px 12px;margin:16px 0}
-figure.fig figcaption{font-size:13.5px;color:var(--text-2);margin:10px 0 2px;
-  max-width:96ch;border-top:1px solid var(--line);padding-top:10px}
-figure.fig .src{display:block;margin-top:6px;font-size:12px;color:var(--text-3)}
-figure.panel figcaption{font-size:13.5px;margin:4px 0 10px}
+figure .src{display:block;margin-top:6px;font-size:12px;color:var(--text-3)}
 svg text{font-size:13px}
 svg .lbl{font-size:13px}
 svg .dlab{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
@@ -180,11 +169,6 @@ ol.checks li{margin:6px 0;max-width:82ch}
 ul.toc{columns:2;column-gap:32px;font-size:13.5px;margin:8px 0 4px;padding-left:20px}
 ul.toc li{margin:3px 0}
 @media (max-width:700px){ul.toc{columns:1}}
-details.howto{margin:8px 0 4px;font-size:13px;color:var(--text-2)}
-details.howto summary{cursor:pointer;color:var(--s1);font-size:12.5px;font-weight:600;
-  list-style-position:inside}
-details.howto>div{border-left:3px solid var(--line);padding:2px 0 2px 12px;margin-top:6px}
-details.howto p{max-width:80ch;margin:6px 0}
 .decision{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
   padding:16px 20px;margin:14px 0;scroll-margin-top:16px}
 .decision:target{border-color:var(--s1)}
@@ -209,14 +193,13 @@ details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
 details.p0[open] summary::before{content:"\2212"}
 details.p0[open] summary{border-bottom:1px solid var(--line)}
 .p0body{padding:10px 16px 12px 40px}
-footer{border-top:1px solid var(--line);padding-top:12px;margin-top:56px}
 </style>
 </head>
 <body>
 <header class="site"><div class="wrap">
 <h1>Searching for Runge–Kutta methods that survive fixed-point arithmetic</h1>
 <p class="sub">An unattended search, a hash-pinned scorer, and what the numbers say so far.</p>
-<nav class="tabs"><a href="index.html" class="on">overview</a><a href="results.html">key findings</a><a href="methodology.html">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-01)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+<nav class="tabs"><a href="index.html" class="on">overview</a><a href="results.html">key findings</a><a href="methodology.html">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-02)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
 </div></header>
 <div class="wrap">
 
@@ -228,7 +211,7 @@ findings: <a href="results.html">discovered methods cut held-out error up to 3.0
 against the best classical anchor</a>, and the mechanism is a half-LSB rounding bias that
 reorders the classical field before any search begins.</p>
 
-<div class="chips"><div class="chip"><div class="v">45,658</div><div class="k">verified tableaus archived</div></div><div class="chip"><div class="v">802</div><div class="k">search cycles completed</div></div><div class="chip"><div class="v">2,816</div><div class="k">candidates rejected by the verifier</div></div><div class="chip"><div class="v">987</div><div class="k">tests in the harness suite</div></div><div class="chip"><div class="v">55</div><div class="k">tests at every container start</div></div><div class="chip"><div class="v">4</div><div class="k">search phases exercised</div></div></div>
+<div class="chips"><div class="chip"><div class="v">46,301</div><div class="k">verified tableaus archived</div></div><div class="chip"><div class="v">808</div><div class="k">search cycles completed</div></div><div class="chip"><div class="v">2,866</div><div class="k">candidates rejected by the verifier</div></div><div class="chip"><div class="v">1,038</div><div class="k">tests in the harness suite</div></div><div class="chip"><div class="v">55</div><div class="k">tests at every container start</div></div><div class="chip"><div class="v">4</div><div class="k">search phases exercised</div></div></div>
 
 <p>The falsifiable claim behind the project: classical tableaus were derived assuming exact
 arithmetic. On an FPU-less microcontroller in Q15, at step sizes a real controller would
@@ -243,7 +226,7 @@ narrow gap is the project.</p>
 boundary that keeps the searching agent away from its own scorer.</p>
 
 <h2>The findings, in one minute</h2>
-<div class="teasers"><a class="tease" href="results.html#efficiency"><span class="tn">1</span><span><span class="tt">Discovered methods beat every classical anchor.</span> <span class="td">13 of 14 discovered grid cells beat all classical anchors of equal or lower cost on held-out error; the best cuts error 3.0× at the same 65,536-cycle budget.</span></span></a><a class="tease" href="results.html#floor-flip"><span class="tn">2</span><span><span class="tt">Floor rounding reorders the classical field.</span> <span class="td">Under the hardware&#x27;s floor rounding, Euler&#x27;s search-set error undercuts rk4&#x27;s; swap in round-to-nearest and the textbook order returns.</span></span></a><a class="tease" href="results.html#crossover"><span class="tn">3</span><span><span class="tt">Quantization overtakes truncation inside the practical range.</span> <span class="td">rk4&#x27;s Q15 error decouples from its float error at h = 0.156 on the damped oscillator, and gets worse as steps shrink.</span></span></a><a class="tease" href="results.html#rc-thermal"><span class="tn">4</span><span><span class="tt">A stiff problem hits a quantization floor.</span> <span class="td">All eight classical methods land within 1.6% of each other on rc_thermal because each drives the state to within a few LSBs of zero; the error reported is the reference itself.</span></span></a><a class="tease" href="results.html#phase0"><span class="tn">5</span><span><span class="tt">One space closed with a proof.</span> <span class="td">The 16-point 2-stage family was enumerated in full; the optimum is not a textbook method, and it beats all eight classical anchors.</span></span></a></div>
+<div class="teasers"><a class="tease" href="results.html#efficiency"><span class="tn">1</span><span><span class="tt">Discovered methods beat every classical anchor.</span> <span class="td">13 of 14 discovered grid cells beat all classical anchors of equal or lower cost on held-out error; the best cuts error 3.0× at the same 65,536-cycle budget.</span></span></a><a class="tease" href="results.html#floor-flip"><span class="tn">2</span><span><span class="tt">Floor rounding reorders the classical field.</span> <span class="td">Under the hardware&#x27;s floor rounding, Euler&#x27;s search-set error undercuts rk4&#x27;s; swap in round-to-nearest and the textbook order returns.</span></span></a><a class="tease" href="results.html#crossover"><span class="tn">3</span><span><span class="tt">Quantization overtakes truncation inside the practical range.</span> <span class="td">rk4&#x27;s Q15 error decouples from its float error at h = 0.156 on the damped oscillator, and gets worse as steps shrink.</span></span></a><a class="tease" href="results.html#rc-thermal"><span class="tn">4</span><span><span class="tt">A stiff problem hits a quantization floor.</span> <span class="td">All eight classical methods land within 1.6% of each other on rc_thermal because each drives the state to within a few LSBs of zero; the error reported is the reference itself.</span></span></a><a class="tease" href="results.html#phase0"><span class="tn">5</span><span><span class="tt">One space closed with a proof.</span> <span class="td">The 16-point 2-stage family was enumerated in full; the optimum is not a textbook method, and it beats all eight classical anchors.</span></span></a><a class="tease" href="results.html#validation"><span class="tn">6</span><span><span class="tt">Discovered methods hold up on practical problems.</span> <span class="td">Five equations from real embedded domains, seen by no search and feeding no archive statistic: the discovered methods carry lower Q15 error on four of the five, median error ratio 0.475.</span></span></a></div>
 <h2>The anchor result</h2>
 <div class="two">
 <div>
@@ -255,11 +238,11 @@ work. Which method to ship depends on which multiplier the chip shipped with. Th
 project's thesis demonstrated in two methods everyone already knows; the
 <a href="results.html">key findings</a> show what a search does with it.</p>
 </div>
-<div class="panel"><figure><figcaption>Analytic cycles per step for rk4 and rk38 under the fast and slow multiplier cost models. Bar height is per-step cost; the printed number is the exact cycle count.</figcaption><div class="legend"><span><span class="sw" style="background:var(--s1)"></span>m0plus_fast (1-cycle multiplier)</span><span><span class="sw" style="background:var(--s2)"></span>m0plus_slow (32-cycle multiplier)</span></div><svg viewBox="0 0 460 260" width="460" height="260" role="img" aria-label="Cycles per step for rk4 and rk38 under the fast and slow multiplier models"><line class="axis" x1="46" y1="220" x2="450" y2="220"/><path d="M 87.50 220.00 L 87.50 155.13 Q 87.50 151.13 91.50 151.13 L 139.50 151.13 Q 143.50 151.13 143.50 155.13 L 143.50 220.00 Z" fill="var(--s1)" class="cellstroke"><title>rk4 under m0plus_fast: 33 cycles per step</title></path><text class="lbl" x="115.50" y="146.13" text-anchor="middle">33</text><path d="M 145.50 220.00 L 145.50 46.61 Q 145.50 42.61 149.50 42.61 L 197.50 42.61 Q 201.50 42.61 201.50 46.61 L 201.50 220.00 Z" fill="var(--s2)" class="cellstroke"><title>rk4 under m0plus_slow: 85 cycles per step</title></path><text class="lbl" x="173.50" y="37.61" text-anchor="middle">85</text><text x="144.50" y="236" text-anchor="middle">rk4</text><path d="M 284.50 220.00 L 284.50 148.87 Q 284.50 144.87 288.50 144.87 L 336.50 144.87 Q 340.50 144.87 340.50 148.87 L 340.50 220.00 Z" fill="var(--s1)" class="cellstroke"><title>rk38 under m0plus_fast: 36 cycles per step</title></path><text class="lbl" x="312.50" y="139.87" text-anchor="middle">36</text><path d="M 342.50 220.00 L 342.50 90.43 Q 342.50 86.43 346.50 86.43 L 394.50 86.43 Q 398.50 86.43 398.50 90.43 L 398.50 220.00 Z" fill="var(--s2)" class="cellstroke"><title>rk38 under m0plus_slow: 64 cycles per step</title></path><text class="lbl" x="370.50" y="81.43" text-anchor="middle">64</text><text x="341.50" y="236" text-anchor="middle">rk38</text></svg></figure></div>
+<div class="panel"><figure><figcaption>Analytic cycles per step for rk4 and rk38 under the fast and slow multiplier cost models. Bar height is per-step cost; the printed number is the exact cycle count. The cheaper of the two <a href="findings/glossary.html#anchor-methods">anchor methods</a> swaps between the multiplier models, the sanity check the whole cost model hangs on.</figcaption><div class="legend"><span><span class="sw" style="background:var(--s1)"></span>m0plus_fast (1-cycle multiplier)</span><span><span class="sw" style="background:var(--s2)"></span>m0plus_slow (32-cycle multiplier)</span></div><svg viewBox="0 0 460 260" width="460" height="260" role="img" aria-label="Cycles per step for rk4 and rk38 under the fast and slow multiplier models"><line class="axis" x1="46" y1="220" x2="450" y2="220"/><path d="M 87.50 220.00 L 87.50 155.13 Q 87.50 151.13 91.50 151.13 L 139.50 151.13 Q 143.50 151.13 143.50 155.13 L 143.50 220.00 Z" fill="var(--s1)" class="cellstroke"><title>rk4 under m0plus_fast: 33 cycles per step</title></path><text class="lbl" x="115.50" y="146.13" text-anchor="middle">33</text><path d="M 145.50 220.00 L 145.50 46.61 Q 145.50 42.61 149.50 42.61 L 197.50 42.61 Q 201.50 42.61 201.50 46.61 L 201.50 220.00 Z" fill="var(--s2)" class="cellstroke"><title>rk4 under m0plus_slow: 85 cycles per step</title></path><text class="lbl" x="173.50" y="37.61" text-anchor="middle">85</text><text x="144.50" y="236" text-anchor="middle">rk4</text><path d="M 284.50 220.00 L 284.50 148.87 Q 284.50 144.87 288.50 144.87 L 336.50 144.87 Q 340.50 144.87 340.50 148.87 L 340.50 220.00 Z" fill="var(--s1)" class="cellstroke"><title>rk38 under m0plus_fast: 36 cycles per step</title></path><text class="lbl" x="312.50" y="139.87" text-anchor="middle">36</text><path d="M 342.50 220.00 L 342.50 90.43 Q 342.50 86.43 346.50 86.43 L 394.50 86.43 Q 398.50 86.43 398.50 90.43 L 398.50 220.00 Z" fill="var(--s2)" class="cellstroke"><title>rk38 under m0plus_slow: 64 cycles per step</title></path><text class="lbl" x="370.50" y="81.43" text-anchor="middle">64</text><text x="341.50" y="236" text-anchor="middle">rk38</text></svg></figure></div>
 </div>
 <h2>Where to go</h2>
-<div class="grid-cards"><a class="gcard" href="results.html"><div class="t">Key findings</div><div class="d">Five findings, five charts, honest verdicts.</div></a><a class="gcard" href="methodology.html"><div class="t">Methodology</div><div class="d">The start gate, the pinned hash, 987 tests, the executed pre-flight.</div></a><a class="gcard" href="architecture.html"><div class="t">Architecture</div><div class="d">The container boundary, the cycle loop, the four-repository split.</div></a><a class="gcard" href="design-decisions.html"><div class="t">Design decisions</div><div class="d">Fourteen choices and what the build did to them.</div></a><a class="gcard" href="findings/index.html"><div class="t">Findings snapshot (2026-09-01)</div><div class="d">The machine-generated site, frozen at the snapshot date.</div></a><a class="gcard" href="https://jgoetzmann.github.io/rk-findings/"><div class="t">Live findings ↗</div><div class="d">The same machine-generated site, still updating with the run.</div></a></div>
-<footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-01 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
+<div class="grid-cards"><a class="gcard" href="results.html"><div class="t">Key findings</div><div class="d">Six findings, six charts, honest verdicts.</div></a><a class="gcard" href="methodology.html"><div class="t">Methodology</div><div class="d">The start gate, the pinned hash, 1,038 tests, the executed pre-flight.</div></a><a class="gcard" href="architecture.html"><div class="t">Architecture</div><div class="d">The container boundary, the cycle loop, the four-repository split.</div></a><a class="gcard" href="design-decisions.html"><div class="t">Design decisions</div><div class="d">Fourteen choices and what the build did to them.</div></a><a class="gcard" href="findings/index.html"><div class="t">Findings snapshot (2026-09-02)</div><div class="d">The machine-generated site, frozen at the snapshot date.</div></a><a class="gcard" href="https://jgoetzmann.github.io/rk-findings/"><div class="t">Live findings ↗</div><div class="d">The same machine-generated site, still updating with the run.</div></a></div>
+<footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-02 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
 </div>
 </body>
 </html>

@@ -33,23 +33,26 @@ from rk_harness import costmodel, enumeration  # noqa: E402
 from rk_harness import tableau as tableau_mod  # noqa: E402
 from rk_harness import timefmt  # noqa: E402
 
-SNAPSHOT_DATE = "2026-09-01"   # the date the snapshot was taken, US Central
+SNAPSHOT_DATE = "2026-09-02"   # the date the snapshot was taken, US Central
 DOCS = ROOT / "docs"
 LIVE_URL = "https://jgoetzmann.github.io/rk-findings/"
 
-# Test-suite figures, stated on the methodology page. Verified 2026-09-01 against
-# `pytest --collect-only -q` in rk-harness (987 collected across the seven tier files)
-# and docs/REVIEW-REPORT.md item A3+ ("55 passed, 894 deselected in 3.81s").
-TESTS_TOTAL = 987
+# Test-suite figures, stated on the methodology page. Verified 2026-09-02 against
+# `pytest --collect-only -q` in rk-harness (1,034 collected across the nine tier files)
+# and docs/REVIEW-REPORT.md item A3+ ("55 passed ... deselected"; the gate selection
+# G1-G20 + K1 + K2 is fixed and does not grow with the suite).
+TESTS_TOTAL = 1038
 GATE_TESTS = 55
 SUITE_TIERS = [
     ("T1", 332, "fixed point, coefficient representation, cycle counting"),
     ("T2", 216, "order conditions, evaluator, verifier"),
     ("T3", 234, "archive, search, directive validation"),
-    ("T4", 173, "ledger, runner, site generator"),
+    ("T4", 177, "ledger, runner, site generator"),
     ("T5", 10, "operational config and the watch view"),
     ("T6", 8, "Central-time display formatting"),
-    ("T7", 14, "the findings methodology page"),
+    ("T7", 15, "the findings methodology page"),
+    ("T8", 38, "the practical validation suite"),
+    ("T9", 8, "the epoch saturation orchestrator"),
 ]
 assert sum(n for _t, n, _c in SUITE_TIERS) == TESTS_TOTAL
 
@@ -59,13 +62,10 @@ assert sum(n for _t, n, _c in SUITE_TIERS) == TESTS_TOTAL
 # Decisions whose plan changed on contact with the build (tagged on the page).
 REVISED_DECISIONS = {"credentials", "numbers-not-claims"}
 
+# Page-specific components only. All shared chrome (font stack, heading scale, nav,
+# footer, tables, figures, details/summary, palette tokens) comes from sitegen._STYLE
+# unchanged, so the two sites read as siblings; never re-style what the base defines.
 _EXTRA_STYLE = """
-h1{font-size:27px;margin:14px 0 4px;letter-spacing:-.015em}
-h2{font-size:19px;margin:36px 0 12px}
-h3{font-size:15px;margin:20px 0 8px;color:var(--text-1)}
-.sub{font-size:14.5px}
-nav.tabs{margin-top:14px}
-nav.tabs a.on{box-shadow:inset 0 3px 0 var(--s1)}
 .herolead{font-size:17.5px;line-height:1.6;max-width:74ch}
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 8px}
 .chip{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
@@ -97,12 +97,7 @@ section.finding h2{font-size:20px;margin-bottom:8px}
 .findnum{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;
   background:var(--s1);color:#fff;font-size:16px;font-weight:700;margin-right:12px;
   vertical-align:-7px}
-figure.fig{background:var(--surface-1);border:1px solid var(--line);border-radius:12px;
-  padding:16px 18px 12px;margin:16px 0}
-figure.fig figcaption{font-size:13.5px;color:var(--text-2);margin:10px 0 2px;
-  max-width:96ch;border-top:1px solid var(--line);padding-top:10px}
-figure.fig .src{display:block;margin-top:6px;font-size:12px;color:var(--text-3)}
-figure.panel figcaption{font-size:13.5px;margin:4px 0 10px}
+figure .src{display:block;margin-top:6px;font-size:12px;color:var(--text-3)}
 svg text{font-size:13px}
 svg .lbl{font-size:13px}
 svg .dlab{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
@@ -122,11 +117,6 @@ ol.checks li{margin:6px 0;max-width:82ch}
 ul.toc{columns:2;column-gap:32px;font-size:13.5px;margin:8px 0 4px;padding-left:20px}
 ul.toc li{margin:3px 0}
 @media (max-width:700px){ul.toc{columns:1}}
-details.howto{margin:8px 0 4px;font-size:13px;color:var(--text-2)}
-details.howto summary{cursor:pointer;color:var(--s1);font-size:12.5px;font-weight:600;
-  list-style-position:inside}
-details.howto>div{border-left:3px solid var(--line);padding:2px 0 2px 12px;margin-top:6px}
-details.howto p{max-width:80ch;margin:6px 0}
 .decision{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
   padding:16px 20px;margin:14px 0;scroll-margin-top:16px}
 .decision:target{border-color:var(--s1)}
@@ -151,7 +141,6 @@ details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
 details.p0[open] summary::before{content:"\\2212"}
 details.p0[open] summary{border-bottom:1px solid var(--line)}
 .p0body{padding:10px 16px 12px 40px}
-footer{border-top:1px solid var(--line);padding-top:12px;margin-top:56px}
 """
 
 _NAV = (
@@ -192,25 +181,19 @@ def _page(title: str, body: str, active: str, subtitle: str = "") -> str:
     )
 
 
-def _howto(body_html: str) -> str:
-    """A short expandable explainer rendered under a diagram or table."""
-    return ('<details class="howto"><summary>How to read this</summary>'
-            f"<div>{body_html}</div></details>")
-
-
-def _panel(inner: str, howto: str = "") -> str:
+def _panel(inner: str) -> str:
     if not inner:
         return ""
-    return '<div class="panel">' + inner + (_howto(howto) if howto else "") + "</div>"
+    return '<div class="panel">' + inner + "</div>"
 
 
 def _fig(svg: str, caption_html: str, legend: str = "", source: str = "") -> str:
-    """A key-findings figure: legend, scrollable chart, visible caption, source line."""
+    """A key-findings figure, caption-first like the findings site's charts."""
     if not svg:
         return ""
     src = f'<span class="src">{sg._esc(source)}</span>' if source else ""
-    return ('<figure class="fig">' + legend + f'<div class="scroll">{svg}</div>'
-            f"<figcaption>{caption_html}{src}</figcaption></figure>")
+    return (f'<figure class="panel"><figcaption>{caption_html}{src}</figcaption>'
+            + legend + f'<div class="scroll">{svg}</div></figure>')
 
 
 def _short(v: float) -> str:
@@ -268,7 +251,7 @@ def _badge(x, y, text, bg, fg) -> str:
 def repo_diagram() -> str:
     """The four-repository split, with the live/frozen cue for the two sites."""
     b1t, b1l = "rk-harness", ["the scorer: verifier, evaluator,",
-                              "cost models, 987 tests",
+                              f"cost models, {TESTS_TOTAL:,} tests",
                               "read-only in the container"]
     b2t, b2l = "rk-work", ["run state: append-only archive,",
                            "events, hypothesis ledger",
@@ -315,8 +298,10 @@ def repo_diagram() -> str:
            'container, rk-findings rebuilt every cycle and published live, rk-overview a '
            'frozen snapshot">' + "".join(p) + "</svg>")
     return ('<figure class="panel"><figcaption>One writer and one trust level per '
-            "repository. The live site keeps moving with the run; this site is a dated "
-            f'snapshot.</figcaption><div class="scroll">{svg}</div>{_howto(T.HOW_REPOS)}</figure>')
+            "repository: boxes are git repositories, the dashed enclosure is the container "
+            "boundary, and the dashed arrow is the one-time snapshot copy. The live site "
+            "keeps moving with the run; this site is a dated snapshot.</figcaption>"
+            f'<div class="scroll">{svg}</div></figure>')
 
 
 def system_diagram() -> str:
@@ -389,9 +374,11 @@ def system_diagram() -> str:
     svg = (f'<svg viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" '
            'aria-label="System diagram: host, container with read-only harness, and services">'
            + "".join(p) + "</svg>")
-    return ('<figure class="panel"><figcaption>The as-built system. The verifier lives '
-            "inside the read-only mount; the GitHub credential never crosses the container "
-            f'boundary.</figcaption><div class="scroll">{svg}</div>{_howto(T.HOW_SYSTEM)}</figure>')
+    return ('<figure class="panel"><figcaption>The as-built system, three columns left to '
+            "right: the Windows host, the docker container, and the services the run talks "
+            "to. The verifier lives inside the read-only mount, and no arrow carries the "
+            "GitHub credential across the container boundary.</figcaption>"
+            f'<div class="scroll">{svg}</div></figure>')
 
 
 def cycle_diagram() -> str:
@@ -429,9 +416,11 @@ def cycle_diagram() -> str:
     svg = (f'<svg viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" '
            'aria-label="Cycle loop: replay, encourager, candidates, verify, evaluate, '
            'tier, append, ledger, site, commit">' + "".join(p) + "</svg>")
-    return ('<figure class="panel"><figcaption>One idempotent cycle; a crash anywhere '
-            f'costs at most one cycle.</figcaption><div class="scroll">{svg}</div>'
-            f"{_howto(T.HOW_CYCLE)}</figure>")
+    return ('<figure class="panel"><figcaption>One idempotent cycle, read left to right, '
+            "top row then bottom. Replay rebuilds all state from the append-only archive "
+            "and nothing before the fsynced append has side effects, so a crash anywhere "
+            "costs at most one cycle.</figcaption>"
+            f'<div class="scroll">{svg}</div></figure>')
 
 
 def pipeline_diagram() -> str:
@@ -488,9 +477,10 @@ def pipeline_diagram() -> str:
            'aria-label="Start gate: heartbeat, read-only probe, hash check, golden and '
            'canary tests, then the runner; any failure exits">' + "".join(p) + "</svg>")
     return ('<figure class="panel"><figcaption>The start gate, run on every container '
-            "start. The runner is unreachable until all four checks pass against the "
-            f'harness as mounted.</figcaption><div class="scroll">{svg}</div>'
-            f"{_howto(T.HOW_PIPELINE)}</figure>")
+            "start, in execution order top to bottom. The runner is unreachable until all "
+            "four checks pass against the harness as mounted; any failure takes the exit-1 "
+            "branch, and the gate re-runs on the next start.</figcaption>"
+            f'<div class="scroll">{svg}</div></figure>')
 
 
 # ----------------------------------------------------------------------------- key-findings charts
@@ -886,6 +876,94 @@ def phase0_chart(kf: dict) -> str:
     return _fig(svg, caption, "", "data: key_findings.json, series all_members")
 
 
+def _validation_load() -> dict:
+    path = WS / "rk-work" / "validation" / "results.json"
+    if not path.exists():
+        print("WARN: validation results.json missing; validation chart skipped")
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except ValueError:
+        print("WARN: validation results.json unparsable; validation chart skipped")
+        return {}
+
+
+def validation_chart(vd: dict) -> str:
+    """Dumbbell per practical problem: best classical vs best discovered Q15 error."""
+    per = (vd.get("verdicts") or {}).get("per_problem") or {}
+    order = [p.get("name") for p in vd.get("problems", []) if p.get("name") in per]
+    order += sorted(k for k in per if k not in set(order))
+    rows = [(name, per[name]) for name in order
+            if isinstance(per[name].get("best_classical_q15_error"), (int, float))
+            and isinstance(per[name].get("best_discovered_q15_error"), (int, float))]
+    if not rows:
+        print("WARN: validation per-problem verdicts empty; chart skipped")
+        return ""
+    vals = [v for _n, d in rows for v in (d["best_classical_q15_error"],
+                                          d["best_discovered_q15_error"])]
+    w, ml, mr = 880, 150, 30
+    xlo = 10 ** math.floor(math.log10(min(vals)))
+    xhi = 10 ** math.ceil(math.log10(max(vals)))
+    fx = lambda v: _logpos(v, xlo, xhi, ml, w - mr)
+    row_h = 56
+    H = 16 + row_h * len(rows) + 36
+    p = []
+    tv = xlo
+    while tv <= xhi * 1.0001:
+        px = fx(tv)
+        p.append(f'<line class="gridline" x1="{sg._fmt(px)}" y1="10" x2="{sg._fmt(px)}" y2="{H - 32}"/>')
+        p.append(f'<text x="{sg._fmt(px)}" y="{H - 14}" text-anchor="middle">{sg._pow_label(tv)}</text>')
+        tv *= 10
+    for i, (name, d) in enumerate(rows):
+        cy = 16 + row_h * i + row_h / 2
+        cx_c, cx_d = fx(d["best_classical_q15_error"]), fx(d["best_discovered_q15_error"])
+        p.append(f'<text class="dlab" x="{ml - 12}" y="{sg._fmt(cy + 4)}" text-anchor="end">{sg._esc(name)}</text>')
+        p.append(f'<line x1="{sg._fmt(min(cx_c, cx_d))}" y1="{sg._fmt(cy)}" '
+                 f'x2="{sg._fmt(max(cx_c, cx_d))}" y2="{sg._fmt(cy)}" stroke="var(--line)" stroke-width="3"/>')
+        ratio = d.get("ratio_discovered_over_classical")
+        title = (f"{name}: best classical {d.get('best_classical')} at "
+                 f"{_short(d['best_classical_q15_error'])}, best discovered at "
+                 f"{_short(d['best_discovered_q15_error'])}"
+                 + (f" (ratio {_short(ratio)})" if isinstance(ratio, (int, float)) else ""))
+        p.append(f'<circle cx="{sg._fmt(cx_c)}" cy="{sg._fmt(cy)}" r="6.5" fill="var(--s2)" '
+                 f'class="cellstroke"><title>{sg._esc(title)}</title></circle>')
+        p.append(f'<circle cx="{sg._fmt(cx_d)}" cy="{sg._fmt(cy)}" r="6.5" fill="var(--s1)" '
+                 f'class="cellstroke"><title>{sg._esc(title)}</title></circle>')
+        lab_c = f"{sg._esc(str(d.get('best_classical')))} {_short(d['best_classical_q15_error'])}"
+        lab_d = _short(d["best_discovered_q15_error"])
+        if cx_d <= cx_c:   # discovered wins: its label to the left, classical's to the right
+            sides = ((cx_d, cy, lab_d, "left"), (cx_c, cy, lab_c, "right"))
+        else:
+            sides = ((cx_c, cy, lab_c, "left"), (cx_d, cy, lab_d, "right"))
+        for cx, yy, lab, side in sides:
+            est = len(lab) * 7.3   # ~13px semibold advance width, conservative
+            if side == "left" and cx - 11 - est >= ml - 6:
+                p.append(f'<text class="dlab" x="{sg._fmt(cx - 11)}" y="{sg._fmt(yy + 4)}" '
+                         f'text-anchor="end">{lab}</text>')
+            elif side == "right" and cx + 11 + est <= w - 6:
+                p.append(f'<text class="dlab" x="{sg._fmt(cx + 11)}" y="{sg._fmt(yy + 4)}">{lab}</text>')
+            else:   # no horizontal room: sit the label above its dot instead
+                p.append(f'<text class="dlab" x="{sg._fmt(cx)}" y="{sg._fmt(yy - 13)}" '
+                         f'text-anchor="middle">{lab}</text>')
+    svg = (f'<svg viewBox="0 0 {w} {H}" width="{w}" height="{H}" role="img" '
+           'aria-label="Best classical versus best discovered Q15 error on each practical '
+           'validation problem, log scale">' + "".join(p) + "</svg>")
+    wins = [n for n, d in rows
+            if d["best_discovered_q15_error"] < d["best_classical_q15_error"]]
+    losses = [n for n, _d in rows if n not in wins]
+    tail = (f"; on {', '.join(losses)} the classical anchor keeps the win"
+            if losses else "")
+    caption = ("One row per practical problem; x is final-state Q15 error at the shared "
+               "65,536-cycle budget, log scale, so left is better. The orange dot is the "
+               "best classical anchor (named, with its error), the blue dot the best "
+               "discovered method, and the bar between them is the gap. Blue sits left "
+               f"(discovered wins) on {len(wins)} of the {len(rows)} rows{tail}. "
+               "Hover a row for exact values and the error ratio.")
+    legend = sg._legend([("var(--s1)", "best discovered"),
+                         ("var(--s2)", "best classical anchor")])
+    return _fig(svg, caption, legend, "data: rk-work/validation/results.json, verdicts.per_problem")
+
+
 # ----------------------------------------------------------------------------- run charts
 
 def _linear_line(points, w, h, xlabel, ylabel, aria) -> str:
@@ -928,9 +1006,10 @@ def records_chart(records) -> str:
         return ""
     svg = _linear_line(pts, 640, 310, "cycle", "records (cumulative)",
                        "Cumulative archive records against cycle number")
-    return ('<figure><figcaption>Archive growth. The jumps are the exhaustive phases; '
-            "the flat stretch is the order-4 dry spell before the projection fallback "
-            f"landed.</figcaption>{svg}</figure>")
+    return ('<figure><figcaption>Archive growth: only candidates that passed all nine '
+            "verifier checks appear (rejections are counted separately, right). The jumps "
+            "are the exhaustive phases; the flat stretch is the order-4 dry spell before "
+            f"the projection fallback landed.</figcaption>{svg}</figure>")
 
 
 def _count_bars(counts, w, aria, sw="var(--s1)") -> str:
@@ -954,8 +1033,11 @@ def _count_bars(counts, w, aria, sw="var(--s1)") -> str:
 def tier_chart(records) -> str:
     c = Counter(r.tier for r in records)
     rows = [(k, c.get(k, 0)) for k in ("heldout_verified", "search_only", "unreplicated")]
-    return ('<figure><figcaption>Tier distribution over every archived record (assigned '
-            "mechanically against each cell's incumbent)</figcaption>"
+    return ('<figure><figcaption>Tier distribution over every archived record, assigned by '
+            "code against each cell's incumbent: heldout_verified improved on both the "
+            "search and held-out aggregates, search_only on search alone (the overfitting "
+            "signature), unreplicated is everything else, including every record landing in "
+            "an empty cell.</figcaption>"
             + _count_bars(rows, 560, "Records per confidence tier") + "</figure>")
 
 
@@ -964,7 +1046,10 @@ def reject_chart(events) -> str:
     rows = sorted(((str(k), v) for k, v in c.items()), key=lambda kv: -kv[1])
     if not rows:
         return ""
-    return ('<figure><figcaption>Verifier rejections by code, whole run</figcaption>'
+    return ('<figure><figcaption>Verifier rejections by code, whole run; each candidate '
+            "counts once, under the earliest of the nine ordered checks to fail. The cheap "
+            "structural codes barely occur because enumeration and the exact-b projection "
+            "emit only valid points.</figcaption>"
             + _count_bars(rows, 560, "Rejections per verifier code", sw="var(--s2)") + "</figure>")
 
 
@@ -1091,7 +1176,7 @@ def build() -> None:
         (f"{len(records):,}", "verified tableaus archived"),
         (f"{n_cycles:,}", "search cycles completed"),
         (f"{n_rejected:,}", "candidates rejected by the verifier"),
-        (f"{TESTS_TOTAL}", "tests in the harness suite"),
+        (f"{TESTS_TOTAL:,}", "tests in the harness suite"),
         (f"{GATE_TESTS}", "tests at every container start"),
         (f"{n_phases}", "search phases exercised"),
     ]))
@@ -1105,13 +1190,14 @@ def build() -> None:
     body.append("<h2>The anchor result</h2>")
     body.append('<div class="two">')
     body.append("<div>" + T.ANCHOR_TEXT + "</div>")
-    body.append('<div class="panel">' + sg._anchor_bars() + "</div>")
+    body.append('<div class="panel">' + sg._anchor_bars().replace(
+        'href="glossary.html#', 'href="findings/glossary.html#') + "</div>")
     body.append("</div>")
     body.append("<h2>Where to go</h2>")
     cards = [
-        ("results.html", "Key findings", "Five findings, five charts, honest verdicts."),
+        ("results.html", "Key findings", "Six findings, six charts, honest verdicts."),
         ("methodology.html", "Methodology",
-         f"The start gate, the pinned hash, {TESTS_TOTAL} tests, the executed pre-flight."),
+         f"The start gate, the pinned hash, {TESTS_TOTAL:,} tests, the executed pre-flight."),
         ("architecture.html", "Architecture",
          "The container boundary, the cycle loop, the four-repository split."),
         ("design-decisions.html", "Design decisions",
@@ -1146,49 +1232,58 @@ def build() -> None:
     body.append(_finding(
         "rc-thermal", 4, "The rc_thermal quantization floor",
         T.F_RC_INTRO, [rc_chart(kf)], T.F_RC_INTERP))
-    p0_table = (_howto(T.HOW_PHASE0_TABLE) + phase0_rows(records)) if records else ""
+    p0_table = phase0_rows(records) if records else ""
     body.append(_finding(
         "phase0", 5, "Phase 0, closed: an exhaustive result",
         T.F_PHASE0_INTRO, [phase0_chart(kf)], T.F_PHASE0_INTERP + p0_table))
+    vd = _validation_load()
+    body.append(_finding(
+        "validation", 6, "Practical validation: five problems nobody tuned for",
+        T.F_VALIDATION_INTRO, [validation_chart(vd)], T.F_VALIDATION_INTERP))
     body.append("<h2>The run behind the numbers</h2>")
     body.append(T.RUN_CHARTS_INTRO)
     if records:
         last_ts = max(r.timestamp for r in records)
         body.append(f'<p class="note">Archive at this snapshot: {len(records):,} records; '
                     f"the latest was appended {sg._esc(timefmt.fmt_ct(last_ts))}.</p>")
-    body.append(_panel(records_chart(records), T.HOW_RECORDS))
+    body.append(_panel(records_chart(records)))
     body.append('<div class="two">')
-    body.append(_panel(tier_chart(records), T.HOW_TIERS))
-    body.append(_panel(reject_chart(events), T.HOW_REJECTS))
+    body.append(_panel(tier_chart(records)))
+    body.append(_panel(reject_chart(events)))
     body.append("</div>")
     pages["results.html"] = _page("key findings", "\n".join(body), "results.html",
-                                  "What the search found, in five charts, at snapshot "
+                                  "What the search found, in six charts, at snapshot "
                                   f"{SNAPSHOT_DATE}.")
 
-    # ---------------- methodology
+    # ---------------- methodology (one skeleton, shared with the findings methodology)
     body = [T.METH_LEAD]
-    body.append('<h2 id="gate">The gate at container start</h2>')
+    body.append('<h2 id="setup">Experimental setup</h2>')
+    body.append(T.METH_SETUP)
+    body.append('<h2 id="measurement">Measurement</h2>')
+    body.append(T.METH_MEASURE)
+    body.append('<h2 id="protocol">Statistical protocol</h2>')
+    body.append(T.METH_PROTOCOL)
+    body.append('<h3 id="practical">Practical validation</h3>')
+    body.append(T.METH_PRACTICAL)
+    body.append('<h2 id="trust">Verification and trust</h2>')
     body.append(pipeline_diagram())
+    body.append('<h3 id="gate">The gate at container start</h3>')
     body.append(T.METH_GATE)
-    body.append("<h2>Ten files, one hash</h2>")
+    body.append("<h3>Ten files, one hash</h3>")
     body.append(T.METH_HASH)
-    body.append("<h2>What the container cannot reach</h2>")
+    body.append("<h3>What the container cannot reach</h3>")
     body.append(T.METH_REACH)
-    body.append(f'<h2 id="tests">The test suite: {TESTS_TOTAL} cases in seven tiers</h2>')
+    body.append('<h2 id="tests">Testing</h2>')
     body.append(T.METH_SUITE)
-    tier_rows = "".join(f"<tr><td>{t}</td><td>{n}</td><td>{sg._esc(c)}</td></tr>"
-                        for t, n, c in SUITE_TIERS)
-    body.append('<div class="scroll"><table><thead><tr><th>tier</th><th>tests</th>'
-                "<th>covers</th></tr></thead><tbody>" + tier_rows +
-                f'<tr><td><strong>total</strong></td><td><strong>{TESTS_TOTAL}</strong></td>'
-                "<td>collected by pytest at this snapshot</td></tr></tbody></table></div>")
-    body.append('<h2 id="preflight">The pre-flight, executed as a program</h2>')
+    body.append('<h3 id="preflight">The pre-flight, executed as a program</h3>')
     body.append(T.METH_PREFLIGHT)
-    body.append("<h2>The operational layer</h2>")
-    body.append(T.METH_OPS)
+    body.append('<h2 id="repro">Reproducibility</h2>')
+    body.append(T.METH_REPRO)
+    body.append('<h2 id="limits">Limitations</h2>')
+    body.append(T.METH_LIMITS)
     pages["methodology.html"] = _page("methodology", "\n".join(body), "methodology.html",
-                                      "How the numbers were earned: the start gate, the "
-                                      "pinned hash, the tests, and the executed pre-flight.")
+                                      "The method: setup, measurement, protocol, trust, "
+                                      "testing, and its limits.")
 
     # ---------------- architecture
     body = [T.ARCH_LEAD]
@@ -1203,11 +1298,15 @@ def build() -> None:
     body.append(T.ARCH_CYCLE)
     body.append("<h2>Verification, in order</h2>")
     body.append(T.ARCH_VERIFY)
-    body.append("<h2>Arithmetic, exactly</h2>")
+    body.append('<h2 id="arithmetic">Arithmetic, exactly</h2>')
     body.append(T.ARCH_ARITH)
-    body.append("<h2>Where candidates come from</h2>")
+    body.append('<h2 id="costmodel">The cost model</h2>')
+    body.append(T.ARCH_COSTMODEL)
+    body.append('<h2 id="candidates">Where candidates come from</h2>')
     body.append(T.ARCH_CANDIDATES)
-    body.append("<h2>The outer loop: a research partner, not a sampler</h2>")
+    body.append('<h2 id="archive">The archive</h2>')
+    body.append(T.ARCH_ARCHIVE)
+    body.append('<h2 id="outer">The outer loop: a research partner, not a sampler</h2>')
     body.append(T.ARCH_OUTER)
     body.append("<h2>The host layer</h2>")
     body.append(T.ARCH_HOST)
@@ -1217,7 +1316,6 @@ def build() -> None:
 
     # ---------------- design decisions
     body = [f'<p class="note">{sg._esc(T.DECISIONS_LEAD)}</p>']
-    body.append(_howto(T.HOW_DECISIONS))
     body.append("<h3>Contents</h3>")
     body.append('<ul class="toc">' + "".join(
         f'<li><a href="#{slug}">{sg._esc(title)}</a></li>'

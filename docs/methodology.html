@@ -118,12 +118,6 @@ footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);
 footer p{margin:3px 0;max-width:none}
 footer p.prov a{color:var(--text-2)}
 
-h1{font-size:27px;margin:14px 0 4px;letter-spacing:-.015em}
-h2{font-size:19px;margin:36px 0 12px}
-h3{font-size:15px;margin:20px 0 8px;color:var(--text-1)}
-.sub{font-size:14.5px}
-nav.tabs{margin-top:14px}
-nav.tabs a.on{box-shadow:inset 0 3px 0 var(--s1)}
 .herolead{font-size:17.5px;line-height:1.6;max-width:74ch}
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 8px}
 .chip{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
@@ -155,12 +149,7 @@ section.finding h2{font-size:20px;margin-bottom:8px}
 .findnum{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;
   background:var(--s1);color:#fff;font-size:16px;font-weight:700;margin-right:12px;
   vertical-align:-7px}
-figure.fig{background:var(--surface-1);border:1px solid var(--line);border-radius:12px;
-  padding:16px 18px 12px;margin:16px 0}
-figure.fig figcaption{font-size:13.5px;color:var(--text-2);margin:10px 0 2px;
-  max-width:96ch;border-top:1px solid var(--line);padding-top:10px}
-figure.fig .src{display:block;margin-top:6px;font-size:12px;color:var(--text-3)}
-figure.panel figcaption{font-size:13.5px;margin:4px 0 10px}
+figure .src{display:block;margin-top:6px;font-size:12px;color:var(--text-3)}
 svg text{font-size:13px}
 svg .lbl{font-size:13px}
 svg .dlab{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
@@ -180,11 +169,6 @@ ol.checks li{margin:6px 0;max-width:82ch}
 ul.toc{columns:2;column-gap:32px;font-size:13.5px;margin:8px 0 4px;padding-left:20px}
 ul.toc li{margin:3px 0}
 @media (max-width:700px){ul.toc{columns:1}}
-details.howto{margin:8px 0 4px;font-size:13px;color:var(--text-2)}
-details.howto summary{cursor:pointer;color:var(--s1);font-size:12.5px;font-weight:600;
-  list-style-position:inside}
-details.howto>div{border-left:3px solid var(--line);padding:2px 0 2px 12px;margin-top:6px}
-details.howto p{max-width:80ch;margin:6px 0}
 .decision{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
   padding:16px 20px;margin:14px 0;scroll-margin-top:16px}
 .decision:target{border-color:var(--s1)}
@@ -209,123 +193,141 @@ details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
 details.p0[open] summary::before{content:"\2212"}
 details.p0[open] summary{border-bottom:1px solid var(--line)}
 .p0body{padding:10px 16px 12px 40px}
-footer{border-top:1px solid var(--line);padding-top:12px;margin-top:56px}
 </style>
 </head>
 <body>
 <header class="site"><div class="wrap">
 <h1>methodology</h1>
-<p class="sub">How the numbers were earned: the start gate, the pinned hash, the tests, and the executed pre-flight.</p>
-<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="methodology.html" class="on">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-01)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+<p class="sub">The method: setup, measurement, protocol, trust, testing, and its limits.</p>
+<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="methodology.html" class="on">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-02)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
 </div></header>
 <div class="wrap">
 
 <p>Numbers from an unattended, partly model-steered search are worth exactly as much as
-the guarantees around them. This page is those guarantees: what runs at every container
-start, what is pinned, what the test suite proves, and what the executed pre-flight
-actually caught. The machine-generated counterpart, always current on constants and
+the method behind them. This page is that method: what the experiment fixes in advance,
+what gets measured, how a claim earns a verdict, what stands between the model and the
+scorer, and what was tested. The formal version, always current on constants and
 thresholds, is the findings methodology page
 (<a href="findings/methodology.html">snapshot</a>,
-<a href="https://jgoetzmann.github.io/rk-findings/methodology.html">live</a>).</p>
+<a href="https://jgoetzmann.github.io/rk-findings/methodology.html">live</a>); the
+system internals live on the <a href="architecture.html">architecture page</a>.</p>
 
-<h2 id="gate">The gate at container start</h2>
-<figure class="panel"><figcaption>The start gate, run on every container start. The runner is unreachable until all four checks pass against the harness as mounted.</figcaption><div class="scroll"><svg viewBox="0 0 767 537" width="767" height="537" role="img" aria-label="Start gate: heartbeat, read-only probe, hash check, golden and canary tests, then the runner; any failure exits"><defs><marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--text-3)"/></marker></defs><rect class="box" x="16" y="16" width="327" height="40" rx="9"/><text class="bt" x="29" y="39">container start</text><rect class="box" x="16" y="86" width="327" height="63" rx="9"/><text class="bt" x="29" y="109">1 · write heartbeat</text><text class="bs" x="29" y="131">the first line of the entrypoint</text><rect class="box" x="16" y="179" width="327" height="63" rx="9"/><text class="bt" x="29" y="202">2 · read-only probe</text><text class="bs" x="29" y="224">a write to /harness must fail</text><rect class="box" x="16" y="272" width="327" height="63" rx="9"/><text class="bt" x="29" y="295">3 · verifier hash check</text><text class="bs" x="29" y="317">sha256 over ten files vs the pinned value</text><rect class="box" x="16" y="365" width="327" height="63" rx="9"/><text class="bt" x="29" y="388">4 · golden + canary tests</text><text class="bs" x="29" y="410">55 cases with pytest, under four seconds</text><rect class="boxhl" x="16" y="458" width="327" height="63" rx="9"/><text class="bt" x="29" y="481">runner starts</text><text class="bs" x="29" y="503">science on a proven environment only</text><path class="arrow" d="M 179.5 56 L 179.5 84"/><path class="arrow" d="M 179.5 149 L 179.5 177"/><path class="arrow" d="M 179.5 242 L 179.5 270"/><path class="arrow" d="M 179.5 335 L 179.5 363"/><path class="arrow" d="M 179.5 428 L 179.5 456"/><rect class="boxbad" x="439" y="216.0" width="312" height="82" rx="9"/><text x="452" y="239.0" style="font-weight:650;font-size:15px;fill:var(--bad-fg)">exit 1</text><text x="452" y="261.0" style="font-size:14px;fill:var(--bad-fg)">the runner never starts;</text><text x="452" y="280.0" style="font-size:14px;fill:var(--bad-fg)">the watchdog restarts, the gate re-runs</text><path d="M 343 117.5 L 389 117.5" stroke="var(--bad-fg)" fill="none" opacity=".55"/><path d="M 343 210.5 L 389 210.5" stroke="var(--bad-fg)" fill="none" opacity=".55"/><path d="M 343 303.5 L 389 303.5" stroke="var(--bad-fg)" fill="none" opacity=".55"/><path d="M 343 396.5 L 389 396.5" stroke="var(--bad-fg)" fill="none" opacity=".55"/><path d="M 389 117.5 L 389 257.0" stroke="var(--bad-fg)" fill="none" opacity=".55"/><path d="M 389 257.0 L 437 257.0" stroke="var(--bad-fg)" fill="none" marker-end="url(#ah)"/><text class="alab" x="383" y="94" text-anchor="end" style="fill:var(--bad-fg)">any failure</text></svg></div><details class="howto"><summary>How to read this</summary><div>
-<p>The vertical chain is the container's entrypoint, in execution order; every box must
-succeed before the next runs, and any failure takes the exit-1 branch on the right, so
-the runner only ever starts on a proven environment. The chain re-runs on every container
-start, including automatic restarts after a watchdog kill.</p>
-</div></details></figure>
+<h2 id="setup">Experimental setup</h2>
 
-<p>The container refuses to run science before proving its environment, in a fixed order.
-It writes a heartbeat first; the gate takes long enough that the watchdog once killed a
-fresh container fourteen seconds after start because the heartbeat on disk predated the
-restart, and the fix is the first line of the entrypoint, not a longer timeout. It then
-probes its own mount: if <code>/harness</code> accepts a write, the container exits
-rather than run with a writable scorer. It recomputes the verifier hash against the
-pinned value. Finally it runs the golden and canary tests against the harness as mounted:
-55 cases at the pre-flight run, passing in under four seconds. Any failure is exit 1 and
-the runner never starts.</p>
-<p>Running tests at start rather than at build time is the point. "The tests passed when
-the image was built" claims nothing about the harness mounted today. The gate re-earns
-the claim on every start, including every automatic restart after a kill.</p>
+<p>Everything scientific is fixed before the run: explicit Runge&ndash;Kutta tableaus
+of orders 1 to 4 and 2 to 6 stages, scored in Q15 fixed point under an analytic
+Cortex-M0+ cycle model, at a budget of 65,536 cycles per problem. Methods compete at
+equal budget, never equal step size, so a cheap method earns its ranking by taking
+more, smaller steps. Seven fixed test problems drive every error number: three the
+optimizer sees, four held out to catch overfitting. The split is structural, not a
+convention; a test walks the optimizer's import graph and fails on any load of the
+held-out set's name.</p>
 
-<h2>Ten files, one hash</h2>
+<h2 id="measurement">Measurement</h2>
 
-<p>Six modules decide every score: coefficient representation, order conditions, verifier,
-cost model, evaluator, problems. Four fixture files pin their golden values. A sha256 over
-those ten files, concatenated in a fixed order, is pinned in <code>VERIFIER_HASH</code>;
-the entrypoint recomputes and compares it, and every archive record stores the hash that
-scored it. A change to any byte is loud twice over: the container refuses to start, and a
-record produced under a different hash would advertise the fact in its own row.</p>
-<p>This was drilled, not assumed. Pre-flight item A3 altered one line of
-<code>coeffrep.py</code> and started the container: exit 1, "VERIFIER HASH MISMATCH &mdash;
-refusing to run". Restored, the same container gated green.</p>
+<p>A method's score is the error at the end of each integration: distance to the
+reference solution, scaled by the problem's amplitude, or drift in an invariant
+(energy for the pendulum, norm for the quaternion). Alongside it the harness measures
+the order each tableau actually delivers, fitting error against step size and letting
+the data pick the fitting window; rk4 comes out at 4.07, and a broken implementation
+reads 2 or 3 instead. Before any of that counts, nine verifier checks gate the
+candidate, cheap structural checks ahead of any simulation; the annotated list is on
+the <a href="architecture.html">architecture page</a>.</p>
 
-<h2>What the container cannot reach</h2>
+<h2 id="protocol">Statistical protocol</h2>
 
-<p>The harness mount is read-only (<code>:ro</code> on the docker command line, re-checked
-by the entrypoint's write probe). The GitHub credential never enters the container: the
-env file is filtered on the host and drops every <code>GITHUB_TOKEN</code> line, the
-runner only ever commits into the mounted checkouts, and the host watchdog pushes those
-commits with the owner's own credentials. The Codex OAuth file is mounted read-only for
-the plan-billed planning calls.</p>
-<p>An earlier design scoped a token instead and did not survive its pre-flight probe;
-the full story is under <a href="design-decisions.html#credentials">credentials outside
-the container</a>.</p>
+<p>Confidence is assigned by code at the moment a record is written: heldout_verified,
+search_only, or unreplicated, by comparison against the incumbent of the record's grid
+cell. The model can propose hypotheses, but only as machine-checkable predicates in a
+closed grammar, and it never writes the verdict: cells with no data mean inconclusive,
+effects below Cohen's d of 0.2 mean inconclusive, and every refuted hypothesis is fed
+back into later prompts so it stays refuted. The project's premise went through the
+same discipline: a falsification experiment with kill and proceed thresholds committed
+in advance, run before the search started, its verdict ("mixed") published either way
+(<a href="results.html#crossover">key finding 3</a>).</p>
 
-<h2 id="tests">The test suite: 987 cases in seven tiers</h2>
+<h3 id="practical">Practical validation</h3>
 
-<p>The suite collects <strong>987 tests</strong> in seven numbered tiers that mirror the
-dependency stack, cheapest and most foundational first. Golden tests (G-numbered) pin
-behaviour to fixture values written before the build: rk4's measured order comes out
-4.0706 from 3 fit points, the hand-counted ARMv6-M multiply sequence costs 13 cycles fast
-and 75 slow, and the eleven coefficient representations reproduce bit for bit. Canary
-tests (K-numbered) are anti-gaming: K1 plants a candidate tuned on the search set and
-asserts it can earn search_only but never heldout_verified; K2 asserts that a
-single-family winner that is worse on both aggregates stays unreplicated.</p>
+<p>A practical validation suite runs outside the search entirely: equations taken from
+real applications, which no optimizer ever saw and no archive statistic includes.
+Champions and classical anchors run on them at the same 65,536-cycle budget, under the
+same arithmetic and cost model. The point is to ask whether methods selected on the
+fixed suite hold up on dynamics nobody tuned for. The outcome is
+<a href="results.html#validation">key finding 6</a>; the full tables live on the
+<a href="https://jgoetzmann.github.io/rk-findings/validation.html">findings validation
+page</a>.</p>
 
-<div class="scroll"><table><thead><tr><th>tier</th><th>tests</th><th>covers</th></tr></thead><tbody><tr><td>T1</td><td>332</td><td>fixed point, coefficient representation, cycle counting</td></tr><tr><td>T2</td><td>216</td><td>order conditions, evaluator, verifier</td></tr><tr><td>T3</td><td>234</td><td>archive, search, directive validation</td></tr><tr><td>T4</td><td>173</td><td>ledger, runner, site generator</td></tr><tr><td>T5</td><td>10</td><td>operational config and the watch view</td></tr><tr><td>T6</td><td>8</td><td>Central-time display formatting</td></tr><tr><td>T7</td><td>14</td><td>the findings methodology page</td></tr><tr><td><strong>total</strong></td><td><strong>987</strong></td><td>collected by pytest at this snapshot</td></tr></tbody></table></div>
-<h2 id="preflight">The pre-flight, executed as a program</h2>
+<h2 id="trust">Verification and trust</h2>
+<figure class="panel"><figcaption>The start gate, run on every container start, in execution order top to bottom. The runner is unreachable until all four checks pass against the harness as mounted; any failure takes the exit-1 branch, and the gate re-runs on the next start.</figcaption><div class="scroll"><svg viewBox="0 0 767 537" width="767" height="537" role="img" aria-label="Start gate: heartbeat, read-only probe, hash check, golden and canary tests, then the runner; any failure exits"><defs><marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--text-3)"/></marker></defs><rect class="box" x="16" y="16" width="327" height="40" rx="9"/><text class="bt" x="29" y="39">container start</text><rect class="box" x="16" y="86" width="327" height="63" rx="9"/><text class="bt" x="29" y="109">1 · write heartbeat</text><text class="bs" x="29" y="131">the first line of the entrypoint</text><rect class="box" x="16" y="179" width="327" height="63" rx="9"/><text class="bt" x="29" y="202">2 · read-only probe</text><text class="bs" x="29" y="224">a write to /harness must fail</text><rect class="box" x="16" y="272" width="327" height="63" rx="9"/><text class="bt" x="29" y="295">3 · verifier hash check</text><text class="bs" x="29" y="317">sha256 over ten files vs the pinned value</text><rect class="box" x="16" y="365" width="327" height="63" rx="9"/><text class="bt" x="29" y="388">4 · golden + canary tests</text><text class="bs" x="29" y="410">55 cases with pytest, under four seconds</text><rect class="boxhl" x="16" y="458" width="327" height="63" rx="9"/><text class="bt" x="29" y="481">runner starts</text><text class="bs" x="29" y="503">science on a proven environment only</text><path class="arrow" d="M 179.5 56 L 179.5 84"/><path class="arrow" d="M 179.5 149 L 179.5 177"/><path class="arrow" d="M 179.5 242 L 179.5 270"/><path class="arrow" d="M 179.5 335 L 179.5 363"/><path class="arrow" d="M 179.5 428 L 179.5 456"/><rect class="boxbad" x="439" y="216.0" width="312" height="82" rx="9"/><text x="452" y="239.0" style="font-weight:650;font-size:15px;fill:var(--bad-fg)">exit 1</text><text x="452" y="261.0" style="font-size:14px;fill:var(--bad-fg)">the runner never starts;</text><text x="452" y="280.0" style="font-size:14px;fill:var(--bad-fg)">the watchdog restarts, the gate re-runs</text><path d="M 343 117.5 L 389 117.5" stroke="var(--bad-fg)" fill="none" opacity=".55"/><path d="M 343 210.5 L 389 210.5" stroke="var(--bad-fg)" fill="none" opacity=".55"/><path d="M 343 303.5 L 389 303.5" stroke="var(--bad-fg)" fill="none" opacity=".55"/><path d="M 343 396.5 L 389 396.5" stroke="var(--bad-fg)" fill="none" opacity=".55"/><path d="M 389 117.5 L 389 257.0" stroke="var(--bad-fg)" fill="none" opacity=".55"/><path d="M 389 257.0 L 437 257.0" stroke="var(--bad-fg)" fill="none" marker-end="url(#ah)"/><text class="alab" x="383" y="94" text-anchor="end" style="fill:var(--bad-fg)">any failure</text></svg></div></figure>
+<h3 id="gate">The gate at container start</h3>
 
-<p>The pre-flight checklist (docs/REVIEW.md in the harness repo) is not a document anyone
-initials. <code>scripts/preflight.py</code> executes every machine-checkable item, prints
-the measured value next to each verdict, and writes the signed report
-(docs/REVIEW-REPORT.md). The full run, suite and docker drills included, was executed on
-2026-08-30: <strong>91 PASS, 0 FAIL</strong>, 8 items marked MANUAL (they need the host,
-hardware, or a human, and carry their instructions in the report), 1 advisory INFO. All
-twelve sections green.</p>
-<p>The drills are where the exercise paid for itself, because they act instead of
-asserting. A1 writes to <code>/harness</code> from inside a running container and expects
-"Read-only file system". A3 tampers with a verifier file and expects the hash refusal. D5
-deliberately feeds the optimizer the held-out set and checks the search/held-out gap
-collapses to zero, then returns on revert; that is what shows the gap metric measures
-what it claims.</p>
-<p>Three drills changed the system before the run started. The crash-recovery drill
-exposed that a runner killed mid-seeding never finished writing the classical baselines
-(fixed: seeding is idempotent per hash, every cycle). The trust-boundary probe caught
-the token scoping failure retold under
-<a href="design-decisions.html#credentials">credentials outside the container</a>. And
-the first live archive build tripped the banned-words guard on model-written text, an
-incident told in full under
-<a href="design-decisions.html#numbers-not-claims">auto-publish numbers, never
-claims</a>.</p>
+<p>The container refuses to run science before proving its environment, in the fixed
+order the diagram shows: heartbeat, a probe that the harness mount rejects writes, the
+verifier hash against its pinned value, then the golden and canary tests against the
+harness as mounted (55 cases, under four seconds). Any failure is exit 1 and the
+runner never starts. Running the tests at start, not at build time, is the point: the
+gate re-earns the claim on every start, including every restart after a kill.</p>
 
-<h2>The operational layer</h2>
+<h3>Ten files, one hash</h3>
 
-<p>Once running, the container answers to a host watchdog that polls every ten seconds
-and holds every kill switch outside the container. A heartbeat older than two minutes is
-a <code>docker kill</code>; a wrongful kill self-heals because the restart policy brings
-the container back and the start gate re-runs. Spend over the monthly cap, or free disk
-under five gigabytes, is a stop that stays down. On battery is a pause; plugged back in,
-an unpause. Pause is atomic, so the run resumes mid-cycle exactly where it stopped.</p>
-<p>The run also throttles itself: auto-stop limits end the run at the next cycle
-boundary; the LLM is asked for a fresh directive every five cycles and on every
-escalation, with reuse in between; calls stop at 80% of the weekly plan. One bookkeeping
-rule ties the layer together: everything stored is UTC, and only human-facing display
-converts to US Central, through one small module. The watchdog's staleness arithmetic and
-the archive's determinism both depend on storage never carrying a local time.</p>
+<p>Six modules decide every score, and four fixture files pin their golden values. A
+sha256 over those ten files is pinned in <code>VERIFIER_HASH</code>; the entrypoint
+recomputes it, and every archive record stores the hash that scored it, so a change to
+any byte is loud twice over. Drilled, not assumed: pre-flight item A3 altered one line
+of <code>coeffrep.py</code> and the container refused with "VERIFIER HASH MISMATCH";
+restored, it gated green.</p>
 
-<footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-01 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
+<h3>What the container cannot reach</h3>
+
+<p>The GitHub credential never enters the container: the env file is filtered on the
+host, the runner only commits into the mounted checkouts, and the host watchdog pushes
+with the owner's own credentials (an earlier token-scoping design failed its probe;
+see <a href="design-decisions.html#credentials">credentials outside the container</a>).
+Model-written problems execute only after the quarantine's admission checks, join the
+held-out set alone, and shadow for 10 cycles; the check list is on the
+<a href="architecture.html">architecture page</a>.</p>
+
+<h2 id="tests">Testing</h2>
+
+<p>The suite collects <strong>1,038 tests</strong> in nine numbered tiers that mirror
+the dependency stack. Golden tests (G-numbered) pin behaviour to fixture values written
+before the build existed, down to exact measured orders and cycle counts. Canary tests
+(K-numbered) are anti-gaming: K1 plants a candidate tuned on the search set and asserts
+it can earn search_only but never heldout_verified; K2 asserts a single-family winner
+stays unreplicated.</p>
+
+<h3 id="preflight">The pre-flight, executed as a program</h3>
+
+<p>The pre-flight checklist is not a document anyone initials.
+<code>scripts/preflight.py</code> executes every machine-checkable item and writes the
+signed report: <strong>91 PASS, 0 FAIL</strong>, 8 MANUAL, 1 advisory INFO on the
+2026-08-30 run. The drills act instead of asserting: A1 writes to
+<code>/harness</code> from a running container and expects "Read-only file system";
+D5 feeds the optimizer the held-out set and watches the search/held-out gap collapse
+to zero, then return on revert. Three drills changed the system before the run
+started; those stories are under <a href="design-decisions.html">design
+decisions</a>.</p>
+
+<h2 id="repro">Reproducibility</h2>
+
+<p>The same seed produces byte-identical archives, and an acceptance test requires it.
+The evaluator reads no clock and draws no random numbers; the archive is append-only
+JSONL whose derived state replays from the files alone; every record stores the hash
+of the scoring code that produced it. Storage is UTC everywhere, and only display code
+converts to Central time. The findings site is a pure function of the archive: same
+records, same bytes.</p>
+
+<h2 id="limits">Limitations</h2>
+
+<p>The honest edges, briefly: the cycle model is analytic and has never been closed
+against a physical chip inside the loop; measured order comes from one scalar problem
+in float64; error is judged at the final time, not along the trajectory; and floor is
+one hardware convention among several. Optimality claims from the enumerated phases
+hold only within their lattices, and four held-out problems make a strong filter, not
+a statistical guarantee. The full list, with reasoning, is on the
+<a href="findings/methodology.html">findings methodology page</a>.</p>
+
+<footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-02 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
 </div>
 </body>
 </html>

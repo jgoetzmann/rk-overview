@@ -118,12 +118,6 @@ footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);
 footer p{margin:3px 0;max-width:none}
 footer p.prov a{color:var(--text-2)}
 
-h1{font-size:27px;margin:14px 0 4px;letter-spacing:-.015em}
-h2{font-size:19px;margin:36px 0 12px}
-h3{font-size:15px;margin:20px 0 8px;color:var(--text-1)}
-.sub{font-size:14.5px}
-nav.tabs{margin-top:14px}
-nav.tabs a.on{box-shadow:inset 0 3px 0 var(--s1)}
 .herolead{font-size:17.5px;line-height:1.6;max-width:74ch}
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 8px}
 .chip{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
@@ -155,12 +149,7 @@ section.finding h2{font-size:20px;margin-bottom:8px}
 .findnum{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;
   background:var(--s1);color:#fff;font-size:16px;font-weight:700;margin-right:12px;
   vertical-align:-7px}
-figure.fig{background:var(--surface-1);border:1px solid var(--line);border-radius:12px;
-  padding:16px 18px 12px;margin:16px 0}
-figure.fig figcaption{font-size:13.5px;color:var(--text-2);margin:10px 0 2px;
-  max-width:96ch;border-top:1px solid var(--line);padding-top:10px}
-figure.fig .src{display:block;margin-top:6px;font-size:12px;color:var(--text-3)}
-figure.panel figcaption{font-size:13.5px;margin:4px 0 10px}
+figure .src{display:block;margin-top:6px;font-size:12px;color:var(--text-3)}
 svg text{font-size:13px}
 svg .lbl{font-size:13px}
 svg .dlab{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
@@ -180,11 +169,6 @@ ol.checks li{margin:6px 0;max-width:82ch}
 ul.toc{columns:2;column-gap:32px;font-size:13.5px;margin:8px 0 4px;padding-left:20px}
 ul.toc li{margin:3px 0}
 @media (max-width:700px){ul.toc{columns:1}}
-details.howto{margin:8px 0 4px;font-size:13px;color:var(--text-2)}
-details.howto summary{cursor:pointer;color:var(--s1);font-size:12.5px;font-weight:600;
-  list-style-position:inside}
-details.howto>div{border-left:3px solid var(--line);padding:2px 0 2px 12px;margin-top:6px}
-details.howto p{max-width:80ch;margin:6px 0}
 .decision{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
   padding:16px 20px;margin:14px 0;scroll-margin-top:16px}
 .decision:target{border-color:var(--s1)}
@@ -209,14 +193,13 @@ details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
 details.p0[open] summary::before{content:"\2212"}
 details.p0[open] summary{border-bottom:1px solid var(--line)}
 .p0body{padding:10px 16px 12px 40px}
-footer{border-top:1px solid var(--line);padding-top:12px;margin-top:56px}
 </style>
 </head>
 <body>
 <header class="site"><div class="wrap">
 <h1>architecture</h1>
 <p class="sub">The as-built system: repositories, boundaries, loop, arithmetic, search, host layer.</p>
-<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="methodology.html">methodology</a><a href="architecture.html" class="on">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-01)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="methodology.html">methodology</a><a href="architecture.html" class="on">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-02)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
 </div></header>
 <div class="wrap">
 
@@ -226,13 +209,7 @@ tested, and <a href="design-decisions.html">design decisions</a> records why eac
 shaped the way it is.</p>
 
 <h2>The four repositories</h2>
-<figure class="panel"><figcaption>One writer and one trust level per repository. The live site keeps moving with the run; this site is a dated snapshot.</figcaption><div class="scroll"><svg viewBox="0 0 1148 360" width="1148" height="360" role="img" aria-label="The four repositories: rk-harness and rk-work mounted into the container, rk-findings rebuilt every cycle and published live, rk-overview a frozen snapshot"><defs><marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--text-3)"/></marker></defs><rect class="enclosure" x="10" y="20" width="668" height="141" rx="12"/><text class="alab" x="18" y="14">mounted into the run container</text><rect class="boxhl" x="20" y="46" width="261" height="101" rx="9"/><text class="bt" x="33" y="69">rk-harness</text><text class="bs" x="33" y="91">the scorer: verifier, evaluator,</text><text class="bs" x="33" y="110">cost models, 987 tests</text><text class="bs" x="33" y="129">read-only in the container</text><rect class="box" x="415" y="46" width="253" height="101" rx="9"/><text class="bt" x="428" y="69">rk-work</text><text class="bs" x="428" y="91">run state: append-only archive,</text><text class="bs" x="428" y="110">events, hypothesis ledger</text><text class="bs" x="428" y="129">the one writable mount</text><rect class="box" x="815" y="46" width="313" height="82" rx="9"/><text class="bt" x="828" y="69">rk-findings</text><text class="bs" x="828" y="91">machine-generated numbers site,</text><text class="bs" x="828" y="110">rebuilt by the run every cycle</text><rect x="1070" y="56" width="42" height="19" rx="9" fill="var(--good-bg)"/><text x="1091.0" y="69.5" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--good-fg)">LIVE</text><rect class="box frozen" x="815" y="216" width="313" height="82" rx="9"/><text class="bt" x="828" y="239">rk-overview  (this site)</text><text class="bs" x="828" y="261">human-written explainer pages</text><text class="bs" x="828" y="280">+ a frozen copy of the findings site</text><rect x="1052" y="226" width="56" height="19" rx="9" fill="var(--mut-bg)"/><text x="1080.0" y="239.5" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--mut-fg)">FROZEN</text><path class="arrow" d="M 281 96.5 L 415 96.5"/><text class="alab" x="348.0" y="90.5" text-anchor="middle">verifies + scores</text><path class="arrow" d="M 668 96.5 L 815 87.0"/><text class="alab" x="741.5" y="85.75" text-anchor="middle">rebuilt every cycle</text><path class="arrow arrowdash" d="M 971.5 128 L 971.5 216"/><text class="alab" x="959.5" y="176.0" text-anchor="end">frozen copy taken 2026-09-01</text><a href="https://jgoetzmann.github.io/rk-findings/"><text class="alab" x="815" y="146" style="fill:var(--s1)">jgoetzmann.github.io/rk-findings ↗ (live)</text></a><text class="alab" x="815" y="316">jgoetzmann.github.io/rk-overview</text><text class="alab" x="815" y="332">(you are here, frozen at 2026-09-01)</text></svg></div><details class="howto"><summary>How to read this</summary><div>
-<p>Each box is a git repository; the container boundary is the dashed enclosure. Solid
-arrows are continuous flows that happen every cycle while the run is alive; the dashed
-arrow is a one-time copy. The two right-hand boxes are the published sites: rk-findings
-is rebuilt by the run itself and keeps changing; rk-overview (this site) was generated by
-hand on the snapshot date, and its copy of the findings pages is frozen at that date.</p>
-</div></details></figure>
+<figure class="panel"><figcaption>One writer and one trust level per repository: boxes are git repositories, the dashed enclosure is the container boundary, and the dashed arrow is the one-time snapshot copy. The live site keeps moving with the run; this site is a dated snapshot.</figcaption><div class="scroll"><svg viewBox="0 0 1148 360" width="1148" height="360" role="img" aria-label="The four repositories: rk-harness and rk-work mounted into the container, rk-findings rebuilt every cycle and published live, rk-overview a frozen snapshot"><defs><marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--text-3)"/></marker></defs><rect class="enclosure" x="10" y="20" width="668" height="141" rx="12"/><text class="alab" x="18" y="14">mounted into the run container</text><rect class="boxhl" x="20" y="46" width="261" height="101" rx="9"/><text class="bt" x="33" y="69">rk-harness</text><text class="bs" x="33" y="91">the scorer: verifier, evaluator,</text><text class="bs" x="33" y="110">cost models, 1,038 tests</text><text class="bs" x="33" y="129">read-only in the container</text><rect class="box" x="415" y="46" width="253" height="101" rx="9"/><text class="bt" x="428" y="69">rk-work</text><text class="bs" x="428" y="91">run state: append-only archive,</text><text class="bs" x="428" y="110">events, hypothesis ledger</text><text class="bs" x="428" y="129">the one writable mount</text><rect class="box" x="815" y="46" width="313" height="82" rx="9"/><text class="bt" x="828" y="69">rk-findings</text><text class="bs" x="828" y="91">machine-generated numbers site,</text><text class="bs" x="828" y="110">rebuilt by the run every cycle</text><rect x="1070" y="56" width="42" height="19" rx="9" fill="var(--good-bg)"/><text x="1091.0" y="69.5" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--good-fg)">LIVE</text><rect class="box frozen" x="815" y="216" width="313" height="82" rx="9"/><text class="bt" x="828" y="239">rk-overview  (this site)</text><text class="bs" x="828" y="261">human-written explainer pages</text><text class="bs" x="828" y="280">+ a frozen copy of the findings site</text><rect x="1052" y="226" width="56" height="19" rx="9" fill="var(--mut-bg)"/><text x="1080.0" y="239.5" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--mut-fg)">FROZEN</text><path class="arrow" d="M 281 96.5 L 415 96.5"/><text class="alab" x="348.0" y="90.5" text-anchor="middle">verifies + scores</text><path class="arrow" d="M 668 96.5 L 815 87.0"/><text class="alab" x="741.5" y="85.75" text-anchor="middle">rebuilt every cycle</text><path class="arrow arrowdash" d="M 971.5 128 L 971.5 216"/><text class="alab" x="959.5" y="176.0" text-anchor="end">frozen copy taken 2026-09-02</text><a href="https://jgoetzmann.github.io/rk-findings/"><text class="alab" x="815" y="146" style="fill:var(--s1)">jgoetzmann.github.io/rk-findings ↗ (live)</text></a><text class="alab" x="815" y="316">jgoetzmann.github.io/rk-overview</text><text class="alab" x="815" y="332">(you are here, frozen at 2026-09-02)</text></svg></div></figure>
 
 <p>The split exists so that each artifact has exactly one writer and one trust level.
 <code>rk-harness</code> is the scorer: verifier, evaluator, cost models, tests. It enters
@@ -244,15 +221,7 @@ continuously. <code>rk-overview</code> is this site: human-written, regenerated 
 and carrying a frozen copy of the findings site from its snapshot date.</p>
 
 <h2>Trust boundaries</h2>
-<figure class="panel"><figcaption>The as-built system. The verifier lives inside the read-only mount; the GitHub credential never crosses the container boundary.</figcaption><div class="scroll"><svg viewBox="0 0 1357 316" width="1357" height="316" role="img" aria-label="System diagram: host, container with read-only harness, and services"><defs><marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--text-3)"/></marker></defs><rect class="box" x="16" y="16" width="275" height="101" rx="9"/><text class="bt" x="29" y="39">Windows host</text><text class="bs" x="29" y="61">watchdog: heartbeat kill,</text><text class="bs" x="29" y="80">spend / disk stop, battery pause,</text><text class="bs" x="29" y="99">git pushes + config + watcher</text><rect class="box" x="16" y="135" width="275" height="82" rx="9"/><text class="bt" x="29" y="158">credentials</text><text class="bs" x="29" y="180">GitHub PAT: host only, not mounted</text><text class="bs" x="29" y="199">Codex auth: mounted read-only</text><rect class="box" x="413" y="16" width="528" height="284" rx="10"/><text class="bt" x="426" y="40">run container (docker)</text><rect class="boxhl" x="429" y="52" width="496" height="82" rx="9"/><text class="bt" x="442" y="75">rk-harness  (read-only mount)</text><text class="bs" x="442" y="97">verifier + evaluator + cost models</text><text class="bs" x="442" y="116">sha256 pinned, checked at start</text><rect class="box" x="429" y="146" width="253" height="63" rx="9"/><text class="bt" x="442" y="169">runner</text><text class="bs" x="442" y="191">cycle loop; the only LLM caller</text><rect class="box" x="694" y="146" width="231" height="63" rx="9"/><text class="bt" x="707" y="169">search</text><text class="bs" x="707" y="191">CMA-ES islands + enumeration</text><rect class="box" x="429" y="221" width="496" height="63" rx="9"/><text class="bt" x="442" y="244">rk-work  (writable mount)</text><text class="bs" x="442" y="266">append-only archive, events, ledger</text><rect class="box" x="1088" y="16" width="253" height="63" rx="9"/><text class="bt" x="1101" y="39">Codex (planning)</text><text class="bs" x="1101" y="61">directives, hypotheses, digests</text><rect class="box" x="1088" y="105" width="253" height="63" rx="9"/><text class="bt" x="1101" y="128">rk-findings</text><text class="bs" x="1101" y="150">auto site, rebuilt every cycle</text><rect class="box" x="1088" y="194" width="253" height="63" rx="9"/><text class="bt" x="1101" y="217">GitHub Pages</text><text class="bs" x="1101" y="239">deploys on push from the host</text><path class="arrow" d="M 291 60 L 413 60"/><text class="alab" x="352.0" y="54.0" text-anchor="middle">docker run</text><path class="arrow" d="M 291 177 L 413 241"/><text class="alab" x="352.0" y="199.0" text-anchor="middle">git push (host)</text><path class="arrow" d="M 941 177.5 L 1088 47.5"/><text class="alab" x="1014.5" y="102.5" text-anchor="middle">throttled LLM calls</text><path class="arrow" d="M 941 241 L 1088 136.5"/><text class="alab" x="1014.5" y="178.75" text-anchor="middle">commit each cycle</text><path class="arrow" d="M 1214.5 168 L 1214.5 194"/></svg></div><details class="howto"><summary>How to read this</summary><div>
-<p>Three columns, left to right: the Windows host, the docker container, and the services
-the run talks to. On the host, the watchdog is the only process holding push credentials.
-Inside the container, the highlighted box is <code>rk-harness</code>: mounted read-only,
-hash-checked at start, home of every rule that decides a score. The runner drives the
-cycle loop and is the only component that calls the LLM; <code>rk-work</code> is the one
-writable mount. The arrows carry the trust story: "docker run" is all the host does to
-start the science, and no arrow carries a GitHub credential into the middle column.</p>
-</div></details></figure>
+<figure class="panel"><figcaption>The as-built system, three columns left to right: the Windows host, the docker container, and the services the run talks to. The verifier lives inside the read-only mount, and no arrow carries the GitHub credential across the container boundary.</figcaption><div class="scroll"><svg viewBox="0 0 1357 316" width="1357" height="316" role="img" aria-label="System diagram: host, container with read-only harness, and services"><defs><marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--text-3)"/></marker></defs><rect class="box" x="16" y="16" width="275" height="101" rx="9"/><text class="bt" x="29" y="39">Windows host</text><text class="bs" x="29" y="61">watchdog: heartbeat kill,</text><text class="bs" x="29" y="80">spend / disk stop, battery pause,</text><text class="bs" x="29" y="99">git pushes + config + watcher</text><rect class="box" x="16" y="135" width="275" height="82" rx="9"/><text class="bt" x="29" y="158">credentials</text><text class="bs" x="29" y="180">GitHub PAT: host only, not mounted</text><text class="bs" x="29" y="199">Codex auth: mounted read-only</text><rect class="box" x="413" y="16" width="528" height="284" rx="10"/><text class="bt" x="426" y="40">run container (docker)</text><rect class="boxhl" x="429" y="52" width="496" height="82" rx="9"/><text class="bt" x="442" y="75">rk-harness  (read-only mount)</text><text class="bs" x="442" y="97">verifier + evaluator + cost models</text><text class="bs" x="442" y="116">sha256 pinned, checked at start</text><rect class="box" x="429" y="146" width="253" height="63" rx="9"/><text class="bt" x="442" y="169">runner</text><text class="bs" x="442" y="191">cycle loop; the only LLM caller</text><rect class="box" x="694" y="146" width="231" height="63" rx="9"/><text class="bt" x="707" y="169">search</text><text class="bs" x="707" y="191">CMA-ES islands + enumeration</text><rect class="box" x="429" y="221" width="496" height="63" rx="9"/><text class="bt" x="442" y="244">rk-work  (writable mount)</text><text class="bs" x="442" y="266">append-only archive, events, ledger</text><rect class="box" x="1088" y="16" width="253" height="63" rx="9"/><text class="bt" x="1101" y="39">Codex (planning)</text><text class="bs" x="1101" y="61">directives, hypotheses, digests</text><rect class="box" x="1088" y="105" width="253" height="63" rx="9"/><text class="bt" x="1101" y="128">rk-findings</text><text class="bs" x="1101" y="150">auto site, rebuilt every cycle</text><rect class="box" x="1088" y="194" width="253" height="63" rx="9"/><text class="bt" x="1101" y="217">GitHub Pages</text><text class="bs" x="1101" y="239">deploys on push from the host</text><path class="arrow" d="M 291 60 L 413 60"/><text class="alab" x="352.0" y="54.0" text-anchor="middle">docker run</text><path class="arrow" d="M 291 177 L 413 241"/><text class="alab" x="352.0" y="199.0" text-anchor="middle">git push (host)</text><path class="arrow" d="M 941 177.5 L 1088 47.5"/><text class="alab" x="1014.5" y="102.5" text-anchor="middle">throttled LLM calls</text><path class="arrow" d="M 941 241 L 1088 136.5"/><text class="alab" x="1014.5" y="178.75" text-anchor="middle">commit each cycle</text><path class="arrow" d="M 1214.5 168 L 1214.5 194"/></svg></div></figure>
 
 <p>The design assumes the searching agent will, if permitted, optimise the scorer instead
 of the score. Four boundaries make that unprofitable:</p>
@@ -274,15 +243,7 @@ model invented.</li>
 </ul>
 
 <h2>The cycle loop</h2>
-<figure class="panel"><figcaption>One idempotent cycle; a crash anywhere costs at most one cycle.</figcaption><div class="scroll"><svg viewBox="0 0 998 210" width="998" height="210" role="img" aria-label="Cycle loop: replay, encourager, candidates, verify, evaluate, tier, append, ledger, site, commit"><defs><marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--text-3)"/></marker></defs><rect class="box" x="16" y="16" width="158" height="63" rx="9"/><text class="bt" x="29" y="39">replay</text><text class="bs" x="29" y="61">archive → state</text><path class="arrow" d="M 174 47.5 L 218 47.5"/><rect class="box" x="218" y="16" width="158" height="63" rx="9"/><text class="bt" x="231" y="39">encourager</text><text class="bs" x="231" y="61">ladder + calendar</text><path class="arrow" d="M 376 47.5 L 420 47.5"/><rect class="box" x="420" y="16" width="158" height="63" rx="9"/><text class="bt" x="433" y="39">candidates</text><text class="bs" x="433" y="61">enumerate / CMA-ES</text><path class="arrow" d="M 578 47.5 L 622 47.5"/><rect class="boxhl" x="622" y="16" width="158" height="63" rx="9"/><text class="bt" x="635" y="39">verify ×9</text><text class="bs" x="635" y="61">nine checks, exact</text><path class="arrow" d="M 780 47.5 L 824 47.5"/><rect class="box" x="824" y="16" width="158" height="63" rx="9"/><text class="bt" x="837" y="39">evaluate</text><text class="bs" x="837" y="61">Q15, 3 cost models</text><rect class="box" x="16" y="131" width="158" height="63" rx="9"/><text class="bt" x="29" y="154">tier</text><text class="bs" x="29" y="176">vs cell incumbent</text><path class="arrow" d="M 174 162.5 L 218 162.5"/><rect class="box" x="218" y="131" width="158" height="63" rx="9"/><text class="bt" x="231" y="154">append</text><text class="bs" x="231" y="176">fsync JSONL</text><path class="arrow" d="M 376 162.5 L 420 162.5"/><rect class="box" x="420" y="131" width="158" height="63" rx="9"/><text class="bt" x="433" y="154">ledger</text><text class="bs" x="433" y="176">verdicts by code</text><path class="arrow" d="M 578 162.5 L 622 162.5"/><rect class="box" x="622" y="131" width="158" height="63" rx="9"/><text class="bt" x="635" y="154">site</text><text class="bs" x="635" y="176">rebuild + guard</text><path class="arrow" d="M 780 162.5 L 824 162.5"/><rect class="box" x="824" y="131" width="158" height="63" rx="9"/><text class="bt" x="837" y="154">commit</text><text class="bs" x="837" y="176">host pushes later</text><path class="arrow" d="M 903.0 79 L 903.0 105.0 L 95.0 105.0 L 95.0 129"/></svg></div><details class="howto"><summary>How to read this</summary><div>
-<p>Ten stages, left to right, top row then bottom. "replay" rebuilds all state from the
-append-only archive, which is what lets the loop be killed anywhere. "verify &times;9" is
-the nine-check gate, cheap checks first. "evaluate" runs survivors in Q15 under three cost
-models at equal cycle budget; "tier" compares against the cell's incumbent; "append"
-fsyncs the record. A crash between any two boxes loses at most the current cycle: nothing
-before "append" has side effects, and everything after it can be regenerated from the
-archive.</p>
-</div></details></figure>
+<figure class="panel"><figcaption>One idempotent cycle, read left to right, top row then bottom. Replay rebuilds all state from the append-only archive and nothing before the fsynced append has side effects, so a crash anywhere costs at most one cycle.</figcaption><div class="scroll"><svg viewBox="0 0 998 210" width="998" height="210" role="img" aria-label="Cycle loop: replay, encourager, candidates, verify, evaluate, tier, append, ledger, site, commit"><defs><marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--text-3)"/></marker></defs><rect class="box" x="16" y="16" width="158" height="63" rx="9"/><text class="bt" x="29" y="39">replay</text><text class="bs" x="29" y="61">archive → state</text><path class="arrow" d="M 174 47.5 L 218 47.5"/><rect class="box" x="218" y="16" width="158" height="63" rx="9"/><text class="bt" x="231" y="39">encourager</text><text class="bs" x="231" y="61">ladder + calendar</text><path class="arrow" d="M 376 47.5 L 420 47.5"/><rect class="box" x="420" y="16" width="158" height="63" rx="9"/><text class="bt" x="433" y="39">candidates</text><text class="bs" x="433" y="61">enumerate / CMA-ES</text><path class="arrow" d="M 578 47.5 L 622 47.5"/><rect class="boxhl" x="622" y="16" width="158" height="63" rx="9"/><text class="bt" x="635" y="39">verify ×9</text><text class="bs" x="635" y="61">nine checks, exact</text><path class="arrow" d="M 780 47.5 L 824 47.5"/><rect class="box" x="824" y="16" width="158" height="63" rx="9"/><text class="bt" x="837" y="39">evaluate</text><text class="bs" x="837" y="61">Q15, 3 cost models</text><rect class="box" x="16" y="131" width="158" height="63" rx="9"/><text class="bt" x="29" y="154">tier</text><text class="bs" x="29" y="176">vs cell incumbent</text><path class="arrow" d="M 174 162.5 L 218 162.5"/><rect class="box" x="218" y="131" width="158" height="63" rx="9"/><text class="bt" x="231" y="154">append</text><text class="bs" x="231" y="176">fsync JSONL</text><path class="arrow" d="M 376 162.5 L 420 162.5"/><rect class="box" x="420" y="131" width="158" height="63" rx="9"/><text class="bt" x="433" y="154">ledger</text><text class="bs" x="433" y="176">verdicts by code</text><path class="arrow" d="M 578 162.5 L 622 162.5"/><rect class="box" x="622" y="131" width="158" height="63" rx="9"/><text class="bt" x="635" y="154">site</text><text class="bs" x="635" y="176">rebuild + guard</text><path class="arrow" d="M 780 162.5 L 824 162.5"/><rect class="box" x="824" y="131" width="158" height="63" rx="9"/><text class="bt" x="837" y="154">commit</text><text class="bs" x="837" y="176">host pushes later</text><path class="arrow" d="M 903.0 79 L 903.0 105.0 L 95.0 105.0 L 95.0 129"/></svg></div></figure>
 
 <p>The runner executes one idempotent cycle at a time. A crash at any point costs at most
 one cycle: the archive is append-only with fsync, state is written atomically, and replay
@@ -309,20 +270,85 @@ consistent slope run.</li>
 <li><strong>NAN_OR_INF</strong> &mdash; any non-finite value anywhere is fatal.</li>
 </ol>
 
-<h2>Arithmetic, exactly</h2>
+<h2 id="arithmetic">Arithmetic, exactly</h2>
 
 <p>States are Q15: int16 at scale 2<sup>&minus;15</sup>. A multiply is
 <code>(a*b) &gt;&gt; 15</code> with an arithmetic shift, flooring toward negative
-infinity; that matches ARM's ASRS and deliberately does not match C's truncation.
-Addition overflow raises rather than wraps, so overflow becomes a verifier rejection
-instead of a silent wrong answer.</p>
-<p>Coefficients are not Q15. Each is an integer-and-shift pair m/2<sup>s</sup> (rk4's 1
-and kutta3's 2 do not fit [&minus;1, 1)), and inexact representations contribute a
-recorded quantisation error. Cost is driven by CSD (non-adjacent-form) weight: 3/8 is
-dyadic yet costs two shifts and an add, and every coefficient is priced at min(shift-add
-expansion, hardware multiply).</p>
+infinity; that matches ARM's ASRS and deliberately does not match C's truncation,
+which rounds toward zero. The two conventions disagree on every negative product with
+a nonzero remainder (q15_mul(&minus;1, 1) is &minus;1 under floor, 0 under
+truncation), and getting this wrong would bias every result in the project, so the
+divergence vectors are pinned as fixtures. Nothing saturates and nothing wraps:
+operands and results are range-checked, anything outside int16 raises, and the
+pipeline turns the exception into a verifier rejection instead of a silent wrong
+answer. Skipping saturation mirrors the hardware rather than cutting a corner: M0+
+has no SSAT instruction, and saturating in software needs a compare and branch, which
+would destroy both branchlessness and exact cycle counting.</p>
+<p>Floor rounding is one-sided: the computed product never exceeds the exact product,
+and the discarded bits average about half an LSB of deficit per term.
+Round-to-nearest would make the per-term error zero-mean and let errors partially
+cancel; flooring accumulates the bias in one direction across every coefficient
+application and every step. A fixed-step integration at the standard budget performs
+thousands of such products, so at small step sizes the drift, not roundoff variance,
+dominates Q15 error. The harness keeps the hardware semantics because shipped code on
+this target would floor too; the measured consequences are
+<a href="results.html#floor-flip">key finding 2</a>.</p>
+<p>Coefficients are not Q15. Each is an integer-and-shift pair m/2<sup>s</sup> with
+|m| &le; 32767 and 0 &le; s &le; 20 (rk4's 1 and kutta3's 2 do not fit
+[&minus;1, 1)), applied as <code>(v*m) &gt;&gt; s</code>. When no exact pair exists,
+1/3 for instance, the closest pair is used and the gap is recorded as a quantisation
+error: a measured property, never a rejection.</p>
+<p>Derivatives get one extra mechanism. The Q15 right-hand side wraps the physical
+float64 derivative: state out to physical units, derivative in float64, result scaled
+back into Q15. A derivative can be larger than the state it drives; rc_thermal's is
+&minus;11 at t = 0, which times the state scale 0.25 leaves Q15 range. Such a problem
+stores its derivative with an extra power-of-two factor (DERIV_SCALE = 1/8 there, 1
+everywhere else), and the step undoes it by inflating the step-size constant,
+h_q = q15(h / DERIV_SCALE). The compensation is exact because both factors are powers
+of two.</p>
+<p>The Q15 integrator takes n equal steps of the budgeted size. Within a step, each
+stage stores h times its derivative (the multiply by h_q happens once, at
+evaluation), so applying a coefficient is a single (m, s) multiply-and-add per
+nonzero entry, and the b combination works the same way. The simulator tracks the
+largest absolute integer seen anywhere in the trajectory, which becomes the overflow
+margin, 1 / (2 &middot; max|q| / 32768): above 1.0 exactly when everything stayed
+under half of full scale, the 2&times; headroom the verifier demands. A float64 twin
+of the integrator exists for the convergence study only and plays no part in scoring
+Q15 error.</p>
 
-<h2>Where candidates come from</h2>
+<h2 id="costmodel">The cost model</h2>
+
+<p>Costs are counted analytically: no compiler, no emulator, no board in the loop, so
+the cycle count is a pure function of the tableau and identical on every machine.
+Three models assign cycles to five operation classes:</p>
+<div class="scroll"><table>
+<thead><tr><th>model</th><th>mul</th><th>add</th><th>shift</th><th>load</th><th>store</th><th>role</th></tr></thead>
+<tbody>
+<tr><td>m0plus_fast</td><td>1</td><td>1</td><td>1</td><td>2</td><td>2</td><td>M0+ with single-cycle multiplier; primary</td></tr>
+<tr><td>m0plus_slow</td><td>32</td><td>1</td><td>1</td><td>2</td><td>2</td><td>M0+ with iterative multiplier; primary</td></tr>
+<tr><td>avr_approx</td><td>14</td><td>2</td><td>8</td><td>2</td><td>2</td><td>8-bit AVR approximation; advisory only</td></tr>
+</tbody></table></div>
+<p>Applying a coefficient (m, s) costs nothing when it is 0 (the term is omitted) or
+&plusmn;1 (a copy whose sign folds into the add). Otherwise it costs the cheaper of
+two implementations: a shift-add expansion of w shifts plus w &minus; 1 adds, where w
+is the CSD weight of m (the minimum number of nonzero signed powers of two in its
+non-adjacent form; 3/8 is dyadic yet costs two shifts and an add), or one hardware
+multiply plus one shift. Taking the minimum is the point of the model: with a 1-cycle
+multiplier the multiply nearly always wins and coefficient structure barely matters,
+while with a 32-cycle multiplier the shift-add expansion wins up to about w = 10,
+making low-weight coefficients dramatically cheaper. Per stage with any nonzero A
+entry, and once more for the b combination, the model charges a load, the coefficient
+cost plus an add per nonzero entry, and a store, all times the state count.
+Derivative evaluation is excluded: identical across methods at the same stage count,
+it only shifts every method by the same constant.</p>
+<p>Two cross-checks anchor the model to hardware. A pinned, hand-counted ARMv6-M
+assembly sequence must count to exactly 13 cycles under m0plus_fast and 75 under
+m0plus_slow, and a reference C emitter can print the step function a compiler would
+see, for one-off human comparison; the harness never compiles or executes it. The
+rk4-versus-rk38 comparison on the <a href="index.html">overview page</a> is pinned
+the same way, as golden test G21: twelve numbers verified before any search ran.</p>
+
+<h2 id="candidates">Where candidates come from</h2>
 
 <p>Phases 0 and 1 are exhaustive enumerations (16 points at order 2; 5,094 exact 3-stage
 order-3 points), so their results are proofs within the enumerated space, and the site
@@ -332,35 +358,107 @@ b-linear order conditions; snapping b would make order &ge; 3 impossible by the 
 theorem. When the requested order is not exactly solvable for a snapped A (order 4 rarely
 is), the projection falls back to the highest solvable order &ge; 2 and the candidate is
 verified at the order it actually achieves.</p>
+<p>The projection, exactly: a CMA-ES sample is s(s&minus;1)/2 free A entries plus s
+guesses for b. The A entries snap to the lattice k/D, where D is the directive's
+dyadic denominator cap; the abscissae c are then the exact row sums of A. The order
+conditions up to the target order, linear in b once A and c are fixed, are assembled
+as an exact system over Fractions (one row per rooted tree, right-hand side
+1/&gamma;(tree)) and solved by Gaussian elimination over Fractions: determined
+components come out as exact rationals, leftover degrees of freedom take the CMA
+guess snapped to the same lattice, and an inconsistent system returns no tableau.
+Non-dyadic weights like 1/6 survive as exact fractions and are later applied through
+their closest (m, s) pair, with the gap recorded as quantisation error.</p>
+<p>Around the projection, CMA-ES (initial step size 0.3) minimises the search-set RMS
+at the shared budget plus a 1e6 quadratic penalty on the order-condition residuals,
+with 1e9 assigned to anything that overflows or cannot be projected; only the three
+search problems are reachable from this loop. On stagnation it restarts with a
+derived seed (seed + 1000k for restart k), improving tableaus are deduplicated by
+content hash, and islands running under different seeds exchange the record with the
+lowest held-out error, using scores already computed downstream by the evaluator,
+never by the search itself.</p>
+<p>The enumerated spaces are lattices, counted before they are walked. Phase 0's one
+free parameter runs over 256 dyadic values, of which exactly 16 yield exactly
+representable b weights; that space is closed as
+<a href="results.html#phase0">key finding 5</a>. Phase 1 parameterises the 3-stage
+order-3 family by its two abscissae, each over a 1,024-value lattice: 1,048,576
+ordered pairs, well under the module's 100,000,000-candidate cap (past the cap, the
+code would fall back to CMA-ES and record that it did). Pairs survive only when the
+induced matrix entries and c<sub>2</sub> are exactly representable, every emitted
+tableau is asserted to satisfy the order-3 residuals exactly, and 5,094 make it
+through.</p>
 
-<h2>The outer loop: a research partner, not a sampler</h2>
+<h2 id="archive">The archive</h2>
+
+<p>Every verified candidate becomes one JSON line in a per-day file, appended with
+write-then-fsync: the tableau as exact fractions, its sha256 content hash, the full
+score vector, the mechanically assigned tier, the cycle id and seed, the verifier
+hash in force when it was scored, the directive and hypothesis ids that motivated it,
+and a UTC timestamp. Replay validates as it rebuilds: a line that fails JSON parsing
+or schema validation is dropped, a record whose stored hash disagrees with its
+recomputed tableau hash is rejected, and a tier string outside the closed three-value
+set fails validation.</p>
+<p>The working structure over the records is MAP-Elites: one grid per symbolic order,
+each cell keyed by stage count and a log2 band of the m0plus_fast cycle count (below
+16 is bucket 0, 16&ndash;31 is 1, 32&ndash;63 is 2, and so on up to bucket 7 at 1024
+and above). Within a cell the elite is the record with strictly the lowest held-out
+error; ties and non-finite comparisons keep the earlier record. Replay also maintains
+Welford running statistics per (order, stages) cell for each model and metric, which
+is what the hypothesis ledger's predicates read. Problems admitted from quarantine
+run in shadow for 10 cycles, evaluated and recorded but excluded from tier decisions,
+before they count.</p>
+
+<h2 id="outer">The outer loop: a research partner, not a sampler</h2>
 
 <p>The LLM (Codex, plan-billed, authenticated on the host, mounted read-only) never
 touches the inner loop. It emits JSON directives that can only narrow the search: target
 order, stage counts, structural constraints, validated against a schema where unknown
-keys are rejections. Directives are requested every few cycles and on every escalation,
+keys are rejections. Beyond the schema, hand-applied rules bound every field: order 1
+to 4, at most three stage counts between 2 and 6, force-zero positions strictly below
+the diagonal, a dyadic denominator cap that is a power of two at most 32768, islands 1
+to 8, a budget of 5 to 120 minutes, a rationale under 500 characters. A malformed
+directive is discarded and logged, and a deterministic fallback searches the emptiest
+grid cell instead. Directives are requested every few cycles and on every escalation,
 and reused in between; calls stop at a plan-usage cap.</p>
 <p>On HYPOTHESIZE escalations it proposes falsifiable hypotheses whose ids and verdicts
-are assigned by code and whose predicates must parse under a closed grammar (a
-hand-written parser; no eval anywhere near model output). A literature loop web-searches
-a rotating topic every ~50 cycles and feeds the digest into every prompt. The digests and
-the model's prose interpretation are published on the findings site, clearly labelled and
-passed through a softener so the site's banned-words guard holds.</p>
+are assigned by code and whose predicates must parse under a closed grammar: a
+hand-written tokenizer and recursive-descent parser with a 2,000-character cap and a
+control-character ban, no eval anywhere near model output (a grep canary enforces
+that), and a dunder call is a syntax error, not code. The grammar, in full:</p>
+<pre class="grammar">expr    := term (("AND" | "OR") term)*
+term    := field op field | field op number
+field   := model "." cell "." metric
+model   := "fast" | "slow" | "avr_approx"
+cell    := "p" digit "s" digit
+metric  := "heldout" | "search" | "cycles" | "order"
+op      := "&lt;" | "&gt;" | "&lt;=" | "&gt;=" | "=="</pre>
+<p>A field such as fast.p3s4.heldout resolves against the archive's cell statistics:
+the minimum of the metric over every cycle bucket at that (order, stages), except the
+order metric, which uses the mean. How verdicts are then assigned is protocol, not
+machinery, and lives on the <a href="methodology.html#protocol">methodology page</a>.
+A literature loop web-searches a rotating topic every ~50 cycles and feeds the digest
+into every prompt. The digests and the model's prose interpretation are published on
+the findings site, clearly labelled and passed through a softener so the site's
+banned-words guard holds.</p>
 
 <h2>The host layer</h2>
 
 <p>A PowerShell watchdog polls every 10 seconds: stale heartbeat &rarr; kill; spend over
 cap or disk under 5 GB &rarr; stop; laptop on battery or foreground CPU load &rarr; pause
-and resume; plus the host-side pushes. Operational knobs (container resources, auto-stop,
-LLM throttles, watchdog thresholds) live in a workspace <code>config.json</code> edited
-by <code>configure.py</code>. Scientific thresholds are deliberately not configurable:
-changing them would invalidate the archive, so they live in the hash-pinned code. A
-read-only watcher window renders the whole state live; Ctrl+C in it cannot touch the
-run.</p>
+and resume; plus the host-side pushes. A wrongful kill self-heals, because the restart
+policy brings the container back and the start gate re-runs; spend and disk stops stay
+down; pause is atomic, so the run resumes mid-cycle exactly where it stopped.
+Operational knobs (container resources, auto-stop, LLM throttles, watchdog thresholds)
+live in a workspace <code>config.json</code> edited by <code>configure.py</code>.
+Scientific thresholds are deliberately not configurable: changing them would invalidate
+the archive, so they live in the hash-pinned code. A read-only watcher window renders
+the whole state live; Ctrl+C in it cannot touch the run. One bookkeeping rule ties the
+layer together: storage is UTC everywhere, and only human-facing display converts to US
+Central, through one small module; the watchdog's staleness arithmetic and the
+archive's determinism both depend on it.</p>
 <p class="note">Three pre-flight drills changed this system before the run started; that
 story is on the <a href="methodology.html#preflight">methodology page</a>.</p>
 
-<footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-01 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
+<footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-02 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
 </div>
 </body>
 </html>
