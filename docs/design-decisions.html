@@ -87,6 +87,8 @@ th.num,td.num{text-align:right}
 .badge-supported{background:var(--good-bg);color:var(--good-fg)}
 .badge-refuted{background:var(--bad-bg);color:var(--bad-fg)}
 .badge-inconclusive{background:var(--warn-bg);color:var(--warn-fg)}
+.badge-active{background:var(--good-bg);color:var(--good-fg)}
+.badge-frozen{background:var(--mut-bg);color:var(--mut-fg)}
 .hash{word-break:break-all;font:12px ui-monospace,Consolas,monospace;color:var(--text-2)}
 .mono{font:13px ui-monospace,Consolas,monospace}
 .note{font-size:13px;color:var(--text-2);font-style:italic}
@@ -199,7 +201,7 @@ details.p0[open] summary{border-bottom:1px solid var(--line)}
 <header class="site"><div class="wrap">
 <h1>design decisions</h1>
 <p class="sub">Every deliberate choice, annotated with what the build did to it.</p>
-<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="methodology.html">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html" class="on">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-02)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="tradeoffs.html">trade-offs</a><a href="tracks.html">research tracks</a><a href="methodology.html">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html" class="on">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-02)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
 </div></header>
 <div class="wrap">
 <p class="note">Each entry: the original decision from DESIGN.md (written before the build), and what the working system actually does. Tags mark whether contact with reality kept or changed it.</p>
@@ -228,14 +230,19 @@ quantisation effect. Rosenbrock methods remain the natural second project. One a
 to the cut list from the build: alternative rounding modes (round-to-nearest, stochastic
 rounding) are deliberately a <em>measured comparison</em> on the key findings page, not a
 search dimension, because changing the arithmetic changes every score in the archive, so
-it is pinned by the verifier hash.</p>
+it is pinned by the verifier hash. </p>
+<p class="note">Update (2026-09-02): adaptive step size and implicit methods are
+no longer cut, they are scheduled &mdash; as future scored epochs with deterministic
+realizations (a division-free controller with worst-case cycles booked; a fixed Newton
+iteration count). The <a href="tracks.html">research tracks page</a> carries the plan
+and the prototypes.</p>
 
 <h2>Known prior art, and where the gap is</h2>
 
 <p>RKTK (Zhang, 2019) already performs unstructured numerical search over Butcher order
 conditions and holds an order-10 stage-count record; numerical tableau search is not the
 contribution. That line optimises order, stages and error constants in exact arithmetic.
-Nobody prices coefficients against a hardware cost model, and nobody evaluates end-to-end
+That line of work does not price coefficients against a hardware cost model, and does not evaluate end-to-end
 in fixed point; that is the gap, and it is narrow enough to finish. The literature loop
 keeps collecting adjacent work (fixed-point ODE solvers, CSD constant multiplication,
 rounding-error analysis) into the findings site's literature page as the run proceeds.</p>

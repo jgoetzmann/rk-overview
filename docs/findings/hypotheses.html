@@ -87,6 +87,8 @@ th.num,td.num{text-align:right}
 .badge-supported{background:var(--good-bg);color:var(--good-fg)}
 .badge-refuted{background:var(--bad-bg);color:var(--bad-fg)}
 .badge-inconclusive{background:var(--warn-bg);color:var(--warn-fg)}
+.badge-active{background:var(--good-bg);color:var(--good-fg)}
+.badge-frozen{background:var(--mut-bg);color:var(--mut-fg)}
 .hash{word-break:break-all;font:12px ui-monospace,Consolas,monospace;color:var(--text-2)}
 .mono{font:13px ui-monospace,Consolas,monospace}
 .note{font-size:13px;color:var(--text-2);font-style:italic}
@@ -128,7 +130,7 @@ footer p.prov a{color:var(--text-2)}
 <div class="wrap">
 <p class="lead">The <a href="glossary.html#hypothesis-ledger">hypothesis ledger</a>: statements the planning model committed to before the data could answer them, each resolved mechanically against the archive. Click a hypothesis to see its full text, predicate and resolution provenance.</p>
 <details class="explain"><summary>How to read this</summary><div><p>A hypothesis is a falsifiable statement about archive cells, recorded with a proposed mechanism, a control (what should happen instead if the mechanism is wrong), and a machine-checkable predicate over per-cell statistics, for example <span class="mono">slow.p3s4.heldout &lt; slow.p4s4.heldout</span>. The p and s numbers name an (order, stages) cell; the leading word picks the cost model.</p><p>Verdicts come from code, never from the model. Once every cell a predicate references has at least min_samples records, the predicate is evaluated against the cells' running statistics and the result is supported or refuted. The effect size is <a href="glossary.html#cohens-d">Cohen&#x27;s d</a>, the absolute difference of the two populations' means divided by their pooled standard deviation; when populations are compared and d is below 0.2 the verdict is inconclusive no matter which way the comparison went, so weak effects cannot be claimed as findings.</p><p>A predicate that references a cell with no data is also inconclusive: absence of evidence never refutes. n is the smallest record count among the referenced cells. Hypotheses carry cycle numbers rather than clock times; cycles are the run's unit of progress.</p></div></details>
-<div class="cards"><div class="card"><div class="k">open</div><div class="v">23</div></div><div class="card"><div class="k">supported</div><div class="v">85</div></div><div class="card"><div class="k">refuted</div><div class="v">40</div></div><div class="card"><div class="k">inconclusive</div><div class="v">0</div></div></div>
+<div class="cards"><div class="card"><div class="k">open</div><div class="v">22</div></div><div class="card"><div class="k">supported</div><div class="v">87</div></div><div class="card"><div class="k">refuted</div><div class="v">40</div></div><div class="card"><div class="k">inconclusive</div><div class="v">0</div></div></div>
 <p class="note">Verdicts are computed by code from the archive; the model never writes one. A missing cell reads as inconclusive, never refuted.</p>
 <details class="fold"><summary><span class="mono">H-001</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.603339, n = 44</span></summary><div><dl class="meta">
 <dt>statement</dt><dd>The order-2, three-stage archive cell does better than the order-2, two-stage cell on held-out error under the slow cost model.</dd>
@@ -1894,17 +1896,29 @@ footer p.prov a{color:var(--text-2)}
 <dt>resolved at cycle</dt><dd>807</dd>
 <dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 807; the model never writes verdicts</dd>
 </dl></div></details>
-<details class="fold"><summary><span class="mono">H-148</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<details class="fold"><summary><span class="mono">H-148</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.435851, n = 249</span></summary><div><dl class="meta">
 <dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, five-stage cell on held-out error under the slow cost model.</dd>
 <dt>mechanism</dt><dd>The slow multiplier favors the order-3 cell&#x27;s shift-add-friendly coefficients enough to offset its stricter order constraints.</dd>
 <dt>control</dt><dd>Under the fast cost model, the order-2, five-stage cell should instead have lower held-out error if multiplier cost drives the reversal.</dd>
 <dt>predicate</dt><dd><span class="mono">slow.p3s5.heldout &lt; slow.p2s5.heldout AND fast.p2s5.heldout &lt; fast.p3s5.heldout</span></dd>
 <dt>min_samples</dt><dd>20</dd>
-<dt>n_samples</dt><dd>n/a</dd>
-<dt>effect_size</dt><dd>n/a</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.435851</dd>
 <dt>proposed at cycle</dt><dd>808</dd>
-<dt>resolved at cycle</dt><dd>n/a</dd>
-<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+<dt>resolved at cycle</dt><dd>808</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 808; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-149</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.926691, n = 266</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, four-stage archive cell does better than the order-3, five-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>Single-cycle multiplication favors the lower-stage method by reducing the value of shift-add-friendly coefficients.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, five-stage cell should instead have lower held-out error if the mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s4.heldout &lt; fast.p3s5.heldout AND slow.p3s5.heldout &lt; slow.p2s4.heldout</span></dd>
+<dt>min_samples</dt><dd>50</dd>
+<dt>n_samples</dt><dd>266</dd>
+<dt>effect_size</dt><dd>0.926691</dd>
+<dt>proposed at cycle</dt><dd>808</dd>
+<dt>resolved at cycle</dt><dd>808</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 808; the model never writes verdicts</dd>
 </dl></div></details>
 <footer>
 <p>rk-harness findings: Q15 fixed point, equal cycle budget, Cortex-M0+ cost models.</p>

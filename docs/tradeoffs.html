@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>trade-offs</title>
+<style>
+:root{
+  color-scheme:light;
+  --surface-0:#f5f4f2;--surface-1:#fcfcfb;--line:#dedcd6;--grid:#eceae5;
+  --text-1:#0b0b0b;--text-2:#52514e;--text-3:#8a887f;
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;
+  --good-bg:#e0f2e3;--good-fg:#0d5c1d;--warn-bg:#fdf0d3;--warn-fg:#7a5300;
+  --mut-bg:#eceae5;--mut-fg:#52514e;--bad-bg:#fbe3e3;--bad-fg:#8f1d1d;
+  --q1:#cde2fb;--q2:#9ec5f4;--q3:#6da7ec;--q4:#3987e5;--q5:#256abf;--q6:#184f95;--q7:#0d366b;
+  --banner-bg:#fdf0d3;--banner-line:#c98500;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme:dark;
+    --surface-0:#111110;--surface-1:#1a1a19;--line:#3a3936;--grid:#262523;
+    --text-1:#ffffff;--text-2:#c3c2b7;--text-3:#8a887f;
+    --s1:#3987e5;--s2:#d95926;--s3:#199e70;
+    --good-bg:#123a1c;--good-fg:#9fdca9;--warn-bg:#42350b;--warn-fg:#ecc76a;
+    --mut-bg:#262523;--mut-fg:#c3c2b7;--bad-bg:#461414;--bad-fg:#f1a5a5;
+    --q1:#0d366b;--q2:#184f95;--q3:#256abf;--q4:#3987e5;--q5:#6da7ec;--q6:#9ec5f4;--q7:#cde2fb;
+    --banner-bg:#42350b;--banner-line:#ecc76a;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface-0);color:var(--text-1);
+  font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 48px}
+header.site{background:var(--surface-1);border-bottom:1px solid var(--line);margin-bottom:28px}
+header.site .wrap{padding-top:22px;padding-bottom:0}
+h1{font-size:26px;margin:6px 0 2px;letter-spacing:-.015em}
+h2{font-size:18px;margin:36px 0 12px;letter-spacing:-.01em}
+h3{font-size:14px;margin:20px 0 6px;color:var(--text-2)}
+p{max-width:76ch}
+.sub{color:var(--text-2);margin:0 0 14px;font-size:14px}
+nav.tabs{display:flex;gap:2px;flex-wrap:wrap;margin:14px 0 0}
+nav.tabs a{padding:8px 14px;border-radius:8px 8px 0 0;color:var(--text-2);
+  text-decoration:none;font-size:13.5px;border:1px solid transparent;border-bottom:none}
+nav.tabs a:hover{color:var(--text-1);background:var(--surface-0)}
+nav.tabs a.on{background:var(--surface-0);border-color:var(--line);color:var(--text-1);
+  font-weight:600;box-shadow:0 1px 0 var(--surface-0)}
+a{color:var(--s1)}
+.cards{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;align-items:stretch}
+.card{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:12px 16px;min-width:148px;flex:0 1 auto;display:flex;flex-direction:column}
+.card .k{font-size:11px;color:var(--text-2);letter-spacing:.06em;text-transform:uppercase}
+.card .v{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em;line-height:1.25;margin:2px 0}
+.card .d{font-size:12px;color:var(--text-3);margin-top:auto}
+.panel{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 18px;margin:16px 0}
+figure{margin:0}
+figure figcaption{font-size:13px;color:var(--text-2);margin:0 0 10px;max-width:72ch;
+  line-height:1.5}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2);margin:2px 0 6px}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;
+  vertical-align:-1px}
+.charts{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+svg{max-width:100%;height:auto;display:block}
+svg text{font:11px system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--text-2)}
+svg .lbl{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
+  stroke-width:3px;stroke-linejoin:round}
+svg .axis{stroke:var(--line)}
+svg .gridline{stroke:var(--grid)}
+svg .cellstroke{stroke:var(--surface-1);stroke-width:2px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;margin:10px 0;font-size:13px;background:var(--surface-1);
+  border:1px solid var(--line);border-radius:8px}
+th,td{border-bottom:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--surface-0);color:var(--text-2);font-weight:600;font-size:12px;
+  letter-spacing:.02em;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover>td{background:var(--grid)}
+td{font-variant-numeric:tabular-nums}
+th.num,td.num{text-align:right}
+.tier,.badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;
+  font-weight:600;white-space:nowrap}
+.tier-heldout_verified{background:var(--good-bg);color:var(--good-fg)}
+.tier-search_only{background:var(--warn-bg);color:var(--warn-fg)}
+.tier-unreplicated{background:var(--mut-bg);color:var(--mut-fg)}
+.badge-open{background:var(--mut-bg);color:var(--mut-fg)}
+.badge-supported{background:var(--good-bg);color:var(--good-fg)}
+.badge-refuted{background:var(--bad-bg);color:var(--bad-fg)}
+.badge-inconclusive{background:var(--warn-bg);color:var(--warn-fg)}
+.badge-active{background:var(--good-bg);color:var(--good-fg)}
+.badge-frozen{background:var(--mut-bg);color:var(--mut-fg)}
+.hash{word-break:break-all;font:12px ui-monospace,Consolas,monospace;color:var(--text-2)}
+.mono{font:13px ui-monospace,Consolas,monospace}
+.note{font-size:13px;color:var(--text-2);font-style:italic}
+dl.meta{display:grid;grid-template-columns:max-content 1fr;gap:2px 16px;font-size:13px}
+dl.meta dt{color:var(--text-2)}
+dl.meta dd{margin:0}
+article.entry{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+article.entry h2{margin-top:0}
+article.entry .when{font-size:12px;color:var(--text-3);margin:0 0 8px}
+.when{font-size:12px;color:var(--text-3)}
+p.lead{color:var(--text-2);font-size:13.5px;max-width:76ch;margin:10px 0 16px}
+details.explain{margin:10px 0;max-width:76ch;font-size:13px;color:var(--text-2);
+  border:1px solid var(--line);border-radius:8px;background:var(--surface-1)}
+details.explain summary{cursor:pointer;padding:6px 12px;color:var(--text-3);
+  font-size:12.5px;letter-spacing:.02em}
+details.explain summary:hover{color:var(--text-1)}
+details.explain[open] summary{border-bottom:1px solid var(--line);color:var(--text-2)}
+details.explain>div{padding:4px 12px 8px}
+details.explain p{margin:8px 0}
+details.fold{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  margin:10px 0}
+details.fold>summary{cursor:pointer;padding:10px 16px;font-size:13.5px}
+details.fold>summary:hover{color:var(--text-1)}
+details.fold[open]>summary{border-bottom:1px solid var(--line)}
+details.fold>div{padding:6px 16px 12px}
+footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);
+  font-size:12px;color:var(--text-3)}
+footer p{margin:3px 0;max-width:none}
+footer p.prov a{color:var(--text-2)}
+
+.herolead{font-size:17.5px;line-height:1.6;max-width:74ch}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 8px}
+.chip{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:10px 16px;min-width:120px}
+.chip .v{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em}
+.chip .k{font-size:12px;color:var(--text-2)}
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:14px;margin:16px 0}
+a.gcard{display:block;background:var(--surface-1);border:1px solid var(--line);
+  border-radius:12px;padding:14px 18px;text-decoration:none;color:inherit}
+a.gcard:hover{border-color:var(--s1)}
+a.gcard .t{font-weight:650;color:var(--s1);margin:0 0 4px;font-size:15px}
+a.gcard .d{font-size:13px;color:var(--text-2)}
+.teasers{margin:12px 0}
+a.tease{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:baseline;
+  padding:10px 14px;margin:8px 0;background:var(--surface-1);border:1px solid var(--line);
+  border-radius:10px;text-decoration:none;color:inherit}
+a.tease:hover{border-color:var(--s1)}
+a.tease .tn{display:inline-grid;place-items:center;width:26px;height:26px;
+  border-radius:8px;background:var(--s1);color:#fff;font-weight:700;font-size:14px}
+a.tease .tt{font-weight:650}
+a.tease .td{font-size:13px;color:var(--text-2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:900px){.two{grid-template-columns:1fr}}
+p.verdict{font-size:17px;line-height:1.65;max-width:82ch}
+section.finding{margin:44px 0;scroll-margin-top:16px}
+section.finding h2{font-size:20px;margin-bottom:8px}
+.findnum{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;
+  background:var(--s1);color:#fff;font-size:16px;font-weight:700;margin-right:12px;
+  vertical-align:-7px}
+figure .src{display:block;margin-top:6px;font-size:12px;color:var(--text-3)}
+svg text{font-size:13px}
+svg .lbl{font-size:13px}
+svg .dlab{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
+  stroke-width:3.5px;stroke-linejoin:round}
+svg .bt{font-weight:650;fill:var(--text-1);font-size:15px}
+svg .bs{fill:var(--text-2);font-size:14px}
+svg .alab{font-size:12.5px;fill:var(--text-3);paint-order:stroke;stroke:var(--surface-1);stroke-width:3px;stroke-linejoin:round}
+svg .box{fill:var(--surface-1);stroke:var(--line)}
+svg .boxhl{fill:var(--surface-0);stroke:var(--s1);stroke-width:1.5}
+svg .boxbad{fill:var(--bad-bg);stroke:var(--bad-fg)}
+svg .frozen{stroke-dasharray:6 4}
+svg .arrow{stroke:var(--text-3);fill:none;marker-end:url(#ah);stroke-width:1.5}
+svg .arrowdash{stroke-dasharray:6 4}
+svg .enclosure{fill:none;stroke:var(--text-3);stroke-dasharray:4 4;opacity:.7}
+svg a text{fill:var(--s1)}
+ol.checks li{margin:6px 0;max-width:82ch}
+ul.toc{columns:2;column-gap:32px;font-size:13.5px;margin:8px 0 4px;padding-left:20px}
+ul.toc li{margin:3px 0}
+@media (max-width:700px){ul.toc{columns:1}}
+.decision{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin:14px 0;scroll-margin-top:16px}
+.decision:target{border-color:var(--s1)}
+.decision h3{margin:0 0 6px;font-size:15px;color:var(--text-1)}
+.decision .orig{color:var(--text-2);border-left:3px solid var(--line);padding-left:12px;
+  margin:8px 0}
+.decision .asbuilt{margin:8px 0 0}
+.decision .tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
+  font-weight:600;margin-left:8px;vertical-align:2px}
+.tag-kept{background:var(--good-bg);color:var(--good-fg)}
+.tag-changed{background:var(--warn-bg);color:var(--warn-fg)}
+.p0wrap{min-width:780px}
+.p0head,details.p0 summary{display:grid;
+  grid-template-columns:18px 80px 130px 88px 118px 148px 1fr;
+  gap:10px;align-items:center;padding:7px 12px}
+.p0head{font-size:12px;color:var(--text-2);font-weight:600;letter-spacing:.02em}
+details.p0{background:var(--surface-1);border:1px solid var(--line);border-radius:8px;
+  margin:6px 0;font-size:13px}
+details.p0 summary{cursor:pointer;list-style:none;font-variant-numeric:tabular-nums}
+details.p0 summary::-webkit-details-marker{display:none}
+details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
+details.p0[open] summary::before{content:"\2212"}
+details.p0[open] summary{border-bottom:1px solid var(--line)}
+.p0body{padding:10px 16px 12px 40px}
+</style>
+</head>
+<body>
+<header class="site"><div class="wrap">
+<h1>trade-offs</h1>
+<p class="sub">Discovered, classical and library methods in one table; every cell traced to a data file.</p>
+<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="tradeoffs.html" class="on">trade-offs</a><a href="tracks.html">research tracks</a><a href="methodology.html">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-02)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+</div></header>
+<div class="wrap">
+
+<p class="herolead">The paper's central table: every method class this project has
+measured, in one matrix &mdash; discovered Q15 methods from the archive, the classical
+anchors they ran against, and real library integrators from the benchmark harness. Every
+cell traces to a data file (footnotes below the table); where a protocol was never run
+for a method, the cell holds a dash and a footnote rather than an estimate.</p>
+
+<div class="chips"><div class="chip"><div class="v">727</div><div class="k">median best-Q15 / best-library error at matched tolerance</div></div><div class="chip"><div class="v">28 of 28</div><div class="k">matched-step cells where float64 rk4 is more accurate</div></div><div class="chip"><div class="v">0.972</div><div class="k">Pearson r, analytic cycles vs measured time/step</div></div><div class="chip"><div class="v">5 of 8</div><div class="k">validation problems won outright by a discovered method</div></div></div>
+
+<p>Rows are methods; the columns mix three measurement protocols, which is the point of
+the footnotes. Held-out error is the epoch-1 scored protocol (Q15, floor rounding,
+65,536-cycle budget, four held-out problems). Validation wins count outright wins on the
+8-problem out-of-band suite, split practical / stiff. Cycles per step and CSD weight are
+analytic, from the pinned cost model, and portable to the target class; measured time
+per step is Python-level wall clock on one stated desktop and compares like against like
+only within a regime. No single column ranks these methods; the trade-off is the
+finding.</p>
+
+<h2>The matrix</h2>
+<div class="scroll"><table><tr><th>method</th><th>kind</th><th class="num">order</th><th class="num">stages</th><th class="num">held-out error at budget<sup>a</sup></th><th class="num">validation wins (practical / stiff)<sup>b</sup></th><th class="num">cycles/step fast<sup>c</sup></th><th class="num">cycles/step slow<sup>c</sup></th><th class="num">CSD weight<sup>c</sup></th><th class="num">measured &micro;s/step<sup>d</sup></th><th>stiff validation subset<sup>e</sup></th><th>notes</th></tr><tr><td>euler</td><td>classical</td><td class="num">1</td><td class="num">1</td><td class="num">0.32</td><td class="num">0 / 0</td><td class="num">5</td><td class="num">5</td><td class="num">0</td><td class="num">&mdash;<sup>d</sup></td><td>finishes all 3</td><td>Smallest possible step cost and code; survives every stiff run because its tiny budget-driven steps stay inside the stability region. Worst accuracy of the field everywhere else.</td></tr><tr><td>midpoint</td><td>classical</td><td class="num">2</td><td class="num">2</td><td class="num">0.0844</td><td class="num">0 / 2</td><td class="num">11</td><td class="num">11</td><td class="num">1</td><td class="num">&mdash;<sup>d</sup></td><td>finishes all 3</td><td>The best classical anchor under this budget and arithmetic; wins two of the three stiff problems including the one nothing else survives well. Still 3x the held-out error of the discovered champion.</td></tr><tr><td>heun2</td><td>classical</td><td class="num">2</td><td class="num">2</td><td class="num">0.0961</td><td class="num">0 / 0</td><td class="num">13</td><td class="num">13</td><td class="num">2</td><td class="num">&mdash;<sup>d</sup></td><td>finishes all 3</td><td>Same cost class as midpoint, slightly worse everywhere here; its equal b-weights change how the floor bias lands but it never takes a win.</td></tr><tr><td>rk4</td><td>classical</td><td class="num">4</td><td class="num">4</td><td class="num">0.0919</td><td class="num">0 / 0</td><td class="num">33</td><td class="num">85</td><td class="num">34</td><td class="num">88</td><td>finishes 2 of 3; overflows on robertson_scaled</td><td>The textbook default, and this project's cautionary tale: classically optimal coefficients buy nothing at this budget in Q15, it pays 85 cycles under a slow multiplier, and it overflows on the scaled Robertson problem.</td></tr><tr><td>rk38</td><td>classical</td><td class="num">4</td><td class="num">4</td><td class="num">0.0853</td><td class="num">1 / 0</td><td class="num">36</td><td class="num">64</td><td class="num">22</td><td class="num">&mdash;<sup>d</sup></td><td>finishes 2 of 3; overflows on robertson_scaled</td><td>Same order and stages as rk4 with cheaper coefficients under a slow multiplier (64 vs 85); takes the one practical win the classical side keeps (the PLL). Same stiff overflow as rk4.</td></tr><tr><td><span class="hash">11e898cb (discovered champion)</span></td><td>discovered</td><td class="num">2</td><td class="num">3</td><td class="num">0.0286</td><td class="num">3 / 1</td><td class="num">22</td><td class="num">29</td><td class="num">8</td><td class="num">63</td><td>finishes 2 of 3; overflows on robertson_scaled</td><td>The 3-stage order-2 discovered champion: lowest held-out error in the archive at 22 cycles per step, wins four validation problems outright, and is the only discovered method that finishes any stiff run. Order 2 only; its edge is floor-bias management, not truncation order.</td></tr><tr><td><span class="hash">42863b93 (best order-3 elite)</span></td><td>discovered</td><td class="num">3</td><td class="num">6</td><td class="num">0.0377</td><td class="num">0 / 0</td><td class="num">75</td><td class="num">120</td><td class="num">48</td><td class="num">213</td><td>overflows on all 3</td><td>Best order-3 archive elite. Strong on the held-out set, but six stages at 75 cycles per step means large steps at a fixed budget: it overflows on all three stiff problems and takes no validation win.</td></tr><tr><td><span class="hash">196b1d17 (best order-4 elite)</span></td><td>discovered</td><td class="num">4</td><td class="num">6</td><td class="num">0.0603</td><td class="num">1 / 0</td><td class="num">63</td><td class="num">105</td><td class="num">40</td><td class="num">175</td><td>overflows on all 3</td><td>Best order-4 archive elite; wins the vehicle-dynamics validation problem. Same stiff failure mode as the other 6-stage method: every stiff run overflows.</td></tr><tr><td>RK45</td><td>library (SciPy, float64, adaptive)</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;<sup>a</sup></td><td class="num">&mdash;<sup>b</sup></td><td class="num">&mdash;<sup>c</sup></td><td class="num">&mdash;<sup>c</sup></td><td class="num">&mdash;<sup>c</sup></td><td class="num">223</td><td>&mdash;<sup>e</sup></td><td>The general-purpose library default (explicit, adaptive, float64). Orders of magnitude more accurate than any Q15 method at matched tolerance; step count chosen at run time, so no fixed cycle certificate exists.</td></tr><tr><td>Radau</td><td>library (SciPy, float64, adaptive)</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;<sup>a</sup></td><td class="num">&mdash;<sup>b</sup></td><td class="num">&mdash;<sup>c</sup></td><td class="num">&mdash;<sup>c</sup></td><td class="num">&mdash;<sup>c</sup></td><td class="num">668</td><td>&mdash;<sup>e</sup></td><td>Implicit Radau IIA: the most accurate library on all seven scored problems at matched tolerance, and built for exactly the stiff regime that limits the explicit field. The most expensive per step measured here.</td></tr><tr><td>BDF</td><td>library (SciPy, float64, adaptive)</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;<sup>a</sup></td><td class="num">&mdash;<sup>b</sup></td><td class="num">&mdash;<sup>c</sup></td><td class="num">&mdash;<sup>c</sup></td><td class="num">&mdash;<sup>c</sup></td><td class="num">371</td><td>&mdash;<sup>e</sup></td><td>Implicit multistep for stiff problems; accurate and robust in float64, with the same caveats as every library row: adaptive step counts, no cycle model, double-precision arithmetic assumed.</td></tr><tr><td>LSODA</td><td>library (SciPy, float64, adaptive)</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;<sup>a</sup></td><td class="num">&mdash;<sup>b</sup></td><td class="num">&mdash;<sup>c</sup></td><td class="num">&mdash;<sup>c</sup></td><td class="num">&mdash;<sup>c</sup></td><td class="num">36</td><td>&mdash;<sup>e</sup></td><td>Auto-switches between stiff and non-stiff modes; the fastest measured per-step wall clock of the libraries in this benchmark. Same non-portable, uncertified cost profile as the other library rows.</td></tr></table></div>
+<h3>Where each column comes from</h3>
+<ol class="checks" style="font-size:13.5px">
+<li><strong>a</strong> &mdash; held-out RMS error at the 65,536-cycle budget, m0plus_fast,
+Q15 floor rounding: <code>tools/key_findings.json</code>,
+series <code>frontier_cycles_vs_heldout</code>, matched by tableau hash. The library
+integrators never ran this protocol (they are adaptive and float64), so those cells
+hold no number.</li>
+<li><strong>b</strong> &mdash; problems where this exact method has the lowest Q15 error of
+all eight tested, from <code>rk-work/validation/results.json</code>,
+<code>verdicts.per_problem.winner</code>; split as practical (5 non-stiff) / stiff (3).
+Libraries are not part of the validation suite.</li>
+<li><strong>c</strong> &mdash; analytic cycles per step (one state) and total CSD weight,
+recomputed from each method's tableau in <code>rk-work/validation/results.json</code>
+with the pinned <code>costmodel</code> and <code>coeffrep</code> modules. CSD weight is
+the shift-add length of the coefficient multiplies, a code-size proxy. Adaptive
+libraries have no fixed cycles per step.</li>
+<li><strong>d</strong> &mdash; measured Python-level wall clock per step, the median across
+the seven scored problems of per-problem medians (15 repeats, 3 warmups, gc paused),
+from <code>rk-work/benchmark/results.json</code>. Q15 rows execute the pinned solver in
+the Python interpreter; library rows run compiled internals, so times compare like
+against like only within a regime. euler, midpoint, heun2 and rk38 were not part of the
+benchmark run.</li>
+<li><strong>e</strong> &mdash; behavior on the three stiff validation problems (stiffness
+ratios 292 to 1030), from <code>rk-work/validation/results.json</code>; an overflow is a
+<code>Q15OverflowError</code> raised by the pinned solver. The libraries were not run on
+the stiff validation problems.</li>
+</ol>
+
+<h2>Measurement caveats, verbatim</h2>
+<ul><li>Adaptive scipy integrators choose their own step counts; their wall clock is reported for context and is never a same-work comparison with any fixed-step run.</li><li>All timings are Python-level wall clock on one desktop machine: the Q15 runs pay Python interpreter overhead per primitive while scipy runs compiled internals, so timings compare like against like only within a regime and do not transfer to microcontroller cycle counts.</li><li>Accuracy numbers are deterministic and reproducible; timing numbers are measured and vary run to run within the reported IQR.</li><li>The float baselines start from the exact physical initial state; the Q15 runs start from the quantized Q15 initial state, as on the target.</li></ul>
+<p class="note">Caveats copied from <code>rk-work/benchmark/results.json</code>; the timing protocol (median of 15 repeats after 3 warmups, gc paused, BLAS threads capped) and the environment (Python 3.13.5, SciPy 1.14.1, NumPy 2.1.3) are recorded in the same file.</p>
+<h2>Reading it</h2>
+
+<p class="verdict">What the matrix says, read honestly: at matched tolerance the
+float64 libraries are far more accurate than any Q15 method (median best-Q15 to
+best-library error ratio 727, with Radau the most accurate library on all seven scored
+problems), and at identical step counts float64 rk4 has lower error in all 28
+comparable cells &mdash; the price of 16-bit floor arithmetic, about eight decades of
+error. What the Q15 side offers is not accuracy parity: it is bounded 16-bit integer
+arithmetic at a fixed, analyzable cycle cost, which none of the libraries provide, and
+within that regime the discovered methods hold the frontier &mdash; the 3-stage champion
+carries a third of the held-out error of the best classical anchor at a third fewer
+cycles than rk4, and wins four of the eight validation problems outright. The stiff
+column is the standing weakness of the whole explicit class and the case for epoch 3:
+expensive tableaus take large steps at a fixed budget, large steps leave the stability
+region, and the run overflows, whoever found the coefficients.</p>
+
+<p>The stiff column's failure pattern is measured in detail on the <a href="findings/validation.html">findings validation page</a> (stiff subset) and motivates <a href="tracks.html">research track C</a>.</p>
+<footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-02 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
+</div>
+</body>
+</html>

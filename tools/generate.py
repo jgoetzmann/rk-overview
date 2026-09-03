@@ -16,6 +16,7 @@ import json
 import math
 import re
 import shutil
+import statistics
 import sys
 from collections import Counter
 from fractions import Fraction
@@ -29,7 +30,7 @@ sys.path.insert(0, str(HERE))
 
 import pages_text as T  # noqa: E402
 from rk_harness import archive, sitegen as sg  # noqa: E402
-from rk_harness import costmodel, enumeration  # noqa: E402
+from rk_harness import coeffrep, costmodel, enumeration  # noqa: E402
 from rk_harness import tableau as tableau_mod  # noqa: E402
 from rk_harness import timefmt  # noqa: E402
 
@@ -38,21 +39,24 @@ DOCS = ROOT / "docs"
 LIVE_URL = "https://jgoetzmann.github.io/rk-findings/"
 
 # Test-suite figures, stated on the methodology page. Verified 2026-09-02 against
-# `pytest --collect-only -q` in rk-harness (1,034 collected across the nine tier files)
+# `pytest --collect-only -q` in rk-harness across the twelve tier files
 # and docs/REVIEW-REPORT.md item A3+ ("55 passed ... deselected"; the gate selection
 # G1-G20 + K1 + K2 is fixed and does not grow with the suite).
-TESTS_TOTAL = 1038
+TESTS_TOTAL = 1093
 GATE_TESTS = 55
 SUITE_TIERS = [
     ("T1", 332, "fixed point, coefficient representation, cycle counting"),
     ("T2", 216, "order conditions, evaluator, verifier"),
     ("T3", 234, "archive, search, directive validation"),
-    ("T4", 177, "ledger, runner, site generator"),
+    ("T4", 184, "ledger, runner, site generator, epoch panel"),
     ("T5", 10, "operational config and the watch view"),
     ("T6", 8, "Central-time display formatting"),
     ("T7", 15, "the findings methodology page"),
-    ("T8", 38, "the practical validation suite"),
+    ("T8", 59, "the practical validation suite, stiff subset included"),
     ("T9", 8, "the epoch saturation orchestrator"),
+    ("T10", 15, "the library benchmark harness"),
+    ("T11", 6, "the adaptive embedded-pair prototype"),
+    ("T12", 6, "the SDIRK implicit prototype"),
 ]
 assert sum(n for _t, n, _c in SUITE_TIERS) == TESTS_TOTAL
 
@@ -146,6 +150,8 @@ details.p0[open] summary{border-bottom:1px solid var(--line)}
 _NAV = (
     ("index.html", "overview"),
     ("results.html", "key findings"),
+    ("tradeoffs.html", "trade-offs"),
+    ("tracks.html", "research tracks"),
     ("methodology.html", "methodology"),
     ("architecture.html", "architecture"),
     ("design-decisions.html", "design decisions"),
@@ -889,12 +895,15 @@ def _validation_load() -> dict:
 
 
 def validation_chart(vd: dict) -> str:
-    """Dumbbell per practical problem: best classical vs best discovered Q15 error."""
+    """Dumbbell per practical problem: best classical vs best discovered Q15 error.
+    Scoped to the non-stiff problems; the stiff subset is a different story (overflow,
+    not accuracy) and lives on the trade-offs and tracks pages."""
     per = (vd.get("verdicts") or {}).get("per_problem") or {}
     order = [p.get("name") for p in vd.get("problems", []) if p.get("name") in per]
     order += sorted(k for k in per if k not in set(order))
     rows = [(name, per[name]) for name in order
-            if isinstance(per[name].get("best_classical_q15_error"), (int, float))
+            if not per[name].get("stiff")
+            and isinstance(per[name].get("best_classical_q15_error"), (int, float))
             and isinstance(per[name].get("best_discovered_q15_error"), (int, float))]
     if not rows:
         print("WARN: validation per-problem verdicts empty; chart skipped")
@@ -962,6 +971,371 @@ def validation_chart(vd: dict) -> str:
     legend = sg._legend([("var(--s1)", "best discovered"),
                          ("var(--s2)", "best classical anchor")])
     return _fig(svg, caption, legend, "data: rk-work/validation/results.json, verdicts.per_problem")
+
+
+# ----------------------------------------------------------------------------- tracks page
+
+def _json_file(path: Path, label: str) -> dict:
+    if not path.exists():
+        print(f"WARN: {label} missing; section skipped")
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except ValueError:
+        print(f"WARN: {label} unparsable; section skipped")
+        return {}
+
+
+def orchestrator_panel() -> str:
+    """The same progress-loop state the findings epoch panel shows, read through
+    sitegen.epoch_status_data() so the two sites cannot disagree."""
+    d = sg.epoch_status_data()
+    state = d.get("state", "active")
+    badge = f'<span class="badge badge-{sg._esc(state)}">{sg._esc(state)}</span>'
+    rows = []
+    if state == "frozen":
+        rows.append(("frozen at", sg._esc(timefmt.fmt_ct(d.get("frozen_at")))))
+        if d.get("freeze_reason"):
+            rows.append(("reason", sg._esc(str(d.get("freeze_reason")))))
+    if d.get("last_progress_ts") and d.get("last_progress_kind"):
+        rows.append(("last progress",
+                     f"{sg._esc(timefmt.fmt_ct(d.get('last_progress_ts')))} "
+                     f"({sg._esc(str(d.get('last_progress_kind')))})"))
+    else:
+        rows.append(("last progress", "no progress events recorded yet"))
+    rows.append(("saturation counter",
+                 f"{d.get('consecutive')} consecutive saturating checks; "
+                 f"{d.get('consecutive_needed')} trigger a freeze"))
+    if d.get("last_check_ts"):
+        rows.append(("last check", sg._esc(timefmt.fmt_ct(d.get("last_check_ts")))
+                     + (f", verdict {sg._esc(str(d.get('last_verdict')))}"
+                        if d.get("last_verdict") else "")))
+    rows.append(("falsification file",
+                 "present" if d.get("falsification_present") else "not yet produced"))
+    dl = '<dl class="meta">' + "".join(
+        f"<dt>{sg._esc(k)}</dt><dd>{v}</dd>" for k, v in rows) + "</dl>"
+    head = (f'<p style="margin:0 0 6px"><strong>Epoch {d.get("epoch")}</strong> {badge} '
+            '<span class="when">scored method class: explicit fixed-step '
+            "Runge-Kutta</span></p>")
+    return '<div class="panel">' + head + dl + "</div>"
+
+
+_ADAPTIVE_COLORS = {"buck_converter": "var(--s1)", "pll_lock": "var(--s2)",
+                    "glucose_minimal": "var(--s3)"}
+
+
+def adaptive_curve_chart(ac: dict) -> str:
+    pts = [p for p in (ac.get("points") or [])
+           if isinstance(p.get("n_fevals"), int) and isinstance(p.get("achieved_error"), (int, float))
+           and p["achieved_error"] > 0]
+    if not pts:
+        print("WARN: adaptive_curve points empty; chart skipped")
+        return ""
+    xs = [p["n_fevals"] for p in pts]
+    ys = [p["achieved_error"] for p in pts]
+    xlo = 10 ** math.floor(math.log10(min(xs)))
+    xhi = 10 ** math.ceil(math.log10(max(xs)))
+    ylo = 10 ** math.floor(math.log10(min(ys)))
+    yhi = 10 ** math.ceil(math.log10(max(ys)))
+    pl = sg._LogLog(680, 400, xlo, xhi, ylo, yhi,
+                    "function evaluations (log)", "achieved error (log)", ml=64)
+    pl.frame()
+    problems = [pr for pr in _ADAPTIVE_COLORS if any(p["problem"] == pr for p in pts)]
+    problems += sorted({p["problem"] for p in pts} - set(problems))
+    for pr in problems:
+        rows = sorted((p for p in pts if p["problem"] == pr), key=lambda p: p["n_fevals"])
+        c = _ADAPTIVE_COLORS.get(pr, "var(--text-3)")
+        path = " ".join(f"{'M' if i == 0 else 'L'} {sg._fmt(pl.x(p['n_fevals']))} "
+                        f"{sg._fmt(pl.y(p['achieved_error']))}" for i, p in enumerate(rows))
+        pl.parts.append(f'<path d="{path}" fill="none" stroke="{c}" stroke-width="2"/>')
+        for p in rows:
+            title = (f"{pr} at tol {p.get('tol')}: {p['n_fevals']} fevals, achieved error "
+                     f"{_short(p['achieved_error'])}, {p.get('n_rejected')} rejected steps")
+            pl.parts.append(f'<circle cx="{sg._fmt(pl.x(p["n_fevals"]))}" '
+                            f'cy="{sg._fmt(pl.y(p["achieved_error"]))}" r="4" fill="{c}" '
+                            f'class="cellstroke"><title>{sg._esc(title)}</title></circle>')
+        last = rows[-1]
+        pl.parts.append(f'<text class="dlab" x="{sg._fmt(pl.x(last["n_fevals"]) - 8)}" '
+                        f'y="{sg._fmt(pl.y(last["achieved_error"]) - 10)}" '
+                        f'text-anchor="end">{sg._esc(pr)}</text>')
+    svg = pl.svg("Work-precision curve of the Bogacki-Shampine 3(2) prototype: achieved "
+                 "error against function evaluations on three validation problems")
+    caption = ("Measured work-precision behavior of the float64 Bogacki–Shampine 3(2) "
+               "prototype with the dyadic PI controller: each line is one validation "
+               "problem, each dot one run at a requested tolerance from 1e-3 down to 1e-8, "
+               "x is right-hand-side evaluations and y is the error actually achieved, "
+               "both log. Error falling in lockstep with tolerance at single-digit "
+               "rejection counts is the behavior the epoch-2 controller needs. "
+               "Preliminary and float-only: no Q15 effects are modeled.")
+    legend = sg._legend([(v, k) for k, v in _ADAPTIVE_COLORS.items()])
+    return _fig(svg, caption, legend, "data: rk-work/prototypes/adaptive_curve.json, points")
+
+
+_SDIRK_COLORS = {"sdirk2": "var(--s1)", "rk4": "var(--s2)", "euler": "var(--text-3)"}
+
+
+def sdirk_chart(sc: dict) -> str:
+    prob = (sc.get("problems") or {}).get("stiff_two_rate") or {}
+    methods = prob.get("methods") or {}
+    if not methods:
+        print("WARN: sdirk_curve stiff_two_rate missing; chart skipped")
+        return ""
+    series: dict[str, list[tuple[float, float]]] = {}
+    for name, m in methods.items():
+        cyc = m.get("est_cycles_per_step")
+        pts = [(p["n"] * cyc, p["error"]) for p in (m.get("points") or [])
+               if p.get("status") == "ok" and isinstance(p.get("error"), (int, float))
+               and p["error"] > 0]
+        if pts:
+            series[name] = sorted(pts)
+    if not series:
+        return ""
+    w, h, ml, mr, mt, mb = 680, 420, 74, 20, 26, 52
+    xlo, xhi = 1e3, 4e6
+    ylo, yhi = 1e-16, 1e1
+    fx = lambda v: _logpos(v, xlo, xhi, ml, w - mr)
+    fy = lambda v: h - mb - _logpos(v, ylo, yhi, 0, h - mt - mb)
+    p = []
+    for e in (3, 4, 5, 6):
+        tv = 10.0 ** e
+        p.append(f'<line class="gridline" x1="{sg._fmt(fx(tv))}" y1="{mt}" x2="{sg._fmt(fx(tv))}" y2="{h - mb}"/>')
+        p.append(f'<text x="{sg._fmt(fx(tv))}" y="{h - mb + 18}" text-anchor="middle">1e{e}</text>')
+    for e in range(-16, 2, 4):
+        tv = 10.0 ** e
+        p.append(f'<line class="gridline" x1="{ml}" y1="{sg._fmt(fy(tv))}" x2="{w - mr}" y2="{sg._fmt(fy(tv))}"/>')
+        p.append(f'<text x="{ml - 8}" y="{sg._fmt(fy(tv) + 4)}" text-anchor="end">1e{e}</text>')
+    p.append(f'<line class="axis" x1="{ml}" y1="{h - mb}" x2="{w - mr}" y2="{h - mb}"/>')
+    p.append(f'<line class="axis" x1="{ml}" y1="{mt}" x2="{ml}" y2="{h - mb}"/>')
+    p.append(f'<text x="{sg._fmt((ml + w - mr) / 2)}" y="{h - 8}" text-anchor="middle">'
+             'total cycles for the run, n steps x estimated cycles/step (log)</text>')
+    p.append(f'<text x="14" y="{sg._fmt((mt + h - mb) / 2)}" text-anchor="middle" '
+             f'transform="rotate(-90 14 {sg._fmt((mt + h - mb) / 2)})">final-state error (log)</text>')
+    # the epoch-1 budget, for scale
+    bx = fx(65536)
+    p.append(f'<line x1="{sg._fmt(bx)}" y1="{mt}" x2="{sg._fmt(bx)}" y2="{h - mb}" '
+             'stroke="var(--text-3)" stroke-dasharray="4 3"/>')
+    p.append(f'<text class="dlab" x="{sg._fmt(bx + 5)}" y="{mt + 14}">65,536-cycle budget</text>')
+    for name in ("euler", "rk4", "sdirk2"):
+        pts = series.get(name)
+        if not pts:
+            continue
+        c = _SDIRK_COLORS.get(name, "var(--text-3)")
+        path = " ".join(f"{'M' if i == 0 else 'L'} {sg._fmt(fx(x))} {sg._fmt(fy(y))}"
+                        for i, (x, y) in enumerate(pts))
+        p.append(f'<path d="{path}" fill="none" stroke="{c}" stroke-width="2"/>')
+        m = methods[name]
+        for (x, y) in pts:
+            n = round(x / m["est_cycles_per_step"])
+            p.append(f'<circle cx="{sg._fmt(fx(x))}" cy="{sg._fmt(fy(y))}" r="4" fill="{c}" '
+                     f'class="cellstroke"><title>{sg._esc(name)} at n = {n} steps '
+                     f'({int(x):,} cycles): error {_short(y)}</title></circle>')
+        x0, y0 = pts[0]
+        n0 = round(x0 / m["est_cycles_per_step"])
+        dy = -10 if name != "euler" else 20
+        p.append(f'<text class="dlab" x="{sg._fmt(fx(x0))}" y="{sg._fmt(fy(y0) + dy)}" '
+                 f'text-anchor="middle">{sg._esc(name)}: stable from n = {n0}</text>')
+    svg = (f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
+           'aria-label="SDIRK prototype stability curve on a ratio-1000 two-rate system: '
+           'error against total cycles for euler, rk4 and sdirk2">' + "".join(p) + "</svg>")
+    caption = ("Final-state error against total compute (n steps times estimated "
+               "m0plus_fast cycles per step, both log) on a two-rate linear system with "
+               "stiffness ratio 1000, float64 only. Each line starts at its method's "
+               "cheapest <em>stable</em> run: everything to the left of a line's start "
+               "diverged. sdirk2 is stable from 5 steps; rk4's line cannot begin until "
+               "about 47,500 cycles, most of the epoch-1 budget (dashed vertical), and "
+               "euler's until 10,000. Below the stability floor rk4's float64 accuracy "
+               "is irrelevant because there is no stable run to have. Preliminary, "
+               "off-archive prototype data.")
+    legend = sg._legend([("var(--s1)", "sdirk2 (2-stage L-stable, 3 Newton iterations)"),
+                         ("var(--s2)", "rk4"), ("var(--text-3)", "euler")])
+    return _fig(svg, caption, legend,
+                "data: rk-work/prototypes/sdirk_curve.json, problems.stiff_two_rate")
+
+
+# ----------------------------------------------------------------------------- trade-offs
+
+_DISC_LABEL = {"11e898cb": ("champion", "discovered champion"),
+               "42863b93": ("elite3", "best order-3 elite"),
+               "196b1d17": ("elite4", "best order-4 elite")}
+_CLASSICAL_ROW_ORDER = ("euler", "midpoint", "heun2", "rk4", "rk38")
+_LIB_ROW_ORDER = ("RK45", "Radau", "BDF", "LSODA")
+_DASH = "&mdash;"
+
+
+def _bench_load() -> dict:
+    return _json_file(WS / "rk-work" / "benchmark" / "results.json",
+                      "benchmark results.json")
+
+
+def _tab_from_json(t: dict):
+    A = [[Fraction(x) for x in row] for row in t["A"]]
+    b = [Fraction(x) for x in t["b"]]
+    c = [Fraction(x) for x in t["c"]]
+    return tableau_mod.make_tableau(A, b, c)
+
+
+def tradeoffs_matrix(vd: dict, bench: dict, kf: dict) -> str:
+    methods = vd.get("methods") or []
+    per = (vd.get("verdicts") or {}).get("per_problem") or {}
+    results = vd.get("results") or []
+    stiff_probs = {p["name"] for p in vd.get("problems", []) if p.get("stiff")}
+    if not methods or not stiff_probs:
+        print("WARN: validation methods/stiff subset missing; trade-offs matrix skipped")
+        return ""
+    # held-out error at budget, from the key-findings frontier (hash-matched)
+    kf_rows = (kf.get("efficiency", {}).get("series", {})
+               .get("frontier_cycles_vs_heldout") or [])
+    heldout_by_name = {r.get("name"): r.get("heldout_error")
+                       for r in kf_rows if r.get("kind") == "classical"}
+    heldout_by_hash = {r.get("tableau_hash"): r.get("heldout_error")
+                       for r in kf_rows if r.get("kind") == "discovered"}
+    # outright validation wins per method, split practical / stiff
+    wins: dict[str, list[int]] = {}
+    for prob, v in per.items():
+        w = str(v.get("winner"))
+        wins.setdefault(w, [0, 0])[1 if v.get("stiff") else 0] += 1
+    # measured Q15 seconds/step from the benchmark fixed-step table
+    t_fixed: dict[str, list[float]] = {}
+    for r in bench.get("fixed_step_results") or []:
+        q = r.get("q15") or {}
+        if q.get("status") == "ok" and isinstance(q.get("per_step_median_s"), (int, float)):
+            t_fixed.setdefault(str(r.get("method")), []).append(q["per_step_median_s"])
+    t_lib: dict[str, list[float]] = {}
+    for r in bench.get("adaptive_results") or []:
+        if r.get("status") == "ok" and isinstance(r.get("per_step_median_s"), (int, float)):
+            t_lib.setdefault(str(r.get("integrator")), []).append(r["per_step_median_s"])
+
+    def stiff_text(name: str) -> str:
+        rows = [r for r in results if r.get("method") == name
+                and str(r.get("problem")) in stiff_probs]
+        fin = [str(r["problem"]) for r in rows
+               if isinstance(r.get("q15_error"), (int, float))]
+        over = [str(r["problem"]) for r in rows if r.get("note")]
+        if not rows:
+            return _DASH + '<sup>e</sup>'
+        if not over:
+            return f"finishes all {len(fin)}"
+        if not fin:
+            return f"overflows on all {len(over)}"
+        return f"finishes {len(fin)} of {len(rows)}; overflows on {', '.join(over)}"
+
+    def us(vals: list[float] | None) -> str:
+        if not vals:
+            return _DASH + '<sup>d</sup>'
+        return f"{statistics.median(vals) * 1e6:,.0f}"
+
+    header = ('<tr><th>method</th><th>kind</th><th class="num">order</th>'
+              '<th class="num">stages</th>'
+              '<th class="num">held-out error at budget<sup>a</sup></th>'
+              '<th class="num">validation wins (practical / stiff)<sup>b</sup></th>'
+              '<th class="num">cycles/step fast<sup>c</sup></th>'
+              '<th class="num">cycles/step slow<sup>c</sup></th>'
+              '<th class="num">CSD weight<sup>c</sup></th>'
+              '<th class="num">measured &micro;s/step<sup>d</sup></th>'
+              '<th>stiff validation subset<sup>e</sup></th>'
+              "<th>notes</th></tr>")
+    by_name = {str(m.get("name_or_hash")): m for m in methods}
+    row_order: list[tuple[str, str, str, str]] = []   # (name_or_hash, label, kind, notes_key)
+    for n in _CLASSICAL_ROW_ORDER:
+        if n in by_name:
+            row_order.append((n, n, "classical", n))
+    for m in methods:
+        n = str(m.get("name_or_hash"))
+        if m.get("kind") == "discovered":
+            key, desc = _DISC_LABEL.get(n[:8], (n[:8], "discovered"))
+            row_order.append((n, f"{n[:8]} ({desc})", "discovered", key))
+    rows_html = [header]
+    for name, label, kind, notes_key in row_order:
+        m = by_name[name]
+        tb = _tab_from_json(m["tableau"])
+        fast = costmodel.cycle_count(tb, costmodel.M0PLUS_FAST, 1)
+        slow = costmodel.cycle_count(tb, costmodel.M0PLUS_SLOW, 1)
+        csd = coeffrep.tableau_csd_total(tb)
+        if kind == "classical":
+            heldout = heldout_by_name.get(name)
+        else:
+            heldout = heldout_by_hash.get(name)
+        w = wins.get(name, [0, 0])
+        cell = label if kind == "classical" else f'<span class="hash">{label}</span>'
+        rows_html.append(
+            "<tr>"
+            f"<td>{cell}</td><td>{kind}</td>"
+            f'<td class="num">{m.get("order")}</td><td class="num">{m.get("stages")}</td>'
+            f'<td class="num">{_short(heldout) if isinstance(heldout, (int, float)) else _DASH + "<sup>a</sup>"}</td>'
+            f'<td class="num">{w[0]} / {w[1]}</td>'
+            f'<td class="num">{fast}</td><td class="num">{slow}</td>'
+            f'<td class="num">{csd}</td>'
+            f'<td class="num">{us(t_fixed.get(name))}</td>'
+            f"<td>{stiff_text(name)}</td>"
+            f"<td>{T.TRADEOFFS_NOTES.get(notes_key, '')}</td>"
+            "</tr>")
+    for lib in _LIB_ROW_ORDER:
+        if lib not in t_lib:
+            continue
+        rows_html.append(
+            "<tr>"
+            f"<td>{lib}</td><td>library (SciPy, float64, adaptive)</td>"
+            f'<td class="num">{_DASH}</td><td class="num">{_DASH}</td>'
+            f'<td class="num">{_DASH}<sup>a</sup></td>'
+            f'<td class="num">{_DASH}<sup>b</sup></td>'
+            f'<td class="num">{_DASH}<sup>c</sup></td><td class="num">{_DASH}<sup>c</sup></td>'
+            f'<td class="num">{_DASH}<sup>c</sup></td>'
+            f'<td class="num">{us(t_lib.get(lib))}</td>'
+            f"<td>{_DASH}<sup>e</sup></td>"
+            f"<td>{T.TRADEOFFS_NOTES.get(lib, '')}</td>"
+            "</tr>")
+    foot = """
+<h3>Where each column comes from</h3>
+<ol class="checks" style="font-size:13.5px">
+<li><strong>a</strong> &mdash; held-out RMS error at the 65,536-cycle budget, m0plus_fast,
+Q15 floor rounding: <code>tools/key_findings.json</code>,
+series <code>frontier_cycles_vs_heldout</code>, matched by tableau hash. The library
+integrators never ran this protocol (they are adaptive and float64), so those cells
+hold no number.</li>
+<li><strong>b</strong> &mdash; problems where this exact method has the lowest Q15 error of
+all eight tested, from <code>rk-work/validation/results.json</code>,
+<code>verdicts.per_problem.winner</code>; split as practical (5 non-stiff) / stiff (3).
+Libraries are not part of the validation suite.</li>
+<li><strong>c</strong> &mdash; analytic cycles per step (one state) and total CSD weight,
+recomputed from each method's tableau in <code>rk-work/validation/results.json</code>
+with the pinned <code>costmodel</code> and <code>coeffrep</code> modules. CSD weight is
+the shift-add length of the coefficient multiplies, a code-size proxy. Adaptive
+libraries have no fixed cycles per step.</li>
+<li><strong>d</strong> &mdash; measured Python-level wall clock per step, the median across
+the seven scored problems of per-problem medians (15 repeats, 3 warmups, gc paused),
+from <code>rk-work/benchmark/results.json</code>. Q15 rows execute the pinned solver in
+the Python interpreter; library rows run compiled internals, so times compare like
+against like only within a regime. euler, midpoint, heun2 and rk38 were not part of the
+benchmark run.</li>
+<li><strong>e</strong> &mdash; behavior on the three stiff validation problems (stiffness
+ratios 292 to 1030), from <code>rk-work/validation/results.json</code>; an overflow is a
+<code>Q15OverflowError</code> raised by the pinned solver. The libraries were not run on
+the stiff validation problems.</li>
+</ol>
+"""
+    return ('<div class="scroll"><table>' + "".join(rows_html) + "</table></div>" + foot)
+
+
+def tradeoffs_chips(vd: dict, bench: dict) -> str:
+    bv = bench.get("verdicts") or {}
+    per = (vd.get("verdicts") or {}).get("per_problem") or {}
+    disc_wins = sum(1 for v in per.values() if v.get("winner_kind") == "discovered")
+    items = []
+    r = bv.get("median_ratio_q15_over_library_at_matched_tolerance")
+    if isinstance(r, (int, float)):
+        items.append((f"{r:,.0f}", "median best-Q15 / best-library error at matched tolerance"))
+    compared = bv.get("fixed_step_cells_compared")
+    lower = bv.get("fixed_step_cells_where_q15_error_lower")
+    if isinstance(compared, int) and isinstance(lower, int):
+        items.append((f"{compared - lower} of {compared}",
+                      "matched-step cells where float64 rk4 is more accurate"))
+    pr = (bench.get("correlation") or {}).get("pearson_r")
+    if isinstance(pr, (int, float)):
+        items.append((f"{pr:.3f}", "Pearson r, analytic cycles vs measured time/step"))
+    if per:
+        items.append((f"{disc_wins} of {len(per)}",
+                      "validation problems won outright by a discovered method"))
+    return _chips(items)
 
 
 # ----------------------------------------------------------------------------- run charts
@@ -1196,6 +1570,10 @@ def build() -> None:
     body.append("<h2>Where to go</h2>")
     cards = [
         ("results.html", "Key findings", "Six findings, six charts, honest verdicts."),
+        ("tradeoffs.html", "Trade-offs matrix",
+         "Discovered vs classical vs library integrators, every cell traced to a data file."),
+        ("tracks.html", "Research tracks",
+         "The 70/15/15 rotation: epoch 1 closing, adaptive and implicit prototypes."),
         ("methodology.html", "Methodology",
          f"The start gate, the pinned hash, {TESTS_TOTAL:,} tests, the executed pre-flight."),
         ("architecture.html", "Architecture",
@@ -1221,7 +1599,7 @@ def build() -> None:
         f'<li><a href="#{slug}">{i + 1} · {sg._esc(title)}</a></li>'
         for i, (slug, title, _d) in enumerate(T.TEASERS)) + "</ul>")
     body.append(_finding(
-        "efficiency", 1, "The efficiency frontier: discovered methods beat every classical anchor",
+        "efficiency", 1, "The efficiency frontier: discovered methods lead in 13 of 14 cells",
         T.F_EFFICIENCY_INTRO, [frontier_chart(kf)], T.F_EFFICIENCY_INTERP))
     body.append(_finding(
         "floor-flip", 2, "Floor rounding reorders the classical field",
@@ -1255,6 +1633,68 @@ def build() -> None:
                                   "What the search found, in six charts, at snapshot "
                                   f"{SNAPSHOT_DATE}.")
 
+    # ---------------- research tracks
+    ac = _json_file(WS / "rk-work" / "prototypes" / "adaptive_curve.json",
+                    "adaptive_curve.json")
+    sc = _json_file(WS / "rk-work" / "prototypes" / "sdirk_curve.json",
+                    "sdirk_curve.json")
+    body = [T.TRACKS_LEAD]
+    body.append("<h2>Where the loop stands</h2>")
+    body.append(orchestrator_panel())
+    body.append(T.TRACKS_ORCH_NOTE)
+    body.append("<h2>The rotation: 70/15/15</h2>")
+    body.append(T.TRACKS_POLICY)
+    body.append("<h2>Lead track (70%): epoch 1, explicit fixed-step</h2>")
+    body.append(T.TRACK_A_MILESTONES.format(records=len(records), cycles=n_cycles))
+    body.append("<h2>Side track B (15%): adaptive embedded pairs (epoch 2)</h2>")
+    body.append(T.TRACK_B_INTRO)
+    body.append(adaptive_curve_chart(ac))
+    body.append(T.TRACK_B_INTERP)
+    body.append("<h2>Side track C (15%): implicit SDIRK for stiff problems (epoch 3)</h2>")
+    body.append(T.TRACK_C_INTRO)
+    body.append(sdirk_chart(sc))
+    body.append(T.TRACK_C_INTERP)
+    body.append("<h2>Where it all lands</h2>")
+    body.append('<p>Every track feeds the same destination: the '
+                '<a href="tradeoffs.html">trade-offs matrix</a>, the paper\'s central '
+                "table, already assembled from the epoch-1 data and rebuilt as each "
+                "epoch adds its column of evidence.</p>")
+    pages["tracks.html"] = _page("research tracks", "\n".join(body), "tracks.html",
+                                 "The 70/15/15 rotation: one scored epoch, two side "
+                                 "tracks, all showing measured artifacts.")
+
+    # ---------------- trade-offs matrix
+    bench = _bench_load()
+    body = [T.TRADEOFFS_LEAD]
+    body.append(tradeoffs_chips(vd, bench))
+    body.append(T.TRADEOFFS_HOWTO)
+    body.append("<h2>The matrix</h2>")
+    body.append(tradeoffs_matrix(vd, bench, kf))
+    body.append("<h2>Measurement caveats, verbatim</h2>")
+    caveats = bench.get("caveats") or []
+    if caveats:
+        body.append("<ul>" + "".join(
+            f"<li>{sg._esc(str(c))}</li>" for c in caveats) + "</ul>")
+        body.append('<p class="note">Caveats copied from '
+                    "<code>rk-work/benchmark/results.json</code>; the timing protocol "
+                    f"(median of {int((bench.get('timing_protocol') or {}).get('n_repeats', 15))} "
+                    "repeats after "
+                    f"{int((bench.get('timing_protocol') or {}).get('warmup', 3))} warmups, "
+                    "gc paused, BLAS threads capped) and the environment "
+                    f"(Python {sg._esc(str((bench.get('environment') or {}).get('python', '?')))}, "
+                    f"SciPy {sg._esc(str((bench.get('environment') or {}).get('scipy', '?')))}, "
+                    f"NumPy {sg._esc(str((bench.get('environment') or {}).get('numpy', '?')))}) "
+                    "are recorded in the same file.</p>")
+    body.append("<h2>Reading it</h2>")
+    body.append(T.TRADEOFFS_VERDICT)
+    body.append('<p>The stiff column\'s failure pattern is measured in detail on the '
+                '<a href="findings/validation.html">findings validation page</a> '
+                "(stiff subset) and motivates "
+                '<a href="tracks.html">research track C</a>.</p>')
+    pages["tradeoffs.html"] = _page("trade-offs", "\n".join(body), "tradeoffs.html",
+                                    "Discovered, classical and library methods in one "
+                                    "table; every cell traced to a data file.")
+
     # ---------------- methodology (one skeleton, shared with the findings methodology)
     body = [T.METH_LEAD]
     body.append('<h2 id="setup">Experimental setup</h2>')
@@ -1274,7 +1714,7 @@ def build() -> None:
     body.append("<h3>What the container cannot reach</h3>")
     body.append(T.METH_REACH)
     body.append('<h2 id="tests">Testing</h2>')
-    body.append(T.METH_SUITE)
+    body.append(T.METH_SUITE.format(tests=TESTS_TOTAL))
     body.append('<h3 id="preflight">The pre-flight, executed as a program</h3>')
     body.append(T.METH_PREFLIGHT)
     body.append('<h2 id="repro">Reproducibility</h2>')

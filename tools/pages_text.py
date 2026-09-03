@@ -60,7 +60,7 @@ project's thesis demonstrated in two methods everyone already knows; the
 
 # One-line teasers for the index; slugs must match generate.FINDINGS slugs.
 TEASERS = [
-    ("efficiency", "Discovered methods beat every classical anchor",
+    ("efficiency", "Discovered methods lead in 13 of 14 archive cells",
      "13 of 14 discovered grid cells beat all classical anchors of equal or lower cost on "
      "held-out error; the best cuts error 3.0× at the same 65,536-cycle budget."),
     ("floor-flip", "Floor rounding reorders the classical field",
@@ -256,7 +256,11 @@ strong, not universal.</p>
 step counts land between 4e-14 and 8e-5 error, in every case hundreds of times below the
 Q15 number, so every error above measures quantization &mdash; exactly the regime the
 search selects for. And the largest raw Q15 value seen anywhere is 20,130 of the int16
-limit 32,767, so no run leaned on overflow luck. Full tables, tableaus, per-problem
+limit 32,767, so no run leaned on overflow luck. The suite has since grown three
+moderately stiff problems; those rows tell a different story (overflow, not accuracy)
+and live with the rest of the cross-method comparison on the
+<a href="tradeoffs.html">trade-offs page</a> and the
+<a href="tracks.html">research tracks page</a>. Full tables, tableaus, per-problem
 provenance and the verbatim verdict line are on the
 <a href="https://jgoetzmann.github.io/rk-findings/validation.html">findings validation
 page</a>, generated from the same results file.</p>
@@ -614,8 +618,8 @@ held-out set alone, and shadow for 10 cycles; the check list is on the
 """
 
 METH_SUITE = """
-<p>The suite collects <strong>1,038 tests</strong> in nine numbered tiers that mirror
-the dependency stack. Golden tests (G-numbered) pin behaviour to fixture values written
+<p>The suite collects <strong>{tests:,} tests</strong> in twelve numbered tiers that
+mirror the dependency stack. Golden tests (G-numbered) pin behaviour to fixture values written
 before the build existed, down to exact measured orders and cycle counts. Canary tests
 (K-numbered) are anti-gaming: K1 plants a candidate tuned on the search set and asserts
 it can earn search_only but never heldout_verified; K2 asserts a single-family winner
@@ -796,15 +800,234 @@ quantisation effect. Rosenbrock methods remain the natural second project. One a
 to the cut list from the build: alternative rounding modes (round-to-nearest, stochastic
 rounding) are deliberately a <em>measured comparison</em> on the key findings page, not a
 search dimension, because changing the arithmetic changes every score in the archive, so
-it is pinned by the verifier hash.</p>
+it is pinned by the verifier hash. </p>
+<p class="note">Update (2026-09-02): adaptive step size and implicit methods are
+no longer cut, they are scheduled &mdash; as future scored epochs with deterministic
+realizations (a division-free controller with worst-case cycles booked; a fixed Newton
+iteration count). The <a href="tracks.html">research tracks page</a> carries the plan
+and the prototypes.</p>
 """
 
 PRIOR_ART = """
 <p>RKTK (Zhang, 2019) already performs unstructured numerical search over Butcher order
 conditions and holds an order-10 stage-count record; numerical tableau search is not the
 contribution. That line optimises order, stages and error constants in exact arithmetic.
-Nobody prices coefficients against a hardware cost model, and nobody evaluates end-to-end
+That line of work does not price coefficients against a hardware cost model, and does not evaluate end-to-end
 in fixed point; that is the gap, and it is narrow enough to finish. The literature loop
 keeps collecting adjacent work (fixed-point ODE solvers, CSD constant multiplication,
 rounding-error analysis) into the findings site's literature page as the run proceeds.</p>
 """
+
+# ------------------------------------------------------------------------ research tracks
+
+TRACKS_LEAD = """
+<p class="herolead">The project is now a research program with a destination: a paper
+whose central table weighs discovered methods against classical anchors and real library
+integrators. Method-class changes (adaptive pairs, implicit methods) only happen at
+<strong>epoch boundaries</strong>, because every archive score is a function of the ten
+verifier-pinned files: changing the evaluator silently changes every number, so the run
+is frozen, the archive becomes immutable evidence, the hash is re-pinned, and a new
+archive starts. Everything else &mdash; validation suites, benchmarks, literature,
+analysis &mdash; proceeds out of band at any time. The full plan lives in
+<code>rk-harness/docs/ROADMAP.md</code>; this page tracks where each strand actually
+is.</p>
+<p>Two of these tracks revisit things the original design cut (adaptive step size,
+implicit iteration) on real-time-certificate grounds. The designs answer that objection
+directly rather than waving it off: the adaptive controller is division-free with
+worst-case cycle counts booked, and the implicit anchor fixes its Newton iteration count
+so per-step cost stays deterministic. See
+<a href="design-decisions.html">design decisions</a> for the original reasoning.</p>
+"""
+
+TRACKS_POLICY = """
+<p>The owner's direction (2026-09-02) is not to work the tracks in sequence but to
+rotate attention roughly <strong>70/15/15</strong>: 70% of each work wave to the lead
+track (the current scored epoch and its paper analysis), 15% to each side track. The
+scored archive still holds exactly one epoch at a time; side tracks advance through
+things that need no scored slot &mdash; design documents, working prototypes,
+off-archive experiments on the validation problems &mdash; and every side-track
+allocation must land a showable artifact, not just thinking. The literature rotation
+implements the same split (14/3/3 over a 20-slot cycle). When the scored slot hands over
+at a freeze, the letters re-map and the lead becomes the new epoch.</p>
+<p class="note">Everything below from the two side tracks is a preliminary, float-only
+prototype: no Q15 quantization, no floor bias, not verifier-pinned, nothing in the
+scored archive. The point of showing it is to make the next epochs' claims checkable
+early, not to claim results.</p>
+"""
+
+TRACK_A_MILESTONES = """
+<p>The scored search over explicit fixed-step tableaus at a 65,536-cycle budget is
+closing. The archive holds <strong>{records:,} verified records</strong> across
+{cycles:,} cycles, with 16 grid cells occupied; the saturation counter (panel above) is
+past its freeze threshold, so the watchdog is expected to freeze epoch 1 at a cycle
+boundary, push the data repositories, and write <code>EPOCH_STATUS.json</code>. Its
+scientific yield is on the <a href="results.html">key findings page</a>: the floor-bias
+mechanism, the anchor reversal, the rc_thermal quantization floor, the closed phase-0
+result, and 13 of 14 discovered cells ahead of every cheaper-or-equal classical
+anchor.</p>
+<p>The paper-facing analysis that gates the epoch-2 handover has landed. The practical
+validation suite grew to <strong>8 problems</strong> by adding three moderately stiff
+real-application systems (a servo motor under a load-torque step, stiffness ratio 546; a
+Michaelis&ndash;Menten enzyme system started on its slow manifold, ratio 1030; a
+rate-scaled Robertson system, ratio 292), each designed so stiffness bites through
+stability rather than Q15 dynamic range. The result is the motivating evidence for track
+C: on the two stiff problems where any discovered method finishes, the 3-stage champion
+ties midpoint on one and wins the other by 0.4%, but on the Robertson system
+<em>no discovered method finishes at all</em> &mdash; rk4, rk38 and every discovered
+elite overflow in Q15, while cheap low-stage classical methods complete the run. The T10
+library benchmark harness also landed: SciPy RK45/Radau/BDF/LSODA at tolerances matched
+to one Q15 LSB, a hand-rolled float64 rk4 at identical step counts, and measured wall
+clock with a stated protocol. Its headline numbers are on the
+<a href="tradeoffs.html">trade-offs page</a>, which is this track's third deliverable.</p>
+"""
+
+TRACK_B_INTRO = """
+<p>Epoch 2 will search embedded pairs (b and b-hat sharing one A matrix) with a Q15
+step-size controller, scored on work-precision: cycles consumed to reach a tolerance,
+which is how adaptive methods earn their keep. The design document
+(<code>rk-harness/docs/EPOCH2-DESIGN.md</code>) specifies the pair tableau type and its
+canonical hash form, a Q15 error estimate built from vectors the integrator already
+computes with a documented ~2 LSB floor-bias measurement limit, a division-free PI
+controller in the log2 domain with dyadic gains (&alpha; = 1/4, &beta; = 1/8, safety
+7/8) and a bit-scan-indexed factor table (ARMv6-M has no count-leading-zeros
+instruction), cost-model terms for the controller and rejected steps, FSAL sharing, the
+archive re-dimensioning, and an 8-step migration list tied to the epoch-1 freeze.</p>
+<p>The working prototype (<code>rk_harness/prototypes/adaptive.py</code>) implements
+Bogacki&ndash;Shampine 3(2) (Bogacki and Shampine, Applied Mathematics Letters 2(4),
+1989) in float64 with exactly that dyadic PI controller and exact FSAL evaluation
+accounting. Measured convergence orders on the dahlquist problem: 3.0 for the propagated
+solution, 2.1 for the embedded estimate &mdash; both where they should be. The curve
+below is its measured work-precision behavior on three validation problems.</p>
+"""
+
+TRACK_B_INTERP = """
+<p>The controller does its job across five decades: tightening the tolerance from 1e-3
+to 1e-8 moves the buck converter run from 91 function evaluations at 1.5e-3 achieved
+error to 3,571 evaluations at 9.1e-8, with achieved error tracking the requested
+tolerance the whole way and rejected steps staying in single digits on every run. The
+open question the prototype cannot answer &mdash; and the reason epoch 2 needs the
+scored slot &mdash; is what survives Q15: the error estimate sits on a ~2 LSB
+measurement floor, so tolerances below about 1e-4 in Q15 units are not reachable, and
+the controller's factor table quantizes the step-size response.</p>
+"""
+
+TRACK_C_INTRO = """
+<p>Epoch 3 goes implicit for the stiff regime where every explicit method is
+stability-limited at any budget. The design document
+(<code>rk-harness/docs/EPOCH3-DESIGN.md</code>) anchors on a 2-stage L-stable SDIRK
+method (Alexander 1977, &gamma; = 1 &minus; &radic;2/2) with a <strong>fixed
+3-iteration modified Newton</strong> solve so cycle cost stays deterministic and
+analyzable &mdash; the property that makes an implicit method admissible under this
+project's rules at all. It specifies the new cost-model terms (forming the iteration
+matrix, LU with software reciprocals, per-stage-per-iteration substitution), the
+Jacobian strategy for 1&ndash;4 states, a dyadic-gamma-then-exact-fractions search
+ruling, criteria for the stiff scored suite, and an exact-R(z) L-stability gate that
+joins the verifier in place of the explicit stability threshold.</p>
+<p>The float-only prototype (<code>rk_harness/prototypes/sdirk.py</code>) implements the
+integrator, the LU solve, the finite-difference Jacobian and a cycle estimator. The
+curve below is the measured stability story on a two-rate linear system with stiffness
+ratio 1000, alongside the frozen rc_thermal problem (ratio 70), where euler and rk4
+diverge below 32 and 24 steps respectively while sdirk2 is clean from 4 steps.</p>
+"""
+
+TRACK_C_INTERP = """
+<p>The chart is the stability tax made visible. rk4 cannot take a single stable step on
+this system until n &ge; 720 (its real-axis stability interval of about 2.8 divided
+into the fast eigenvalue), which at 66 cycles per step is a floor of roughly
+<strong>47,500 cycles before accuracy even enters the question</strong> &mdash; nearly
+three quarters of the whole epoch-1 budget. sdirk2 pays about 5&times; more per step
+(roughly 348 cycles against 66) and does not care: it is clean from n = 5, and at n = 10
+(about 3,500 cycles) it reaches 4.5e-4 error, an order of magnitude less compute than
+rk4's cheapest stable run. That is the same mechanism that kills every discovered
+method on the Robertson problem in the stiff validation subset, measured in float here
+so the stability effect is isolated from quantization. What the prototype does not yet
+answer: Q15 feasibility of the Newton solve itself, which is the point of the epoch.</p>
+"""
+
+TRACKS_ORCH_NOTE = """
+<p class="note">This panel is read from the run's state files
+(<code>events.jsonl</code>, <code>saturation_state.json</code>,
+<code>EPOCH_STATUS.json</code>, <code>falsification.json</code>) at generation time,
+the same files the findings site's epoch panel reads, so both sites report the same
+loop. Progress means a record in a previously empty archive cell, an elite improving
+its cell, or a heldout_verified acceptance; enough consecutive saturating checks (each
+requiring stale progress plus a concluded falsification protocol) trigger the freeze.</p>
+"""
+
+# ---------------------------------------------------------------------------- trade-offs
+
+TRADEOFFS_LEAD = """
+<p class="herolead">The paper's central table: every method class this project has
+measured, in one matrix &mdash; discovered Q15 methods from the archive, the classical
+anchors they ran against, and real library integrators from the benchmark harness. Every
+cell traces to a data file (footnotes below the table); where a protocol was never run
+for a method, the cell holds a dash and a footnote rather than an estimate.</p>
+"""
+
+TRADEOFFS_HOWTO = """
+<p>Rows are methods; the columns mix three measurement protocols, which is the point of
+the footnotes. Held-out error is the epoch-1 scored protocol (Q15, floor rounding,
+65,536-cycle budget, four held-out problems). Validation wins count outright wins on the
+8-problem out-of-band suite, split practical / stiff. Cycles per step and CSD weight are
+analytic, from the pinned cost model, and portable to the target class; measured time
+per step is Python-level wall clock on one stated desktop and compares like against like
+only within a regime. No single column ranks these methods; the trade-off is the
+finding.</p>
+"""
+
+TRADEOFFS_VERDICT = """
+<p class="verdict">What the matrix says, read honestly: at matched tolerance the
+float64 libraries are far more accurate than any Q15 method (median best-Q15 to
+best-library error ratio 727, with Radau the most accurate library on all seven scored
+problems), and at identical step counts float64 rk4 has lower error in all 28
+comparable cells &mdash; the price of 16-bit floor arithmetic, about eight decades of
+error. What the Q15 side offers is not accuracy parity: it is bounded 16-bit integer
+arithmetic at a fixed, analyzable cycle cost, which none of the libraries provide, and
+within that regime the discovered methods hold the frontier &mdash; the 3-stage champion
+carries a third of the held-out error of the best classical anchor at a third fewer
+cycles than rk4, and wins four of the eight validation problems outright. The stiff
+column is the standing weakness of the whole explicit class and the case for epoch 3:
+expensive tableaus take large steps at a fixed budget, large steps leave the stability
+region, and the run overflows, whoever found the coefficients.</p>
+"""
+
+# Pros/cons prose for the matrix, keyed by row. Kept human-written on purpose; the
+# numeric columns are computed from the data files at build time.
+TRADEOFFS_NOTES = {
+    "euler": "Smallest possible step cost and code; survives every stiff run because its "
+             "tiny budget-driven steps stay inside the stability region. Worst accuracy "
+             "of the field everywhere else.",
+    "midpoint": "The best classical anchor under this budget and arithmetic; wins two of "
+                "the three stiff problems including the one nothing else survives well. "
+                "Still 3x the held-out error of the discovered champion.",
+    "heun2": "Same cost class as midpoint, slightly worse everywhere here; its equal "
+             "b-weights change how the floor bias lands but it never takes a win.",
+    "rk4": "The textbook default, and this project's cautionary tale: classically optimal "
+           "coefficients buy nothing at this budget in Q15, it pays 85 cycles under a "
+           "slow multiplier, and it overflows on the scaled Robertson problem.",
+    "rk38": "Same order and stages as rk4 with cheaper coefficients under a slow "
+            "multiplier (64 vs 85); takes the one practical win the classical side keeps "
+            "(the PLL). Same stiff overflow as rk4.",
+    "champion": "The 3-stage order-2 discovered champion: lowest held-out error in the "
+                "archive at 22 cycles per step, wins four validation problems outright, "
+                "and is the only discovered method that finishes any stiff run. Order 2 "
+                "only; its edge is floor-bias management, not truncation order.",
+    "elite3": "Best order-3 archive elite. Strong on the held-out set, but six stages at "
+              "75 cycles per step means large steps at a fixed budget: it overflows on "
+              "all three stiff problems and takes no validation win.",
+    "elite4": "Best order-4 archive elite; wins the vehicle-dynamics validation problem. "
+              "Same stiff failure mode as the other 6-stage method: every stiff run "
+              "overflows.",
+    "RK45": "The general-purpose library default (explicit, adaptive, float64). Orders of "
+            "magnitude more accurate than any Q15 method at matched tolerance; step count "
+            "chosen at run time, so no fixed cycle certificate exists.",
+    "Radau": "Implicit Radau IIA: the most accurate library on all seven scored problems "
+             "at matched tolerance, and built for exactly the stiff regime that limits "
+             "the explicit field. The most expensive per step measured here.",
+    "BDF": "Implicit multistep for stiff problems; accurate and robust in float64, with "
+           "the same caveats as every library row: adaptive step counts, no cycle model, "
+           "double-precision arithmetic assumed.",
+    "LSODA": "Auto-switches between stiff and non-stiff modes; the fastest measured "
+             "per-step wall clock of the libraries in this benchmark. Same non-portable, "
+             "uncertified cost profile as the other library rows.",
+}

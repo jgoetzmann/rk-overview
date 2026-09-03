@@ -87,6 +87,8 @@ th.num,td.num{text-align:right}
 .badge-supported{background:var(--good-bg);color:var(--good-fg)}
 .badge-refuted{background:var(--bad-bg);color:var(--bad-fg)}
 .badge-inconclusive{background:var(--warn-bg);color:var(--warn-fg)}
+.badge-active{background:var(--good-bg);color:var(--good-fg)}
+.badge-frozen{background:var(--mut-bg);color:var(--mut-fg)}
 .hash{word-break:break-all;font:12px ui-monospace,Consolas,monospace;color:var(--text-2)}
 .mono{font:13px ui-monospace,Consolas,monospace}
 .note{font-size:13px;color:var(--text-2);font-style:italic}
@@ -199,7 +201,7 @@ details.p0[open] summary{border-bottom:1px solid var(--line)}
 <header class="site"><div class="wrap">
 <h1>methodology</h1>
 <p class="sub">The method: setup, measurement, protocol, trust, testing, and its limits.</p>
-<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="methodology.html" class="on">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-02)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="tradeoffs.html">trade-offs</a><a href="tracks.html">research tracks</a><a href="methodology.html" class="on">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-02)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
 </div></header>
 <div class="wrap">
 
@@ -289,8 +291,8 @@ held-out set alone, and shadow for 10 cycles; the check list is on the
 
 <h2 id="tests">Testing</h2>
 
-<p>The suite collects <strong>1,038 tests</strong> in nine numbered tiers that mirror
-the dependency stack. Golden tests (G-numbered) pin behaviour to fixture values written
+<p>The suite collects <strong>1,093 tests</strong> in twelve numbered tiers that
+mirror the dependency stack. Golden tests (G-numbered) pin behaviour to fixture values written
 before the build existed, down to exact measured orders and cycle counts. Canary tests
 (K-numbered) are anti-gaming: K1 plants a candidate tuned on the search set and asserts
 it can earn search_only but never heldout_verified; K2 asserts a single-family winner
