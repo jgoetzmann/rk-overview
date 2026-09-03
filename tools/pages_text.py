@@ -6,13 +6,19 @@ maintained by the owner. rk-findings stays the machine-truth; anything here that
 disagrees with it is wrong here.
 
 Redundancy policy (one home per fact):
-  index            -> teasers and links, the hero numbers, the anchor result
+  index            -> the hero paragraph, three headline bullets, stat chips, page links
   results          -> the six key findings and the run-level charts
+  tradeoffs        -> the cross-method matrix, the anchor result, the measured-speed
+                      head-to-head
+  tracks           -> the live scored search and the two side efforts
+  literature       -> the human summary of the model-driven reading loop
   methodology      -> the method: setup, measurement, protocol, trust, testing
   architecture     -> the technical deep dive: structure, boundaries, arithmetic,
                       cost model, search machinery, archive
   design-decisions -> rationale, cuts, prior art
 Where another page needs a fact that lives elsewhere, it links instead of repeating.
+The index bullets restate the three headline numbers on purpose; everything else on
+the index is a link.
 """
 
 # Footer provenance, one quiet line per page. {date} is the snapshot date (US Central).
@@ -24,30 +30,64 @@ FOOTER = (
 HERO_TITLE = "Searching for Runge–Kutta methods that survive fixed-point arithmetic"
 
 HERO_LEAD = """
-<p class="herolead">An unattended, months-long search for explicit Runge&ndash;Kutta
-tableaus that minimise <strong>end-to-end error in Q15 fixed point at a fixed cycle budget
-on Cortex-M0+</strong> &mdash; not the textbook criterion of truncation error in exact
-arithmetic. The search runs inside a container that cannot edit its own scorer, and it has
-findings: <a href="results.html">discovered methods cut held-out error up to 3.0&times;
-against the best classical anchor</a>, and the mechanism is a half-LSB rounding bias that
-reorders the classical field before any search begins.</p>
+<p class="herolead">An unattended search for explicit Runge&ndash;Kutta tableaus that
+minimise <strong>end-to-end error in Q15 fixed point at a fixed cycle budget on
+Cortex-M0+</strong>, not the textbook criterion of truncation error in exact arithmetic.
+Classical tableaus assume exact arithmetic; on an FPU-less microcontroller every multiply
+rounds, the rounding is biased, and nobody had searched the gap between classically
+optimal and practically optimal coefficients. The scored search covers explicit
+fixed-step methods; adaptive embedded pairs and implicit SDIRK methods exist as working
+prototypes with measured curves on the <a href="tracks.html">research tracks page</a>.
+The whole thing runs inside a container that cannot edit its own scorer.</p>
 """
 
-INTRO = """
-<p>The falsifiable claim behind the project: classical tableaus were derived assuming exact
-arithmetic. On an FPU-less microcontroller in Q15, at step sizes a real controller would
-use, roundoff dominates truncation, so the classically optimal coefficients are not the
-practically optimal ones, and nobody had searched the gap between. Prior work (RKTK and its
-line) searches tableaus numerically for order and error constants; it does not price
-coefficients against a hardware cost model, and it does not evaluate in fixed point. That
-narrow gap is the project.</p>
-
-<p>The work is split across four repositories with distinct trust levels; the
-<a href="architecture.html">architecture page</a> draws the split and the container
-boundary that keeps the searching agent away from its own scorer.</p>
+# The three headline results, filled with live numbers by generate.build(). Each value
+# in the format() call traces to a data source of record; nothing here is hand-typed.
+RESUME_BULLETS = """
+<ul class="rbul">
+<li><span class="rlab">discovery</span>Discovered integrators lead the classical anchors
+in <strong>{cells_won} of {cells} archive cells</strong> and on <strong>{prac_won} of
+{prac} practical embedded problems</strong> at an equal 65,536-cycle budget (best archive
+cell <strong>{best_x} lower error</strong>; practical-suite median ratio {prac_median}).
+<a class="golink" href="results.html">key findings</a></li>
+<li><span class="rlab">speed</span>The champion integrates a step in <strong>{champ_cyc}
+cycles to rk4's {rk4_cyc}</strong>, and the measured wall clock agrees:
+<strong>{champ_us} vs {rk4_us} &micro;s/step</strong> (<strong>{meas_x} measured</strong>,
+r&nbsp;=&nbsp;{pearson} cycle model vs time), with the lower error on <strong>{err_won} of
+{err_n} problems</strong>. <a class="golink" href="tradeoffs.html#speed">measured
+speed</a></li>
+<li><span class="rlab">infrastructure</span>An autonomous discovery harness (24/7
+containerized search, <strong>{tests:,} tests</strong>, a hash-pinned verifier, an LLM in
+the loop under guarded publication) found and mechanized the <strong>floor-rounding
+bias</strong> that reorders classical methods in 16-bit arithmetic.
+<a class="golink" href="methodology.html">methodology</a></li>
+</ul>
 """
 
-# The anchor result stays on the index: it is the thesis in two textbook methods.
+# Index page teasers: one line per page, links only; the facts live on the pages.
+PAGE_TEASERS = [
+    ("results.html", "Key findings",
+     "Six findings with charts: the efficiency frontier, the floor-bias flip, the "
+     "quantization crossover, the rc_thermal floor, one space closed by enumeration, "
+     "practical validation."),
+    ("tradeoffs.html", "Trade-offs and measured speed",
+     "Discovered, classical and library methods in one matrix, every cell traced to a "
+     "data file, plus the wall-clock head-to-head against rk4."),
+    ("tracks.html", "Research tracks",
+     "The live fixed-step scored search, and two side efforts (adaptive pairs, implicit "
+     "SDIRK) with design docs, prototypes and measured curves."),
+    ("literature.html", "Literature",
+     "What the model-driven reading loop searched, what it found, and how it fed the "
+     "search."),
+    ("methodology.html", "Methodology",
+     "The start gate, the pinned verifier hash, the test suite, the executed pre-flight, "
+     "and the limits."),
+    ("architecture.html", "Architecture",
+     "The container boundary, the cycle loop, exact arithmetic, the cost model, and the "
+     "search machinery."),
+]
+
+# The anchor result: the thesis in two textbook methods. Lives on the trade-offs page.
 ANCHOR_TEXT = """
 <p>rk4 and rk38 are both 4-stage order-4 methods with the same stability polynomial;
 textbooks treat them as interchangeable. Priced against real multipliers they are not:
@@ -62,7 +102,7 @@ project's thesis demonstrated in two methods everyone already knows; the
 TEASERS = [
     ("efficiency", "Discovered methods lead in 13 of 14 archive cells",
      "13 of 14 discovered grid cells beat all classical anchors of equal or lower cost on "
-     "held-out error; the best cuts error 3.0× at the same 65,536-cycle budget."),
+     "held-out error; the best cuts error 2.95× at the same 65,536-cycle budget."),
     ("floor-flip", "Floor rounding reorders the classical field",
      "Under the hardware's floor rounding, Euler's search-set error undercuts rk4's; "
      "swap in round-to-nearest and the textbook order returns."),
@@ -96,7 +136,7 @@ RESULTS_SCOPE = (
 HEADLINE_VERDICT = """
 <p class="verdict">At a fixed budget of 65,536 cycles on a Cortex-M0+ cost model, the
 search found Runge&ndash;Kutta methods that cut held-out error by up to
-<strong>3.0&times;</strong> against the best classical method, and the data says why:
+<strong>2.95&times;</strong> against the best classical method, and the data says why:
 Q15's floor rounding injects a &minus;&frac12;-LSB bias per multiply that reorders the
 classical field before any search begins. The evidence below: an efficiency frontier
 where 13 of 14 discovered cells beat every classical anchor of equal or lower cost; a
@@ -118,7 +158,7 @@ methods, 2 by classicals &mdash; euler owns the only order-1 cell, and rk38 stil
 4-stage order-4 cell, where no discovered method displaced it. The fair comparison is
 against every classical anchor of equal or lower per-step cost, since a cheaper method
 could always be substituted; 13 of the 14 discovered cells win that comparison, with a
-median error ratio of 0.72 and a best of 0.34.</p>
+median error ratio of 0.72 across the 14 discovered cells and a best of 0.34.</p>
 """
 
 F_EFFICIENCY_INTERP = """
@@ -268,7 +308,7 @@ page</a>, generated from the same results file.</p>
 
 RUN_CHARTS_INTRO = """
 <p>The findings above are states of the archive; these charts are the run that produced
-it. All three are computed from the archive and event stream at snapshot time.</p>
+it, computed from the archive and event stream at generation time.</p>
 """
 
 # ---------------------------------------------------------------------------- architecture
@@ -413,8 +453,9 @@ it only shifts every method by the same constant.</p>
 assembly sequence must count to exactly 13 cycles under m0plus_fast and 75 under
 m0plus_slow, and a reference C emitter can print the step function a compiler would
 see, for one-off human comparison; the harness never compiles or executes it. The
-rk4-versus-rk38 comparison on the <a href="index.html">overview page</a> is pinned
-the same way, as golden test G21: twelve numbers verified before any search ran.</p>
+rk4-versus-rk38 comparison on the <a href="tradeoffs.html#anchor">trade-offs page</a>
+is pinned the same way, as golden test G21: twelve numbers verified before any search
+ran.</p>
 """
 
 ARCH_CANDIDATES = """
@@ -503,8 +544,9 @@ op      := "&lt;" | "&gt;" | "&lt;=" | "&gt;=" | "=="</pre>
 the minimum of the metric over every cycle bucket at that (order, stages), except the
 order metric, which uses the mean. How verdicts are then assigned is protocol, not
 machinery, and lives on the <a href="methodology.html#protocol">methodology page</a>.
-A literature loop web-searches a rotating topic every ~50 cycles and feeds the digest
-into every prompt. The digests and the model's prose interpretation are published on
+A literature loop web-searches a fresh topic every ~50 cycles and feeds the digest
+into every prompt; the <a href="literature.html">literature page</a> summarizes what
+it has read. The digests and the model's prose interpretation are published on
 the findings site, clearly labelled and passed through a softener so the site's
 banned-words guard holds.</p>
 """
@@ -609,8 +651,9 @@ restored, it gated green.</p>
 
 METH_REACH = """
 <p>The GitHub credential never enters the container: the env file is filtered on the
-host, the runner only commits into the mounted checkouts, and the host watchdog pushes
-with the owner's own credentials (an earlier token-scoping design failed its probe;
+host, and every push happens host-side, as the
+<a href="architecture.html">architecture page</a> draws in detail (an earlier
+token-scoping design failed its probe;
 see <a href="design-decisions.html#credentials">credentials outside the container</a>).
 Model-written problems execute only after the quarantine's admission checks, join the
 held-out set alone, and shadow for 10 cycles; the check list is on the
@@ -701,7 +744,8 @@ DECISIONS = [
      "and a 32-cycle multiplier model costs nothing and turns hardware-aware into a "
      "demonstrated effect if the ranking changes.",
      "Kept; the ranking does change (rk4 33 vs rk38 36 fast; rk38 64 vs rk4 85 slow; the "
-     "anchor result on the <a href=\"index.html\">overview</a>). AVR stays advisory in a "
+     "anchor result on the <a href=\"tradeoffs.html#anchor\">trade-offs page</a>). AVR "
+     "stays advisory in a "
      "stronger sense than planned: after a live candidate was rejected on an AVR-column "
      "infinity, verification was restricted to primary-model columns only; the slow/AVR "
      "numbers are archive breadth."),
@@ -728,8 +772,9 @@ DECISIONS = [
      "Search/held-out split, enforced structurally",
      "The optimizer has no code path that reads HELDOUT_SET; the held-out gap is a "
      "first-class dashboard metric so it cannot rot unnoticed.",
-     "Kept literally: a test walks the optimizer's import graph and fails on any load of "
-     "the name. The D5 drill deliberately feeds the optimizer the held-out set, watches "
+     "Kept literally, enforced by the import-graph test described under "
+     "<a href=\"methodology.html#setup\">methodology</a>. The D5 drill deliberately "
+     "feeds the optimizer the held-out set, watches "
      "the gap collapse to zero, and restores it on revert, so the metric measures what "
      "it claims to. The gap is also an honest caveat on the champion numbers "
      "(<a href=\"results.html#efficiency\">key finding 1</a>)."),
@@ -821,17 +866,15 @@ rounding-error analysis) into the findings site's literature page as the run pro
 # ------------------------------------------------------------------------ research tracks
 
 TRACKS_LEAD = """
-<p class="herolead">The project is now a research program with a destination: a paper
-whose central table weighs discovered methods against classical anchors and real library
-integrators. Method-class changes (adaptive pairs, implicit methods) only happen at
-<strong>epoch boundaries</strong>, because every archive score is a function of the ten
-verifier-pinned files: changing the evaluator silently changes every number, so the run
-is frozen, the archive becomes immutable evidence, the hash is re-pinned, and a new
-archive starts. Everything else &mdash; validation suites, benchmarks, literature,
-analysis &mdash; proceeds out of band at any time. The full plan lives in
-<code>rk-harness/docs/ROADMAP.md</code>; this page tracks where each strand actually
-is.</p>
-<p>Two of these tracks revisit things the original design cut (adaptive step size,
+<p class="herolead">One scored search runs at a time; two side efforts move alongside
+it. The destination is a paper whose central table weighs discovered methods against
+classical anchors and real library integrators. Method-class changes (adaptive pairs,
+implicit methods) only happen at <strong>epoch boundaries</strong>, because every
+archive score is a function of the ten verifier-pinned files: changing the evaluator
+silently changes every number, so a class change means freezing the run, re-pinning the
+hash, and starting a new archive. Validation suites, benchmarks and literature reading
+proceed out of band at any time.</p>
+<p>Both side efforts revisit things the original design cut (adaptive step size,
 implicit iteration) on real-time-certificate grounds. The designs answer that objection
 directly rather than waving it off: the adaptive controller is division-free with
 worst-case cycle counts booked, and the implicit anchor fixes its Newton iteration count
@@ -839,17 +882,8 @@ so per-step cost stays deterministic. See
 <a href="design-decisions.html">design decisions</a> for the original reasoning.</p>
 """
 
-TRACKS_POLICY = """
-<p>The owner's direction (2026-09-02) is not to work the tracks in sequence but to
-rotate attention roughly <strong>70/15/15</strong>: 70% of each work wave to the lead
-track (the current scored epoch and its paper analysis), 15% to each side track. The
-scored archive still holds exactly one epoch at a time; side tracks advance through
-things that need no scored slot &mdash; design documents, working prototypes,
-off-archive experiments on the validation problems &mdash; and every side-track
-allocation must land a showable artifact, not just thinking. The literature rotation
-implements the same split (14/3/3 over a 20-slot cycle). When the scored slot hands over
-at a freeze, the letters re-map and the lead becomes the new epoch.</p>
-<p class="note">Everything below from the two side tracks is a preliminary, float-only
+TRACKS_PRELIM_NOTE = """
+<p class="note">Everything below from the two side efforts is a preliminary, float-only
 prototype: no Q15 quantization, no floor bias, not verifier-pinned, nothing in the
 scored archive. The point of showing it is to make the next epochs' claims checkable
 early, not to claim results.</p>
@@ -857,11 +891,12 @@ early, not to claim results.</p>
 
 TRACK_A_MILESTONES = """
 <p>The scored search over explicit fixed-step tableaus at a 65,536-cycle budget is
-closing. The archive holds <strong>{records:,} verified records</strong> across
-{cycles:,} cycles, with 16 grid cells occupied; the saturation counter (panel above) is
-past its freeze threshold, so the watchdog is expected to freeze epoch 1 at a cycle
-boundary, push the data repositories, and write <code>EPOCH_STATUS.json</code>. Its
-scientific yield is on the <a href="results.html">key findings page</a>: the floor-bias
+live. The archive holds <strong>{records:,} verified records</strong> across
+{cycles:,} cycles, with {cells} grid cells occupied. The saturation orchestrator froze
+epoch 1 once, at the cycle-808 boundary, after its stale-progress checks tripped; the
+owner reopened the run and demoted the automatic freeze to advisory, and the panel
+above reads whatever the state files say now. The scientific yield is on the
+<a href="results.html">key findings page</a>: the floor-bias
 mechanism, the anchor reversal, the rc_thermal quantization floor, the closed phase-0
 result, and 13 of 14 discovered cells ahead of every cheaper-or-equal classical
 anchor.</p>
@@ -870,15 +905,15 @@ validation suite grew to <strong>8 problems</strong> by adding three moderately 
 real-application systems (a servo motor under a load-torque step, stiffness ratio 546; a
 Michaelis&ndash;Menten enzyme system started on its slow manifold, ratio 1030; a
 rate-scaled Robertson system, ratio 292), each designed so stiffness bites through
-stability rather than Q15 dynamic range. The result is the motivating evidence for track
-C: on the two stiff problems where any discovered method finishes, the 3-stage champion
+stability rather than Q15 dynamic range. The result is the motivating evidence for the
+implicit side effort: on the two stiff problems where any discovered method finishes, the 3-stage champion
 ties midpoint on one and wins the other by 0.4%, but on the Robertson system
 <em>no discovered method finishes at all</em> &mdash; rk4, rk38 and every discovered
 elite overflow in Q15, while cheap low-stage classical methods complete the run. The T10
 library benchmark harness also landed: SciPy RK45/Radau/BDF/LSODA at tolerances matched
 to one Q15 LSB, a hand-rolled float64 rk4 at identical step counts, and measured wall
 clock with a stated protocol. Its headline numbers are on the
-<a href="tradeoffs.html">trade-offs page</a>, which is this track's third deliverable.</p>
+<a href="tradeoffs.html">trade-offs page</a>, which is this search's third deliverable.</p>
 """
 
 TRACK_B_INTRO = """
@@ -951,7 +986,8 @@ TRACKS_ORCH_NOTE = """
 the same files the findings site's epoch panel reads, so both sites report the same
 loop. Progress means a record in a previously empty archive cell, an elite improving
 its cell, or a heldout_verified acceptance; enough consecutive saturating checks (each
-requiring stale progress plus a concluded falsification protocol) trigger the freeze.</p>
+requiring stale progress plus a concluded falsification protocol) mark the epoch
+saturated. The freeze that once fired automatically on that signal is advisory now.</p>
 """
 
 # ---------------------------------------------------------------------------- trade-offs
@@ -991,6 +1027,107 @@ expensive tableaus take large steps at a fixed budget, large steps leave the sta
 region, and the run overflows, whoever found the coefficients.</p>
 """
 
+TRADEOFFS_SPEED_INTRO = """
+<p>The matrix prices methods analytically; this section checks the analytic claim
+against a clock. The benchmark's head-to-head runs the discovered champion and rk4
+through the identical pinned Q15 solver on all seven scored problems: same 16-bit floor
+arithmetic, same per-step machinery, only the tableau differs, so the per-step
+wall-clock ratio isolates what the coefficients cost.</p>
+"""
+
+TRADEOFFS_SPEED_INTERP = """
+<p>The cycle model predicts a ratio of exactly 1.50 on every problem (22 vs 33 cycles
+per step per state, 44 vs 66, and so on up the state counts); the measured geometric
+mean is 1.45, and every per-problem measurement lands within about 14% of the
+prediction. The accuracy side is cited bit-for-bit from the benchmark's fixed-step
+table: at the same 65,536-cycle budget the champion also has the lower Q15 error on
+five of the seven problems (rk4 keeps dahlquist and pendulum), median error ratio 0.35,
+so the per-step saving is not bought with accuracy. Whole-budget wall-clock totals
+carry constant Python per-step overhead, which favors methods taking fewer, larger
+steps; on the M0+ target the cycle count is the time.</p>
+"""
+
+# ------------------------------------------------------------------------- literature
+
+LIT_LEAD = """
+<p class="herolead">Every ~50 cycles the run's planning model searches the web for one
+topic, writes a digest with citations, and from then on that digest is injected into
+the directive and hypothesis prompts. This page is the human summary of what the loop
+has read so far: what was searched, what came back, and where it touched the search.
+The raw digests, as stored, are on the findings literature page
+(<a href="findings/literature.html">snapshot</a>,
+<a href="https://jgoetzmann.github.io/rk-findings/literature.html">live</a>).</p>
+<p class="note">The digests are model-written text and their sources are
+model-collected citations; verify both before relying on them. Nothing on this page is
+a measurement from this project, and no measured page depends on anything written
+here.</p>
+"""
+
+# Human summaries per topic group. Each entry: (title, cycle ids covered, list of
+# paragraphs). The cycle ids must exist in rk-work/literature/digests.jsonl; generate.py
+# attaches collection dates and source counts from the file and fails loudly on a
+# mismatch, so these summaries cannot drift from the digests silently.
+LIT_TOPICS = [
+    ("Rounding bias and roundoff accumulation", (549, 700, 750), [
+        """The loop's core question: what is known about roundoff inside Runge&ndash;Kutta
+steps at low precision, and about floor rounding specifically. The digests came back
+consistent. Stage perturbations propagate through a method's internal-stability
+polynomials, so algebraically equivalent implementations can amplify errors
+differently. Probabilistic analyses give roundoff growth like &radic;n for zero-mean
+rounding, but floor rounding is one-sided, so it drifts instead of cancelling. The
+published fixed-point ODE experiments the model found (Hopkins et al., on neural ODEs)
+report exactly the pattern this archive measures: downward rounding harmed accuracy,
+round-to-nearest helped, and stochastic rounding helped more at about 30% overhead in
+an RK2 benchmark.""",
+        """How it fed the search: this group gave the prompts the published vocabulary and
+prior evidence for the floor-bias mechanism the archive was measuring on its own
+(<a href="results.html#floor-flip">key finding 2</a>), and the overhead numbers for
+stochastic rounding back the design ruling that rounding mode stays pinned rather than
+becoming a search dimension.""",
+    ]),
+    ("Prior art in tableau search", (550, 800), [
+        """What was searched: how existing projects optimize low-order Runge&ndash;Kutta
+tableaus. The digests cover the standard line: order conditions as rooted-tree
+polynomial constraints, free parameters in low-order families, and the tools that
+search them numerically (RKTK, RK-Opt, interval constraint programming), usually with
+multistart methods because the space is nonconvex. One caution recurs: principal error
+constants compare fairly only within an order, and application tests can disagree with
+rankings built on asymptotic constants alone.""",
+        """The two digests overlap heavily; the second (cycle 800) re-covers the same tools
+from different sources and adds little. The useful negative result stands either way:
+none of the surveyed work models Q15 coefficient representability, per-operation floor
+rounding, or a hardware cycle budget. That absence is the project's gap, and it is
+stated with sources under <a href="design-decisions.html">prior art</a>.""",
+    ]),
+    ("The target hardware", (600, 800), [
+        """What was searched: what multiplication actually costs on Cortex-M0+. The
+digests summarize Arm's documentation: the core ships with either a single-cycle or a
+32-cycle iterative multiplier, adds and shifts are one cycle, and an arithmetic right
+shift floors toward negative infinity, which is where the harness's ASRS semantics
+come from. On the constant-multiply side, CSD form minimizes nonzero signed digits but
+does not guarantee the shortest software sequence.""",
+        """These are the thinnest digests of the set: two short restatements of the
+technical reference manual plus CSD notes, and the second largely repeats the first.
+Thin is still useful here. They confirm the two cost models (m0plus_fast,
+m0plus_slow) match documented silicon options rather than invented ones, and the CSD
+caution matches the cost model's rule of taking the cheaper of shift-add and hardware
+multiply.""",
+    ]),
+    ("Precision under real-time budgets", (650,), [
+        """What was searched: how low-precision integration behaves under hard real-time
+constraints. The digest reports that fixed-step, fixed-cost solvers are the standard
+route to predictable execution; that naive reduced-precision Runge&ndash;Kutta can get
+worse as steps shrink; and that mixed-precision results depend on the tableau, the
+precision assignment and the hardware, so equal formal order does not imply equal
+error at an equal budget.""",
+        """How it fed the search: independent support for the harness's equal-budget
+framing, and for scoring methods across orders instead of assuming the higher order
+wins. The same digest flags energy-preserving constructions as needing implicit or
+quadrature work, which is part of why the implicit design waits for its own epoch
+(<a href="tracks.html">research tracks</a>).""",
+    ]),
+]
+
 # Pros/cons prose for the matrix, keyed by row. Kept human-written on purpose; the
 # numeric columns are computed from the data files at build time.
 TRADEOFFS_NOTES = {
@@ -1024,9 +1161,9 @@ TRADEOFFS_NOTES = {
     "Radau": "Implicit Radau IIA: the most accurate library on all seven scored problems "
              "at matched tolerance, and built for exactly the stiff regime that limits "
              "the explicit field. The most expensive per step measured here.",
-    "BDF": "Implicit multistep for stiff problems; accurate and robust in float64, with "
-           "the same caveats as every library row: adaptive step counts, no cycle model, "
-           "double-precision arithmetic assumed.",
+    "BDF": "Implicit multistep for stiff problems; accurate and dependable in float64, "
+           "with the same caveats as every library row: adaptive step counts, no cycle "
+           "model, double-precision arithmetic assumed.",
     "LSODA": "Auto-switches between stiff and non-stiff modes; the fastest measured "
              "per-step wall clock of the libraries in this benchmark. Same non-portable, "
              "uncertified cost profile as the other library rows.",

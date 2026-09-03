@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>library benchmark</title>
+<style>
+:root{
+  color-scheme:light;
+  --surface-0:#f5f4f2;--surface-1:#fcfcfb;--line:#dedcd6;--grid:#eceae5;
+  --text-1:#0b0b0b;--text-2:#52514e;--text-3:#8a887f;
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;
+  --good-bg:#e0f2e3;--good-fg:#0d5c1d;--warn-bg:#fdf0d3;--warn-fg:#7a5300;
+  --mut-bg:#eceae5;--mut-fg:#52514e;--bad-bg:#fbe3e3;--bad-fg:#8f1d1d;
+  --q1:#cde2fb;--q2:#9ec5f4;--q3:#6da7ec;--q4:#3987e5;--q5:#256abf;--q6:#184f95;--q7:#0d366b;
+  --banner-bg:#fdf0d3;--banner-line:#c98500;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme:dark;
+    --surface-0:#111110;--surface-1:#1a1a19;--line:#3a3936;--grid:#262523;
+    --text-1:#ffffff;--text-2:#c3c2b7;--text-3:#8a887f;
+    --s1:#3987e5;--s2:#d95926;--s3:#199e70;
+    --good-bg:#123a1c;--good-fg:#9fdca9;--warn-bg:#42350b;--warn-fg:#ecc76a;
+    --mut-bg:#262523;--mut-fg:#c3c2b7;--bad-bg:#461414;--bad-fg:#f1a5a5;
+    --q1:#0d366b;--q2:#184f95;--q3:#256abf;--q4:#3987e5;--q5:#6da7ec;--q6:#9ec5f4;--q7:#cde2fb;
+    --banner-bg:#42350b;--banner-line:#ecc76a;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface-0);color:var(--text-1);
+  font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 48px}
+header.site{background:var(--surface-1);border-bottom:1px solid var(--line);margin-bottom:28px}
+header.site .wrap{padding-top:22px;padding-bottom:0}
+h1{font-size:26px;margin:6px 0 2px;letter-spacing:-.015em}
+h2{font-size:18px;margin:36px 0 12px;letter-spacing:-.01em}
+h3{font-size:14px;margin:20px 0 6px;color:var(--text-2)}
+p{max-width:76ch}
+.sub{color:var(--text-2);margin:0 0 14px;font-size:14px}
+nav.tabs{display:flex;gap:2px;flex-wrap:wrap;margin:14px 0 0}
+nav.tabs a{padding:8px 14px;border-radius:8px 8px 0 0;color:var(--text-2);
+  text-decoration:none;font-size:13.5px;border:1px solid transparent;border-bottom:none}
+nav.tabs a:hover{color:var(--text-1);background:var(--surface-0)}
+nav.tabs a.on{background:var(--surface-0);border-color:var(--line);color:var(--text-1);
+  font-weight:600;box-shadow:0 1px 0 var(--surface-0)}
+a{color:var(--s1)}
+.cards{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;align-items:stretch}
+.card{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:12px 16px;min-width:148px;flex:0 1 auto;display:flex;flex-direction:column}
+.card .k{font-size:11px;color:var(--text-2);letter-spacing:.06em;text-transform:uppercase}
+.card .v{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em;line-height:1.25;margin:2px 0}
+.card .d{font-size:12px;color:var(--text-3);margin-top:auto}
+.panel{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 18px;margin:16px 0}
+figure{margin:0}
+figure figcaption{font-size:13px;color:var(--text-2);margin:0 0 10px;max-width:72ch;
+  line-height:1.5}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2);margin:2px 0 6px}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;
+  vertical-align:-1px}
+.charts{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+svg{max-width:100%;height:auto;display:block}
+svg text{font:11px system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--text-2)}
+svg .lbl{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
+  stroke-width:3px;stroke-linejoin:round}
+svg .axis{stroke:var(--line)}
+svg .gridline{stroke:var(--grid)}
+svg .cellstroke{stroke:var(--surface-1);stroke-width:2px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;margin:10px 0;font-size:13px;background:var(--surface-1);
+  border:1px solid var(--line);border-radius:8px}
+th,td{border-bottom:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--surface-0);color:var(--text-2);font-weight:600;font-size:12px;
+  letter-spacing:.02em;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover>td{background:var(--grid)}
+td{font-variant-numeric:tabular-nums}
+th.num,td.num{text-align:right}
+.tier,.badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;
+  font-weight:600;white-space:nowrap}
+.tier-heldout_verified{background:var(--good-bg);color:var(--good-fg)}
+.tier-search_only{background:var(--warn-bg);color:var(--warn-fg)}
+.tier-unreplicated{background:var(--mut-bg);color:var(--mut-fg)}
+.badge-open{background:var(--mut-bg);color:var(--mut-fg)}
+.badge-supported{background:var(--good-bg);color:var(--good-fg)}
+.badge-refuted{background:var(--bad-bg);color:var(--bad-fg)}
+.badge-inconclusive{background:var(--warn-bg);color:var(--warn-fg)}
+.badge-active{background:var(--good-bg);color:var(--good-fg)}
+.badge-frozen{background:var(--mut-bg);color:var(--mut-fg)}
+.hash{word-break:break-all;font:12px ui-monospace,Consolas,monospace;color:var(--text-2)}
+.mono{font:13px ui-monospace,Consolas,monospace}
+.note{font-size:13px;color:var(--text-2);font-style:italic}
+dl.meta{display:grid;grid-template-columns:max-content 1fr;gap:2px 16px;font-size:13px}
+dl.meta dt{color:var(--text-2)}
+dl.meta dd{margin:0}
+article.entry{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+article.entry h2{margin-top:0}
+article.entry .when{font-size:12px;color:var(--text-3);margin:0 0 8px}
+.when{font-size:12px;color:var(--text-3)}
+p.lead{color:var(--text-2);font-size:13.5px;max-width:76ch;margin:10px 0 16px}
+details.explain{margin:10px 0;max-width:76ch;font-size:13px;color:var(--text-2);
+  border:1px solid var(--line);border-radius:8px;background:var(--surface-1)}
+details.explain summary{cursor:pointer;padding:6px 12px;color:var(--text-3);
+  font-size:12.5px;letter-spacing:.02em}
+details.explain summary:hover{color:var(--text-1)}
+details.explain[open] summary{border-bottom:1px solid var(--line);color:var(--text-2)}
+details.explain>div{padding:4px 12px 8px}
+details.explain p{margin:8px 0}
+details.fold{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  margin:10px 0}
+details.fold>summary{cursor:pointer;padding:10px 16px;font-size:13.5px}
+details.fold>summary:hover{color:var(--text-1)}
+details.fold[open]>summary{border-bottom:1px solid var(--line)}
+details.fold>div{padding:6px 16px 12px}
+footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);
+  font-size:12px;color:var(--text-3)}
+footer p{margin:3px 0;max-width:none}
+footer p.prov a{color:var(--text-2)}
+</style>
+</head>
+<body>
+<header class="site"><div class="wrap">
+<h1>library benchmark</h1>
+<p class="sub">Measured wall clock next to the analytic cycle model, on one desktop machine.</p>
+<nav class="tabs"><a href="index.html">overview</a><a href="methodology.html">methodology</a><a href="costmodel.html">cost model</a><a href="falsification.html">falsification</a><a href="validation.html">validation</a><a href="benchmark.html" class="on">benchmark</a><a href="hypotheses.html">hypotheses</a><a href="literature.html">literature</a><a href="interpretation.html">interpretation</a><a href="glossary.html">glossary</a></nav>
+</div></header>
+<div class="wrap">
+<p class="lead">This page reports the library benchmark: measured wall-clock timings of the benchmark methods on a desktop Python environment, next to the analytic cycle model the rest of this site ranks by. The fixed-step rows run the identical pinned Q15 path at the shared <a href="glossary.html#cycle-budget">cycle budget</a> of 65536 cycles; the scipy adaptive integrators are accuracy context in a different regime. Accuracy numbers are deterministic; timing numbers are measured on one machine and vary run to run.</p>
+<div class="cards"><div class="card"><div class="k">measured speedup</div><div class="v">1.450x</div><div class="d">geometric mean, rk4 over champion, per step</div></div><div class="card"><div class="k">predicted speedup</div><div class="v">1.500x</div><div class="d">cycle-model quotient under m0plus_fast</div></div><div class="card"><div class="k">champion</div><div class="v">36.293 us/step</div><div class="d">median across problems, measured</div></div><div class="card"><div class="k">rk4</div><div class="v">51.671 us/step</div><div class="d">median across problems, measured</div></div><div class="card"><div class="k">cycles against time</div><div class="v">r = 0.980</div><div class="d">Pearson r over 28 fixed-step Q15 runs</div></div></div>
+<h2>Measured time per step</h2>
+<div class="panel"><figure><figcaption>Measured wall clock per Q15 step for each method, linear axis in microseconds. The bar length and printed value are the median across the benchmark problems; each dot is one problem. Every method runs the same pinned solve_q15 path, so row differences isolate tableau cost. Blue is a discovered method, orange a classical anchor; hover any mark for exact values.</figcaption><div class="legend"><span><span class="sw" style="background:var(--s1)"></span>discovered (archive)</span><span><span class="sw" style="background:var(--s2)"></span>classical anchor</span></div><svg viewBox="0 0 640 164" width="640" height="164" role="img" aria-label="Measured microseconds per Q15 step, per method"><line class="gridline" x1="118.00" y1="10" x2="118.00" y2="138"/><text x="118.00" y="152" text-anchor="middle">0</text><line class="gridline" x1="244.50" y1="10" x2="244.50" y2="138"/><text x="244.50" y="152" text-anchor="middle">50</text><line class="gridline" x1="371.00" y1="10" x2="371.00" y2="138"/><text x="371.00" y="152" text-anchor="middle">100</text><line class="gridline" x1="497.50" y1="10" x2="497.50" y2="138"/><text x="497.50" y="152" text-anchor="middle">150</text><line class="gridline" x1="624.00" y1="10" x2="624.00" y2="138"/><text x="624.00" y="152" text-anchor="middle">200</text><text x="110" y="27.00" text-anchor="end">rk4</text><rect x="118" y="12" width="130.73" height="20" rx="4" fill="var(--s2)" class="cellstroke"><title>rk4 (classical): median 51.671 us per Q15 step over 7 problems; min 35.701, max 80.993</title></rect><circle cx="208.32" cy="22.00" r="3.5" fill="var(--s2)" class="cellstroke"><title>rk4 / dahlquist: 35.701 us per step</title></circle><circle cx="260.69" cy="22.00" r="3.5" fill="var(--s2)" class="cellstroke"><title>rk4 / damped_osc: 56.399 us per step</title></circle><circle cx="237.73" cy="22.00" r="3.5" fill="var(--s2)" class="cellstroke"><title>rk4 / dc_motor: 47.326 us per step</title></circle><circle cx="246.51" cy="22.00" r="3.5" fill="var(--s2)" class="cellstroke"><title>rk4 / pendulum: 50.794 us per step</title></circle><circle cx="322.91" cy="22.00" r="3.5" fill="var(--s2)" class="cellstroke"><title>rk4 / quaternion: 80.993 us per step</title></circle><circle cx="287.66" cy="22.00" r="3.5" fill="var(--s2)" class="cellstroke"><title>rk4 / rc_thermal: 67.059 us per step</title></circle><circle cx="248.73" cy="22.00" r="3.5" fill="var(--s2)" class="cellstroke"><title>rk4 / vanderpol_mild: 51.671 us per step</title></circle><text class="lbl" x="242.73" y="27.00" text-anchor="end">51.671</text><text x="110" y="57.00" text-anchor="end">11e898cb</text><rect x="118" y="42" width="91.82" height="20" rx="4" fill="var(--s1)" class="cellstroke"><title>11e898cb (discovered): median 36.293 us per Q15 step over 7 problems; min 22.729, max 54.632</title></rect><circle cx="175.50" cy="52.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>11e898cb / dahlquist: 22.729 us per step</title></circle><circle cx="204.00" cy="52.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>11e898cb / damped_osc: 33.994 us per step</title></circle><circle cx="209.82" cy="52.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>11e898cb / dc_motor: 36.293 us per step</title></circle><circle cx="212.57" cy="52.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>11e898cb / pendulum: 37.381 us per step</title></circle><circle cx="256.22" cy="52.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>11e898cb / quaternion: 54.632 us per step</title></circle><circle cx="249.75" cy="52.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>11e898cb / rc_thermal: 52.077 us per step</title></circle><circle cx="203.52" cy="52.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>11e898cb / vanderpol_mild: 33.803 us per step</title></circle><text class="lbl" x="203.82" y="57.00" text-anchor="end">36.293</text><text x="110" y="87.00" text-anchor="end">42863b93</text><rect x="118" y="72" width="259.40" height="20" rx="4" fill="var(--s1)" class="cellstroke"><title>42863b93 (discovered): median 102.531 us per Q15 step over 7 problems; min 69.075, max 183.178</title></rect><circle cx="292.76" cy="82.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>42863b93 / dahlquist: 69.075 us per step</title></circle><circle cx="375.83" cy="82.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>42863b93 / damped_osc: 101.909 us per step</title></circle><circle cx="377.40" cy="82.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>42863b93 / dc_motor: 102.531 us per step</title></circle><circle cx="383.92" cy="82.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>42863b93 / pendulum: 105.108 us per step</title></circle><circle cx="581.44" cy="82.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>42863b93 / quaternion: 183.178 us per step</title></circle><circle cx="492.85" cy="82.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>42863b93 / rc_thermal: 148.161 us per step</title></circle><circle cx="375.42" cy="82.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>42863b93 / vanderpol_mild: 101.747 us per step</title></circle><text class="lbl" x="371.40" y="87.00" text-anchor="end">102.531</text><text x="110" y="117.00" text-anchor="end">196b1d17</text><rect x="118" y="102" width="242.80" height="20" rx="4" fill="var(--s1)" class="cellstroke"><title>196b1d17 (discovered): median 95.967 us per Q15 step over 7 problems; min 70.488, max 143.432</title></rect><circle cx="296.33" cy="112.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>196b1d17 / dahlquist: 70.488 us per step</title></circle><circle cx="368.07" cy="112.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>196b1d17 / damped_osc: 98.843 us per step</title></circle><circle cx="360.19" cy="112.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>196b1d17 / dc_motor: 95.726 us per step</title></circle><circle cx="358.44" cy="112.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>196b1d17 / pendulum: 95.037 us per step</title></circle><circle cx="480.88" cy="112.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>196b1d17 / quaternion: 143.432 us per step</title></circle><circle cx="462.92" cy="112.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>196b1d17 / rc_thermal: 136.333 us per step</title></circle><circle cx="360.80" cy="112.00" r="3.5" fill="var(--s1)" class="cellstroke"><title>196b1d17 / vanderpol_mild: 95.967 us per step</title></circle><text class="lbl" x="354.80" y="117.00" text-anchor="end">95.967</text></svg></figure></div>
+<div class="scroll"><table><tr><th>method</th><th>kind</th><th class="num">order</th><th class="num">stages</th><th class="num">min us/step</th><th class="num">median us/step</th><th class="num">max us/step</th></tr>
+<tr><td class="hash">rk4</td><td>classical</td><td class="num">4</td><td class="num">4</td><td class="num">35.701</td><td class="num">51.671</td><td class="num">80.993</td></tr>
+<tr><td class="hash">11e898cb</td><td>discovered</td><td class="num">2</td><td class="num">3</td><td class="num">22.729</td><td class="num">36.293</td><td class="num">54.632</td></tr>
+<tr><td class="hash">42863b93</td><td>discovered</td><td class="num">3</td><td class="num">6</td><td class="num">69.075</td><td class="num">102.531</td><td class="num">183.178</td></tr>
+<tr><td class="hash">196b1d17</td><td>discovered</td><td class="num">4</td><td class="num">6</td><td class="num">70.488</td><td class="num">95.967</td><td class="num">143.432</td></tr>
+</table></div>
+<h2>Champion against rk4: predicted and measured</h2>
+<p>Fixed-step Q15 at the shared cycle budget: the champion and rk4 both run the identical pinned solve_q15 path with the same 16-bit floor arithmetic and the same per-step machinery; only the tableau coefficients differ, so the per-step wall-clock ratio isolates tableau cost. Ratios above 1.0 mean the champion needs less time per step.</p>
+<div class="scroll"><table><tr><th>problem</th><th class="num">champion cycles/step</th><th class="num">rk4 cycles/step</th><th class="num">predicted ratio</th><th class="num">measured ratio</th><th class="num">champion us/step</th><th class="num">rk4 us/step</th><th class="num">champion Q15 error</th><th class="num">rk4 Q15 error</th><th>lower error</th><th class="num">champion budget s</th><th class="num">rk4 budget s</th></tr>
+<tr><td>dahlquist</td><td class="num">22</td><td class="num">33</td><td class="num">1.500</td><td class="num">1.571</td><td class="num">22.729</td><td class="num">35.701</td><td class="num">0.000198741</td><td class="num">0.00016747</td><td>rk4</td><td class="num">0.0677</td><td class="num">0.0709</td></tr>
+<tr><td>damped_osc</td><td class="num">44</td><td class="num">66</td><td class="num">1.500</td><td class="num">1.659</td><td class="num">33.994</td><td class="num">56.399</td><td class="num">0.00393948</td><td class="num">0.0159248</td><td>11e898cb</td><td class="num">0.0506</td><td class="num">0.0559</td></tr>
+<tr><td>vanderpol_mild</td><td class="num">44</td><td class="num">66</td><td class="num">1.500</td><td class="num">1.529</td><td class="num">33.803</td><td class="num">51.671</td><td class="num">0.0194682</td><td class="num">0.100973</td><td>11e898cb</td><td class="num">0.0503</td><td class="num">0.0513</td></tr>
+<tr><td>pendulum</td><td class="num">44</td><td class="num">66</td><td class="num">1.500</td><td class="num">1.359</td><td class="num">37.381</td><td class="num">50.794</td><td class="num">0.00474438</td><td class="num">0.00403234</td><td>rk4</td><td class="num">0.0557</td><td class="num">0.0504</td></tr>
+<tr><td>dc_motor</td><td class="num">44</td><td class="num">66</td><td class="num">1.500</td><td class="num">1.304</td><td class="num">36.293</td><td class="num">47.326</td><td class="num">0.0276476</td><td class="num">0.0763589</td><td>11e898cb</td><td class="num">0.054</td><td class="num">0.0469</td></tr>
+<tr><td>rc_thermal</td><td class="num">66</td><td class="num">99</td><td class="num">1.500</td><td class="num">1.288</td><td class="num">52.077</td><td class="num">67.059</td><td class="num">0.0460875</td><td class="num">0.158159</td><td>11e898cb</td><td class="num">0.0517</td><td class="num">0.0443</td></tr>
+<tr><td>quaternion</td><td class="num">88</td><td class="num">132</td><td class="num">1.500</td><td class="num">1.483</td><td class="num">54.632</td><td class="num">80.993</td><td class="num">0.0191055</td><td class="num">0.0540564</td><td>11e898cb</td><td class="num">0.0406</td><td class="num">0.0402</td></tr>
+</table></div>
+<p>Geometric mean over the rows: measured 1.450, predicted 1.500; ratios above 1.0 mean the champion needs less time per step. At the same budget the champion reaches the lower Q15 error in 5 of 7 problems; the median error ratio (champion over rk4) is 0.353437.</p>
+<p>Across 28 fixed-step Q15 runs the Pearson correlation between analytic cycles per step and measured seconds per step is 0.980. The analytic model counts Cortex-M0+ arithmetic while the measurement is Python interpreter time, so the correlation speaks to ordering, not to absolute scale.</p>
+<p class="note">This head-to-head is valid because both sides run the identical solve_q15 path in the same interpreter: same arithmetic, same per-step machinery, only the tableau differs, so the per-step ratio compares like against like. Budget wall-clock totals also carry constant Python per-step overhead, which favors methods that take fewer, larger steps inside the budget; on the Cortex-M0+ target the analytic cycle count is the time, and the predicted ratio column states what that model expects of the measured ratio beside it.</p>
+<h2>Library accuracy at matched tolerance (adaptive regime)</h2>
+<figure><figcaption>Adaptive scipy integrators choose their own step counts; their wall clock is reported for context and is never a same-work comparison with any fixed-step run.</figcaption><div class="scroll"><table><tr><th>problem</th><th>integrator</th><th class="num">error</th><th class="num">rtol</th><th class="num">atol</th><th class="num">accepted steps</th><th class="num">rhs evaluations</th><th class="num">median s per solve</th><th>status</th></tr>
+<tr><td>dahlquist</td><td>BDF</td><td class="num">4.80624e-06</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">36</td><td class="num">76</td><td class="num">0.0099996</td><td>ok</td></tr>
+<tr><td>dahlquist</td><td>LSODA</td><td class="num">3.58e-07</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">31</td><td class="num">65</td><td class="num">0.0008087</td><td>ok</td></tr>
+<tr><td>dahlquist</td><td>RK45</td><td class="num">6.64604e-06</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">11</td><td class="num">68</td><td class="num">0.0006187</td><td>ok</td></tr>
+<tr><td>dahlquist</td><td>Radau</td><td class="num">2.30322e-07</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">14</td><td class="num">100</td><td class="num">0.0052011</td><td>ok</td></tr>
+<tr><td>damped_osc</td><td>BDF</td><td class="num">0.000953693</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">127</td><td class="num">256</td><td class="num">0.029112</td><td>ok</td></tr>
+<tr><td>damped_osc</td><td>LSODA</td><td class="num">0.000790295</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">114</td><td class="num">231</td><td class="num">0.0030539</td><td>ok</td></tr>
+<tr><td>damped_osc</td><td>RK45</td><td class="num">0.000412926</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">44</td><td class="num">266</td><td class="num">0.0023491</td><td>ok</td></tr>
+<tr><td>damped_osc</td><td>Radau</td><td class="num">1.39883e-05</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">75</td><td class="num">527</td><td class="num">0.0286302</td><td>ok</td></tr>
+<tr><td>vanderpol_mild</td><td>BDF</td><td class="num">0.00381217</td><td class="num">3.05176e-05</td><td class="num">0.000488281</td><td class="num">160</td><td class="num">466</td><td class="num">0.0426411</td><td>ok</td></tr>
+<tr><td>vanderpol_mild</td><td>LSODA</td><td class="num">0.00300922</td><td class="num">3.05176e-05</td><td class="num">0.000488281</td><td class="num">130</td><td class="num">295</td><td class="num">0.0038539</td><td>ok</td></tr>
+<tr><td>vanderpol_mild</td><td>RK45</td><td class="num">0.00235604</td><td class="num">3.05176e-05</td><td class="num">0.000488281</td><td class="num">36</td><td class="num">290</td><td class="num">0.0051517</td><td>ok</td></tr>
+<tr><td>vanderpol_mild</td><td>Radau</td><td class="num">1.3014e-05</td><td class="num">3.05176e-05</td><td class="num">0.000488281</td><td class="num">88</td><td class="num">795</td><td class="num">0.0466415</td><td>ok</td></tr>
+<tr><td>pendulum</td><td>BDF</td><td class="num">0.00590194</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">287</td><td class="num">626</td><td class="num">0.0613674</td><td>ok</td></tr>
+<tr><td>pendulum</td><td>LSODA</td><td class="num">0.00307608</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">228</td><td class="num">489</td><td class="num">0.0064392</td><td>ok</td></tr>
+<tr><td>pendulum</td><td>RK45</td><td class="num">0.00699539</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">82</td><td class="num">578</td><td class="num">0.0094761</td><td>ok</td></tr>
+<tr><td>pendulum</td><td>Radau</td><td class="num">8.60633e-05</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">162</td><td class="num">1238</td><td class="num">0.0668204</td><td>ok</td></tr>
+<tr><td>dc_motor</td><td>BDF</td><td class="num">3.16274e-05</td><td class="num">3.05176e-05</td><td class="num">0.000244141</td><td class="num">39</td><td class="num">80</td><td class="num">0.0084103</td><td>ok</td></tr>
+<tr><td>dc_motor</td><td>LSODA</td><td class="num">1.22431e-06</td><td class="num">3.05176e-05</td><td class="num">0.000244141</td><td class="num">39</td><td class="num">82</td><td class="num">0.0010987</td><td>ok</td></tr>
+<tr><td>dc_motor</td><td>RK45</td><td class="num">5.84714e-05</td><td class="num">3.05176e-05</td><td class="num">0.000244141</td><td class="num">15</td><td class="num">92</td><td class="num">0.0017953</td><td>ok</td></tr>
+<tr><td>dc_motor</td><td>Radau</td><td class="num">8.05473e-07</td><td class="num">3.05176e-05</td><td class="num">0.000244141</td><td class="num">17</td><td class="num">121</td><td class="num">0.0075619</td><td>ok</td></tr>
+<tr><td>rc_thermal</td><td>BDF</td><td class="num">4.79833e-07</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">49</td><td class="num">103</td><td class="num">0.0124992</td><td>ok</td></tr>
+<tr><td>rc_thermal</td><td>LSODA</td><td class="num">2.04525e-05</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">58</td><td class="num">128</td><td class="num">0.0020156</td><td>ok</td></tr>
+<tr><td>rc_thermal</td><td>RK45</td><td class="num">6.30811e-05</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">26</td><td class="num">182</td><td class="num">0.0051742</td><td>ok</td></tr>
+<tr><td>rc_thermal</td><td>Radau</td><td class="num">4.59799e-07</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">17</td><td class="num">121</td><td class="num">0.0083505</td><td>ok</td></tr>
+<tr><td>quaternion</td><td>BDF</td><td class="num">0.000753756</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">45</td><td class="num">92</td><td class="num">0.0127138</td><td>ok</td></tr>
+<tr><td>quaternion</td><td>LSODA</td><td class="num">0.000655793</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">37</td><td class="num">77</td><td class="num">0.0011892</td><td>ok</td></tr>
+<tr><td>quaternion</td><td>RK45</td><td class="num">0.000216045</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">15</td><td class="num">92</td><td class="num">0.0020845</td><td>ok</td></tr>
+<tr><td>quaternion</td><td>Radau</td><td class="num">1.66983e-05</td><td class="num">3.05176e-05</td><td class="num">0.00012207</td><td class="num">24</td><td class="num">176</td><td class="num">0.0105034</td><td>ok</td></tr>
+</table></div></figure>
+<p class="note">rtol = 2**-15 and atol = 2**-15 / scale for every problem: one Q15 least significant bit as a relative tolerance, and one Q15 least significant bit converted to physical units (a Q15 state stores y * scale in steps of 2**-15) as the absolute tolerance. The library integrators are therefore asked for local error at the resolution the Q15 representation can hold.</p>
+<p>At tolerances matched to one Q15 least significant bit, the median per-problem ratio of best Q15 error to best library error is 727 (above 1.0 means the library side is more accurate). Library wall clocks in the same table are informative but never same-work comparisons, because adaptive integrators choose their own step counts.</p>
+<h2>Verdict</h2>
+<p>The float64 side holds the accuracy margin in both tables (median Q15-to-library error ratio 727 at matched tolerance; median Q15-to-float-rk4 error ratio 1.9e+08 at matched step counts). What the Q15 methods offer is not accuracy parity: they run in 16-bit integer arithmetic at a fixed, budgeted cycle cost, which no library measured here does. Within the Q15 regime the analytic cycle model and measured time agree on ordering to the extent the reported correlation shows.</p>
+<p class="note">Environment: CPython 3.13.5; Windows 11 (AMD64); scipy 1.14.1; numpy 2.1.3; CPU Intel64 Family 6 Model 141 Stepping 1, GenuineIntel.</p>
+<p class="note">All timings are Python-level wall clock on one desktop machine: the Q15 runs pay Python interpreter overhead per primitive while scipy runs compiled internals, so timings compare like against like only within a regime and do not transfer to microcontroller cycle counts.</p>
+<h2>Provenance</h2>
+<dl class="meta">
+<dt>champion_hashes</dt><dd><span class="hash">11e898cbab591a7f432670d4040b788f4c00cc646a005d4f967505578e2c0033, 42863b93bf7d570f7f6fd94033452451bf70bb8adf803e7f2c965f612914472e, 196b1d17d0b708c06c798239ed34bd466fa7e9b6ba7e59797ec5d22645b2ab03</span></dd>
+<dt>scipy</dt><dd><span class="hash">1.14.1</span></dd>
+<dt>validation_results</dt><dd><span class="hash">rk-work/validation/results.json (methods[].tableau)</span></dd>
+</dl>
+<footer>
+<p>rk-harness findings: Q15 fixed point, equal cycle budget, Cortex-M0+ cost models.</p>
+<p class="prov">Generated from run data by the harness; no human review. Human interpretation is at <a href="https://jgoetzmann.github.io/rk-overview/">the rk-overview site</a>.</p>
+</footer>
+</div>
+</body>
+</html>

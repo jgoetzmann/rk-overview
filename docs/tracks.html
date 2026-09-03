@@ -121,6 +121,18 @@ footer p{margin:3px 0;max-width:none}
 footer p.prov a{color:var(--text-2)}
 
 .herolead{font-size:17.5px;line-height:1.6;max-width:74ch}
+ul.rbul{list-style:none;margin:20px 0 8px;padding:0;max-width:104ch}
+.rbul li{background:var(--surface-1);border:1px solid var(--line);
+  border-left:4px solid var(--s1);border-radius:10px;padding:13px 18px;margin:10px 0;
+  font-size:15.5px;line-height:1.6;max-width:none}
+.rbul li strong{font-variant-numeric:tabular-nums}
+.rbul .rlab{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--s1);margin-right:10px}
+.rbul .golink{font-size:12.5px;white-space:nowrap;margin-left:6px}
+.lit-topic{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.lit-topic h2{margin-top:0;font-size:16px}
+.lit-topic .meta-line{font-size:12px;color:var(--text-3);margin:0 0 10px}
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 8px}
 .chip{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
   padding:10px 16px;min-width:120px}
@@ -200,22 +212,20 @@ details.p0[open] summary{border-bottom:1px solid var(--line)}
 <body>
 <header class="site"><div class="wrap">
 <h1>research tracks</h1>
-<p class="sub">The 70/15/15 rotation: one scored epoch, two side tracks, all showing measured artifacts.</p>
-<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="tradeoffs.html">trade-offs</a><a href="tracks.html" class="on">research tracks</a><a href="methodology.html">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-02)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+<p class="sub">One live scored search, two side efforts, all with measured artifacts.</p>
+<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="tradeoffs.html">trade-offs</a><a href="tracks.html" class="on">research tracks</a><a href="literature.html">literature</a><a href="methodology.html">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-02)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
 </div></header>
 <div class="wrap">
 
-<p class="herolead">The project is now a research program with a destination: a paper
-whose central table weighs discovered methods against classical anchors and real library
-integrators. Method-class changes (adaptive pairs, implicit methods) only happen at
-<strong>epoch boundaries</strong>, because every archive score is a function of the ten
-verifier-pinned files: changing the evaluator silently changes every number, so the run
-is frozen, the archive becomes immutable evidence, the hash is re-pinned, and a new
-archive starts. Everything else &mdash; validation suites, benchmarks, literature,
-analysis &mdash; proceeds out of band at any time. The full plan lives in
-<code>rk-harness/docs/ROADMAP.md</code>; this page tracks where each strand actually
-is.</p>
-<p>Two of these tracks revisit things the original design cut (adaptive step size,
+<p class="herolead">One scored search runs at a time; two side efforts move alongside
+it. The destination is a paper whose central table weighs discovered methods against
+classical anchors and real library integrators. Method-class changes (adaptive pairs,
+implicit methods) only happen at <strong>epoch boundaries</strong>, because every
+archive score is a function of the ten verifier-pinned files: changing the evaluator
+silently changes every number, so a class change means freezing the run, re-pinning the
+hash, and starting a new archive. Validation suites, benchmarks and literature reading
+proceed out of band at any time.</p>
+<p>Both side efforts revisit things the original design cut (adaptive step size,
 implicit iteration) on real-time-certificate grounds. The designs answer that objection
 directly rather than waving it off: the adaptive controller is division-free with
 worst-case cycle counts booked, and the implicit anchor fixes its Newton iteration count
@@ -223,7 +233,7 @@ so per-step cost stays deterministic. See
 <a href="design-decisions.html">design decisions</a> for the original reasoning.</p>
 
 <h2>Where the loop stands</h2>
-<div class="panel"><p style="margin:0 0 6px"><strong>Epoch 1</strong> <span class="badge badge-frozen">frozen</span> <span class="when">scored method class: explicit fixed-step Runge-Kutta</span></p><dl class="meta"><dt>frozen at</dt><dd>2026-09-02 21:43 CT</dd><dt>reason</dt><dd>epoch saturated: no archive progress past the 48h window since 2026-08-31, falsification concluded; graceful stop at cycle boundary</dd><dt>last progress</dt><dd>2026-08-31 06:53 CT (new_cell)</dd><dt>saturation counter</dt><dd>17 consecutive saturating checks; 6 trigger a freeze</dd><dt>last check</dt><dd>2026-09-02 21:03 CT, verdict SATURATING</dd><dt>falsification file</dt><dd>present</dd></dl></div>
+<div class="panel"><p style="margin:0 0 6px"><strong>Epoch 1</strong> <span class="badge badge-active">active</span> <span class="when">scored method class: explicit fixed-step Runge-Kutta</span></p><dl class="meta"><dt>last progress</dt><dd>2026-08-31 06:53 CT (new_cell)</dd><dt>saturation counter</dt><dd>3 consecutive saturating checks; 6 trigger a freeze</dd><dt>last check</dt><dd>2026-09-02 23:46 CT, verdict SATURATING</dd><dt>falsification file</dt><dd>present</dd></dl></div>
 
 <p class="note">This panel is read from the run's state files
 (<code>events.jsonl</code>, <code>saturation_state.json</code>,
@@ -231,32 +241,18 @@ so per-step cost stays deterministic. See
 the same files the findings site's epoch panel reads, so both sites report the same
 loop. Progress means a record in a previously empty archive cell, an elite improving
 its cell, or a heldout_verified acceptance; enough consecutive saturating checks (each
-requiring stale progress plus a concluded falsification protocol) trigger the freeze.</p>
+requiring stale progress plus a concluded falsification protocol) mark the epoch
+saturated. The freeze that once fired automatically on that signal is advisory now.</p>
 
-<h2>The rotation: 70/15/15</h2>
-
-<p>The owner's direction (2026-09-02) is not to work the tracks in sequence but to
-rotate attention roughly <strong>70/15/15</strong>: 70% of each work wave to the lead
-track (the current scored epoch and its paper analysis), 15% to each side track. The
-scored archive still holds exactly one epoch at a time; side tracks advance through
-things that need no scored slot &mdash; design documents, working prototypes,
-off-archive experiments on the validation problems &mdash; and every side-track
-allocation must land a showable artifact, not just thinking. The literature rotation
-implements the same split (14/3/3 over a 20-slot cycle). When the scored slot hands over
-at a freeze, the letters re-map and the lead becomes the new epoch.</p>
-<p class="note">Everything below from the two side tracks is a preliminary, float-only
-prototype: no Q15 quantization, no floor bias, not verifier-pinned, nothing in the
-scored archive. The point of showing it is to make the next epochs' claims checkable
-early, not to claim results.</p>
-
-<h2>Lead track (70%): epoch 1, explicit fixed-step</h2>
+<h2>Current focus: the scored fixed-step search (epoch 1, live)</h2>
 
 <p>The scored search over explicit fixed-step tableaus at a 65,536-cycle budget is
-closing. The archive holds <strong>46,504 verified records</strong> across
-810 cycles, with 16 grid cells occupied; the saturation counter (panel above) is
-past its freeze threshold, so the watchdog is expected to freeze epoch 1 at a cycle
-boundary, push the data repositories, and write <code>EPOCH_STATUS.json</code>. Its
-scientific yield is on the <a href="results.html">key findings page</a>: the floor-bias
+live. The archive holds <strong>46,504 verified records</strong> across
+810 cycles, with 16 grid cells occupied. The saturation orchestrator froze
+epoch 1 once, at the cycle-808 boundary, after its stale-progress checks tripped; the
+owner reopened the run and demoted the automatic freeze to advisory, and the panel
+above reads whatever the state files say now. The scientific yield is on the
+<a href="results.html">key findings page</a>: the floor-bias
 mechanism, the anchor reversal, the rc_thermal quantization floor, the closed phase-0
 result, and 13 of 14 discovered cells ahead of every cheaper-or-equal classical
 anchor.</p>
@@ -265,17 +261,23 @@ validation suite grew to <strong>8 problems</strong> by adding three moderately 
 real-application systems (a servo motor under a load-torque step, stiffness ratio 546; a
 Michaelis&ndash;Menten enzyme system started on its slow manifold, ratio 1030; a
 rate-scaled Robertson system, ratio 292), each designed so stiffness bites through
-stability rather than Q15 dynamic range. The result is the motivating evidence for track
-C: on the two stiff problems where any discovered method finishes, the 3-stage champion
+stability rather than Q15 dynamic range. The result is the motivating evidence for the
+implicit side effort: on the two stiff problems where any discovered method finishes, the 3-stage champion
 ties midpoint on one and wins the other by 0.4%, but on the Robertson system
 <em>no discovered method finishes at all</em> &mdash; rk4, rk38 and every discovered
 elite overflow in Q15, while cheap low-stage classical methods complete the run. The T10
 library benchmark harness also landed: SciPy RK45/Radau/BDF/LSODA at tolerances matched
 to one Q15 LSB, a hand-rolled float64 rk4 at identical step counts, and measured wall
 clock with a stated protocol. Its headline numbers are on the
-<a href="tradeoffs.html">trade-offs page</a>, which is this track's third deliverable.</p>
+<a href="tradeoffs.html">trade-offs page</a>, which is this search's third deliverable.</p>
 
-<h2>Side track B (15%): adaptive embedded pairs (epoch 2)</h2>
+
+<p class="note">Everything below from the two side efforts is a preliminary, float-only
+prototype: no Q15 quantization, no floor bias, not verifier-pinned, nothing in the
+scored archive. The point of showing it is to make the next epochs' claims checkable
+early, not to claim results.</p>
+
+<h2>Side effort: adaptive embedded pairs (epoch 2 candidate)</h2>
 
 <p>Epoch 2 will search embedded pairs (b and b-hat sharing one A matrix) with a Q15
 step-size controller, scored on work-precision: cycles consumed to reach a tolerance,
@@ -294,7 +296,7 @@ accounting. Measured convergence orders on the dahlquist problem: 3.0 for the pr
 solution, 2.1 for the embedded estimate &mdash; both where they should be. The curve
 below is its measured work-precision behavior on three validation problems.</p>
 
-<figure class="panel"><figcaption>Measured work-precision behavior of the float64 Bogacki–Shampine 3(2) prototype with the dyadic PI controller: each line is one validation problem, each dot one run at a requested tolerance from 1e-3 down to 1e-8, x is right-hand-side evaluations and y is the error actually achieved, both log. Error falling in lockstep with tolerance at single-digit rejection counts is the behavior the epoch-2 controller needs. Preliminary and float-only: no Q15 effects are modeled.<span class="src">data: rk-work/prototypes/adaptive_curve.json, points</span></figcaption><div class="legend"><span><span class="sw" style="background:var(--s1)"></span>buck_converter</span><span><span class="sw" style="background:var(--s2)"></span>pll_lock</span><span><span class="sw" style="background:var(--s3)"></span>glucose_minimal</span></div><div class="scroll"><svg viewBox="0 0 680 400" width="680" height="400" role="img" aria-label="Work-precision curve of the Bogacki-Shampine 3(2) prototype: achieved error against function evaluations on three validation problems"><line class="gridline" x1="64.00" y1="10" x2="64.00" y2="366"/><text x="64.00" y="380" text-anchor="middle">1e1</text><line class="gridline" x1="264.67" y1="10" x2="264.67" y2="366"/><text x="264.67" y="380" text-anchor="middle">1e2</text><line class="gridline" x1="465.33" y1="10" x2="465.33" y2="366"/><text x="465.33" y="380" text-anchor="middle">1e3</text><line class="gridline" x1="666.00" y1="10" x2="666.00" y2="366"/><text x="666.00" y="380" text-anchor="middle">1e4</text><line class="gridline" x1="64" y1="366.00" x2="666" y2="366.00"/><text x="58" y="369.50" text-anchor="end">1e-9</text><line class="gridline" x1="64" y1="315.14" x2="666" y2="315.14"/><text x="58" y="318.64" text-anchor="end">1e-8</text><line class="gridline" x1="64" y1="264.29" x2="666" y2="264.29"/><text x="58" y="267.79" text-anchor="end">1e-7</text><line class="gridline" x1="64" y1="213.43" x2="666" y2="213.43"/><text x="58" y="216.93" text-anchor="end">1e-6</text><line class="gridline" x1="64" y1="162.57" x2="666" y2="162.57"/><text x="58" y="166.07" text-anchor="end">1e-5</text><line class="gridline" x1="64" y1="111.71" x2="666" y2="111.71"/><text x="58" y="115.21" text-anchor="end">1e-4</text><line class="gridline" x1="64" y1="60.86" x2="666" y2="60.86"/><text x="58" y="64.36" text-anchor="end">1e-3</text><line class="gridline" x1="64" y1="10.00" x2="666" y2="10.00"/><text x="58" y="13.50" text-anchor="end">1e-2</text><line class="axis" x1="64" y1="366" x2="666" y2="366"/><line class="axis" x1="64" y1="10" x2="64" y2="366"/><text x="365.00" y="394" text-anchor="middle">function evaluations (log)</text><text x="12" y="188.00" text-anchor="middle" transform="rotate(-90 12 188.00)">achieved error (log)</text><path d="M 256.45 51.68 L 316.37 78.61 L 380.09 118.39 L 444.46 166.84 L 509.82 216.08 L 576.26 266.35" fill="none" stroke="var(--s1)" stroke-width="2"/><circle cx="256.45" cy="51.68" r="4" fill="var(--s1)" class="cellstroke"><title>buck_converter at tol 0.001: 91 fevals, achieved error 0.00151, 0 rejected steps</title></circle><circle cx="316.37" cy="78.61" r="4" fill="var(--s1)" class="cellstroke"><title>buck_converter at tol 0.0001: 181 fevals, achieved error 0.000448, 1 rejected steps</title></circle><circle cx="380.09" cy="118.39" r="4" fill="var(--s1)" class="cellstroke"><title>buck_converter at tol 1e-05: 376 fevals, achieved error 7.39e-05, 2 rejected steps</title></circle><circle cx="444.46" cy="166.84" r="4" fill="var(--s1)" class="cellstroke"><title>buck_converter at tol 1e-06: 787 fevals, achieved error 8.24e-06, 3 rejected steps</title></circle><circle cx="509.82" cy="216.08" r="4" fill="var(--s1)" class="cellstroke"><title>buck_converter at tol 1e-07: 1666 fevals, achieved error 8.87e-07, 3 rejected steps</title></circle><circle cx="576.26" cy="266.35" r="4" fill="var(--s1)" class="cellstroke"><title>buck_converter at tol 1e-08: 3571 fevals, achieved error 9.11e-08, 4 rejected steps</title></circle><text class="dlab" x="568.26" y="256.35" text-anchor="end">buck_converter</text><path d="M 207.68 67.33 L 250.50 103.36 L 313.44 141.43 L 375.81 187.97 L 441.07 236.45 L 506.46 286.37" fill="none" stroke="var(--s2)" stroke-width="2"/><circle cx="207.68" cy="67.33" r="4" fill="var(--s2)" class="cellstroke"><title>pll_lock at tol 0.001: 52 fevals, achieved error 0.000746, 0 rejected steps</title></circle><circle cx="250.50" cy="103.36" r="4" fill="var(--s2)" class="cellstroke"><title>pll_lock at tol 0.0001: 85 fevals, achieved error 0.000146, 0 rejected steps</title></circle><circle cx="313.44" cy="141.43" r="4" fill="var(--s2)" class="cellstroke"><title>pll_lock at tol 1e-05: 175 fevals, achieved error 2.6e-05, 2 rejected steps</title></circle><circle cx="375.81" cy="187.97" r="4" fill="var(--s2)" class="cellstroke"><title>pll_lock at tol 1e-06: 358 fevals, achieved error 3.17e-06, 2 rejected steps</title></circle><circle cx="441.07" cy="236.45" r="4" fill="var(--s2)" class="cellstroke"><title>pll_lock at tol 1e-07: 757 fevals, achieved error 3.53e-07, 3 rejected steps</title></circle><circle cx="506.46" cy="286.37" r="4" fill="var(--s2)" class="cellstroke"><title>pll_lock at tol 1e-08: 1603 fevals, achieved error 3.68e-08, 3 rejected steps</title></circle><text class="dlab" x="498.46" y="276.37" text-anchor="end">pll_lock</text><path d="M 202.50 85.65 L 253.53 131.76 L 316.37 177.03 L 379.39 227.27 L 444.46 277.16 L 510.29 327.82" fill="none" stroke="var(--s3)" stroke-width="2"/><circle cx="202.50" cy="85.65" r="4" fill="var(--s3)" class="cellstroke"><title>glucose_minimal at tol 0.001: 49 fevals, achieved error 0.000325, 0 rejected steps</title></circle><circle cx="253.53" cy="131.76" r="4" fill="var(--s3)" class="cellstroke"><title>glucose_minimal at tol 0.0001: 88 fevals, achieved error 4.04e-05, 0 rejected steps</title></circle><circle cx="316.37" cy="177.03" r="4" fill="var(--s3)" class="cellstroke"><title>glucose_minimal at tol 1e-05: 181 fevals, achieved error 5.2e-06, 2 rejected steps</title></circle><circle cx="379.39" cy="227.27" r="4" fill="var(--s3)" class="cellstroke"><title>glucose_minimal at tol 1e-06: 373 fevals, achieved error 5.34e-07, 2 rejected steps</title></circle><circle cx="444.46" cy="277.16" r="4" fill="var(--s3)" class="cellstroke"><title>glucose_minimal at tol 1e-07: 787 fevals, achieved error 5.58e-08, 3 rejected steps</title></circle><circle cx="510.29" cy="327.82" r="4" fill="var(--s3)" class="cellstroke"><title>glucose_minimal at tol 1e-08: 1675 fevals, achieved error 5.63e-09, 3 rejected steps</title></circle><text class="dlab" x="502.29" y="317.82" text-anchor="end">glucose_minimal</text></svg></div></figure>
+<figure class="panel"><figcaption>Measured work-precision behavior of the float64 Bogacki–Shampine 3(2) prototype with the dyadic PI controller: each line is one validation problem, each dot one run at a requested tolerance from 1e-3 down to 1e-8, x is right-hand-side evaluations and y is the error actually achieved, both log. Error falling in lockstep with tolerance at single-digit rejection counts is the behavior the epoch-2 controller needs. Preliminary and float-only: no Q15 effects are modeled.<span class="src">data: rk-work/prototypes/adaptive_curve.json, points</span></figcaption><div class="legend"><span><span class="sw" style="background:var(--s1)"></span>buck_converter</span><span><span class="sw" style="background:var(--s2)"></span>pll_lock</span><span><span class="sw" style="background:var(--s3)"></span>glucose_minimal</span></div><div class="scroll"><svg viewBox="0 0 680 400" width="680" height="400" role="img" aria-label="Work-precision curve of the Bogacki-Shampine 3(2) prototype: achieved error against function evaluations on three validation problems"><line class="gridline" x1="64.00" y1="10" x2="64.00" y2="366"/><text x="64.00" y="380" text-anchor="middle">1e1</text><line class="gridline" x1="264.67" y1="10" x2="264.67" y2="366"/><text x="264.67" y="380" text-anchor="middle">1e2</text><line class="gridline" x1="465.33" y1="10" x2="465.33" y2="366"/><text x="465.33" y="380" text-anchor="middle">1e3</text><line class="gridline" x1="666.00" y1="10" x2="666.00" y2="366"/><text x="666.00" y="380" text-anchor="middle">1e4</text><line class="gridline" x1="64" y1="366.00" x2="666" y2="366.00"/><text x="58" y="364.00" text-anchor="end">1e-9</text><line class="gridline" x1="64" y1="315.14" x2="666" y2="315.14"/><text x="58" y="318.64" text-anchor="end">1e-8</text><line class="gridline" x1="64" y1="264.29" x2="666" y2="264.29"/><text x="58" y="267.79" text-anchor="end">1e-7</text><line class="gridline" x1="64" y1="213.43" x2="666" y2="213.43"/><text x="58" y="216.93" text-anchor="end">1e-6</text><line class="gridline" x1="64" y1="162.57" x2="666" y2="162.57"/><text x="58" y="166.07" text-anchor="end">1e-5</text><line class="gridline" x1="64" y1="111.71" x2="666" y2="111.71"/><text x="58" y="115.21" text-anchor="end">1e-4</text><line class="gridline" x1="64" y1="60.86" x2="666" y2="60.86"/><text x="58" y="64.36" text-anchor="end">1e-3</text><line class="gridline" x1="64" y1="10.00" x2="666" y2="10.00"/><text x="58" y="13.50" text-anchor="end">1e-2</text><line class="axis" x1="64" y1="366" x2="666" y2="366"/><line class="axis" x1="64" y1="10" x2="64" y2="366"/><text x="365.00" y="396" text-anchor="middle">function evaluations (log)</text><text x="12" y="188.00" text-anchor="middle" transform="rotate(-90 12 188.00)">achieved error (log)</text><path d="M 256.45 51.68 L 316.37 78.61 L 380.09 118.39 L 444.46 166.84 L 509.82 216.08 L 576.26 266.35" fill="none" stroke="var(--s1)" stroke-width="2"/><circle cx="256.45" cy="51.68" r="4" fill="var(--s1)" class="cellstroke"><title>buck_converter at tol 0.001: 91 fevals, achieved error 0.00151, 0 rejected steps</title></circle><circle cx="316.37" cy="78.61" r="4" fill="var(--s1)" class="cellstroke"><title>buck_converter at tol 0.0001: 181 fevals, achieved error 0.000448, 1 rejected steps</title></circle><circle cx="380.09" cy="118.39" r="4" fill="var(--s1)" class="cellstroke"><title>buck_converter at tol 1e-05: 376 fevals, achieved error 7.39e-05, 2 rejected steps</title></circle><circle cx="444.46" cy="166.84" r="4" fill="var(--s1)" class="cellstroke"><title>buck_converter at tol 1e-06: 787 fevals, achieved error 8.24e-06, 3 rejected steps</title></circle><circle cx="509.82" cy="216.08" r="4" fill="var(--s1)" class="cellstroke"><title>buck_converter at tol 1e-07: 1666 fevals, achieved error 8.87e-07, 3 rejected steps</title></circle><circle cx="576.26" cy="266.35" r="4" fill="var(--s1)" class="cellstroke"><title>buck_converter at tol 1e-08: 3571 fevals, achieved error 9.11e-08, 4 rejected steps</title></circle><text class="dlab" x="568.26" y="256.35" text-anchor="end">buck_converter</text><path d="M 207.68 67.33 L 250.50 103.36 L 313.44 141.43 L 375.81 187.97 L 441.07 236.45 L 506.46 286.37" fill="none" stroke="var(--s2)" stroke-width="2"/><circle cx="207.68" cy="67.33" r="4" fill="var(--s2)" class="cellstroke"><title>pll_lock at tol 0.001: 52 fevals, achieved error 0.000746, 0 rejected steps</title></circle><circle cx="250.50" cy="103.36" r="4" fill="var(--s2)" class="cellstroke"><title>pll_lock at tol 0.0001: 85 fevals, achieved error 0.000146, 0 rejected steps</title></circle><circle cx="313.44" cy="141.43" r="4" fill="var(--s2)" class="cellstroke"><title>pll_lock at tol 1e-05: 175 fevals, achieved error 2.6e-05, 2 rejected steps</title></circle><circle cx="375.81" cy="187.97" r="4" fill="var(--s2)" class="cellstroke"><title>pll_lock at tol 1e-06: 358 fevals, achieved error 3.17e-06, 2 rejected steps</title></circle><circle cx="441.07" cy="236.45" r="4" fill="var(--s2)" class="cellstroke"><title>pll_lock at tol 1e-07: 757 fevals, achieved error 3.53e-07, 3 rejected steps</title></circle><circle cx="506.46" cy="286.37" r="4" fill="var(--s2)" class="cellstroke"><title>pll_lock at tol 1e-08: 1603 fevals, achieved error 3.68e-08, 3 rejected steps</title></circle><text class="dlab" x="498.46" y="276.37" text-anchor="end">pll_lock</text><path d="M 202.50 85.65 L 253.53 131.76 L 316.37 177.03 L 379.39 227.27 L 444.46 277.16 L 510.29 327.82" fill="none" stroke="var(--s3)" stroke-width="2"/><circle cx="202.50" cy="85.65" r="4" fill="var(--s3)" class="cellstroke"><title>glucose_minimal at tol 0.001: 49 fevals, achieved error 0.000325, 0 rejected steps</title></circle><circle cx="253.53" cy="131.76" r="4" fill="var(--s3)" class="cellstroke"><title>glucose_minimal at tol 0.0001: 88 fevals, achieved error 4.04e-05, 0 rejected steps</title></circle><circle cx="316.37" cy="177.03" r="4" fill="var(--s3)" class="cellstroke"><title>glucose_minimal at tol 1e-05: 181 fevals, achieved error 5.2e-06, 2 rejected steps</title></circle><circle cx="379.39" cy="227.27" r="4" fill="var(--s3)" class="cellstroke"><title>glucose_minimal at tol 1e-06: 373 fevals, achieved error 5.34e-07, 2 rejected steps</title></circle><circle cx="444.46" cy="277.16" r="4" fill="var(--s3)" class="cellstroke"><title>glucose_minimal at tol 1e-07: 787 fevals, achieved error 5.58e-08, 3 rejected steps</title></circle><circle cx="510.29" cy="327.82" r="4" fill="var(--s3)" class="cellstroke"><title>glucose_minimal at tol 1e-08: 1675 fevals, achieved error 5.63e-09, 3 rejected steps</title></circle><text class="dlab" x="502.29" y="317.82" text-anchor="end">glucose_minimal</text></svg></div></figure>
 
 <p>The controller does its job across five decades: tightening the tolerance from 1e-3
 to 1e-8 moves the buck converter run from 91 function evaluations at 1.5e-3 achieved
@@ -305,7 +307,7 @@ scored slot &mdash; is what survives Q15: the error estimate sits on a ~2 LSB
 measurement floor, so tolerances below about 1e-4 in Q15 units are not reachable, and
 the controller's factor table quantizes the step-size response.</p>
 
-<h2>Side track C (15%): implicit SDIRK for stiff problems (epoch 3)</h2>
+<h2>Side effort: implicit SDIRK for stiff problems (epoch 3 candidate)</h2>
 
 <p>Epoch 3 goes implicit for the stiff regime where every explicit method is
 stability-limited at any budget. The design document
@@ -339,7 +341,7 @@ so the stability effect is isolated from quantization. What the prototype does n
 answer: Q15 feasibility of the Newton solve itself, which is the point of the epoch.</p>
 
 <h2>Where it all lands</h2>
-<p>Every track feeds the same destination: the <a href="tradeoffs.html">trade-offs matrix</a>, the paper's central table, already assembled from the epoch-1 data and rebuilt as each epoch adds its column of evidence.</p>
+<p>Every strand feeds the same destination: the <a href="tradeoffs.html">trade-offs matrix</a>, the paper's central table, already assembled from the epoch-1 data and rebuilt as each epoch adds its column of evidence.</p>
 <footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-02 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
 </div>
 </body>

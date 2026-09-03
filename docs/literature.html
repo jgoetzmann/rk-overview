@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>literature</title>
+<style>
+:root{
+  color-scheme:light;
+  --surface-0:#f5f4f2;--surface-1:#fcfcfb;--line:#dedcd6;--grid:#eceae5;
+  --text-1:#0b0b0b;--text-2:#52514e;--text-3:#8a887f;
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;
+  --good-bg:#e0f2e3;--good-fg:#0d5c1d;--warn-bg:#fdf0d3;--warn-fg:#7a5300;
+  --mut-bg:#eceae5;--mut-fg:#52514e;--bad-bg:#fbe3e3;--bad-fg:#8f1d1d;
+  --q1:#cde2fb;--q2:#9ec5f4;--q3:#6da7ec;--q4:#3987e5;--q5:#256abf;--q6:#184f95;--q7:#0d366b;
+  --banner-bg:#fdf0d3;--banner-line:#c98500;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme:dark;
+    --surface-0:#111110;--surface-1:#1a1a19;--line:#3a3936;--grid:#262523;
+    --text-1:#ffffff;--text-2:#c3c2b7;--text-3:#8a887f;
+    --s1:#3987e5;--s2:#d95926;--s3:#199e70;
+    --good-bg:#123a1c;--good-fg:#9fdca9;--warn-bg:#42350b;--warn-fg:#ecc76a;
+    --mut-bg:#262523;--mut-fg:#c3c2b7;--bad-bg:#461414;--bad-fg:#f1a5a5;
+    --q1:#0d366b;--q2:#184f95;--q3:#256abf;--q4:#3987e5;--q5:#6da7ec;--q6:#9ec5f4;--q7:#cde2fb;
+    --banner-bg:#42350b;--banner-line:#ecc76a;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface-0);color:var(--text-1);
+  font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 48px}
+header.site{background:var(--surface-1);border-bottom:1px solid var(--line);margin-bottom:28px}
+header.site .wrap{padding-top:22px;padding-bottom:0}
+h1{font-size:26px;margin:6px 0 2px;letter-spacing:-.015em}
+h2{font-size:18px;margin:36px 0 12px;letter-spacing:-.01em}
+h3{font-size:14px;margin:20px 0 6px;color:var(--text-2)}
+p{max-width:76ch}
+.sub{color:var(--text-2);margin:0 0 14px;font-size:14px}
+nav.tabs{display:flex;gap:2px;flex-wrap:wrap;margin:14px 0 0}
+nav.tabs a{padding:8px 14px;border-radius:8px 8px 0 0;color:var(--text-2);
+  text-decoration:none;font-size:13.5px;border:1px solid transparent;border-bottom:none}
+nav.tabs a:hover{color:var(--text-1);background:var(--surface-0)}
+nav.tabs a.on{background:var(--surface-0);border-color:var(--line);color:var(--text-1);
+  font-weight:600;box-shadow:0 1px 0 var(--surface-0)}
+a{color:var(--s1)}
+.cards{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;align-items:stretch}
+.card{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:12px 16px;min-width:148px;flex:0 1 auto;display:flex;flex-direction:column}
+.card .k{font-size:11px;color:var(--text-2);letter-spacing:.06em;text-transform:uppercase}
+.card .v{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em;line-height:1.25;margin:2px 0}
+.card .d{font-size:12px;color:var(--text-3);margin-top:auto}
+.panel{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 18px;margin:16px 0}
+figure{margin:0}
+figure figcaption{font-size:13px;color:var(--text-2);margin:0 0 10px;max-width:72ch;
+  line-height:1.5}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2);margin:2px 0 6px}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;
+  vertical-align:-1px}
+.charts{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+svg{max-width:100%;height:auto;display:block}
+svg text{font:11px system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--text-2)}
+svg .lbl{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
+  stroke-width:3px;stroke-linejoin:round}
+svg .axis{stroke:var(--line)}
+svg .gridline{stroke:var(--grid)}
+svg .cellstroke{stroke:var(--surface-1);stroke-width:2px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;margin:10px 0;font-size:13px;background:var(--surface-1);
+  border:1px solid var(--line);border-radius:8px}
+th,td{border-bottom:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--surface-0);color:var(--text-2);font-weight:600;font-size:12px;
+  letter-spacing:.02em;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover>td{background:var(--grid)}
+td{font-variant-numeric:tabular-nums}
+th.num,td.num{text-align:right}
+.tier,.badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;
+  font-weight:600;white-space:nowrap}
+.tier-heldout_verified{background:var(--good-bg);color:var(--good-fg)}
+.tier-search_only{background:var(--warn-bg);color:var(--warn-fg)}
+.tier-unreplicated{background:var(--mut-bg);color:var(--mut-fg)}
+.badge-open{background:var(--mut-bg);color:var(--mut-fg)}
+.badge-supported{background:var(--good-bg);color:var(--good-fg)}
+.badge-refuted{background:var(--bad-bg);color:var(--bad-fg)}
+.badge-inconclusive{background:var(--warn-bg);color:var(--warn-fg)}
+.badge-active{background:var(--good-bg);color:var(--good-fg)}
+.badge-frozen{background:var(--mut-bg);color:var(--mut-fg)}
+.hash{word-break:break-all;font:12px ui-monospace,Consolas,monospace;color:var(--text-2)}
+.mono{font:13px ui-monospace,Consolas,monospace}
+.note{font-size:13px;color:var(--text-2);font-style:italic}
+dl.meta{display:grid;grid-template-columns:max-content 1fr;gap:2px 16px;font-size:13px}
+dl.meta dt{color:var(--text-2)}
+dl.meta dd{margin:0}
+article.entry{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+article.entry h2{margin-top:0}
+article.entry .when{font-size:12px;color:var(--text-3);margin:0 0 8px}
+.when{font-size:12px;color:var(--text-3)}
+p.lead{color:var(--text-2);font-size:13.5px;max-width:76ch;margin:10px 0 16px}
+details.explain{margin:10px 0;max-width:76ch;font-size:13px;color:var(--text-2);
+  border:1px solid var(--line);border-radius:8px;background:var(--surface-1)}
+details.explain summary{cursor:pointer;padding:6px 12px;color:var(--text-3);
+  font-size:12.5px;letter-spacing:.02em}
+details.explain summary:hover{color:var(--text-1)}
+details.explain[open] summary{border-bottom:1px solid var(--line);color:var(--text-2)}
+details.explain>div{padding:4px 12px 8px}
+details.explain p{margin:8px 0}
+details.fold{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  margin:10px 0}
+details.fold>summary{cursor:pointer;padding:10px 16px;font-size:13.5px}
+details.fold>summary:hover{color:var(--text-1)}
+details.fold[open]>summary{border-bottom:1px solid var(--line)}
+details.fold>div{padding:6px 16px 12px}
+footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);
+  font-size:12px;color:var(--text-3)}
+footer p{margin:3px 0;max-width:none}
+footer p.prov a{color:var(--text-2)}
+
+.herolead{font-size:17.5px;line-height:1.6;max-width:74ch}
+ul.rbul{list-style:none;margin:20px 0 8px;padding:0;max-width:104ch}
+.rbul li{background:var(--surface-1);border:1px solid var(--line);
+  border-left:4px solid var(--s1);border-radius:10px;padding:13px 18px;margin:10px 0;
+  font-size:15.5px;line-height:1.6;max-width:none}
+.rbul li strong{font-variant-numeric:tabular-nums}
+.rbul .rlab{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--s1);margin-right:10px}
+.rbul .golink{font-size:12.5px;white-space:nowrap;margin-left:6px}
+.lit-topic{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.lit-topic h2{margin-top:0;font-size:16px}
+.lit-topic .meta-line{font-size:12px;color:var(--text-3);margin:0 0 10px}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 8px}
+.chip{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:10px 16px;min-width:120px}
+.chip .v{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em}
+.chip .k{font-size:12px;color:var(--text-2)}
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:14px;margin:16px 0}
+a.gcard{display:block;background:var(--surface-1);border:1px solid var(--line);
+  border-radius:12px;padding:14px 18px;text-decoration:none;color:inherit}
+a.gcard:hover{border-color:var(--s1)}
+a.gcard .t{font-weight:650;color:var(--s1);margin:0 0 4px;font-size:15px}
+a.gcard .d{font-size:13px;color:var(--text-2)}
+.teasers{margin:12px 0}
+a.tease{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:baseline;
+  padding:10px 14px;margin:8px 0;background:var(--surface-1);border:1px solid var(--line);
+  border-radius:10px;text-decoration:none;color:inherit}
+a.tease:hover{border-color:var(--s1)}
+a.tease .tn{display:inline-grid;place-items:center;width:26px;height:26px;
+  border-radius:8px;background:var(--s1);color:#fff;font-weight:700;font-size:14px}
+a.tease .tt{font-weight:650}
+a.tease .td{font-size:13px;color:var(--text-2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:900px){.two{grid-template-columns:1fr}}
+p.verdict{font-size:17px;line-height:1.65;max-width:82ch}
+section.finding{margin:44px 0;scroll-margin-top:16px}
+section.finding h2{font-size:20px;margin-bottom:8px}
+.findnum{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;
+  background:var(--s1);color:#fff;font-size:16px;font-weight:700;margin-right:12px;
+  vertical-align:-7px}
+figure .src{display:block;margin-top:6px;font-size:12px;color:var(--text-3)}
+svg text{font-size:13px}
+svg .lbl{font-size:13px}
+svg .dlab{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
+  stroke-width:3.5px;stroke-linejoin:round}
+svg .bt{font-weight:650;fill:var(--text-1);font-size:15px}
+svg .bs{fill:var(--text-2);font-size:14px}
+svg .alab{font-size:12.5px;fill:var(--text-3);paint-order:stroke;stroke:var(--surface-1);stroke-width:3px;stroke-linejoin:round}
+svg .box{fill:var(--surface-1);stroke:var(--line)}
+svg .boxhl{fill:var(--surface-0);stroke:var(--s1);stroke-width:1.5}
+svg .boxbad{fill:var(--bad-bg);stroke:var(--bad-fg)}
+svg .frozen{stroke-dasharray:6 4}
+svg .arrow{stroke:var(--text-3);fill:none;marker-end:url(#ah);stroke-width:1.5}
+svg .arrowdash{stroke-dasharray:6 4}
+svg .enclosure{fill:none;stroke:var(--text-3);stroke-dasharray:4 4;opacity:.7}
+svg a text{fill:var(--s1)}
+ol.checks li{margin:6px 0;max-width:82ch}
+ul.toc{columns:2;column-gap:32px;font-size:13.5px;margin:8px 0 4px;padding-left:20px}
+ul.toc li{margin:3px 0}
+@media (max-width:700px){ul.toc{columns:1}}
+.decision{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin:14px 0;scroll-margin-top:16px}
+.decision:target{border-color:var(--s1)}
+.decision h3{margin:0 0 6px;font-size:15px;color:var(--text-1)}
+.decision .orig{color:var(--text-2);border-left:3px solid var(--line);padding-left:12px;
+  margin:8px 0}
+.decision .asbuilt{margin:8px 0 0}
+.decision .tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;
+  font-weight:600;margin-left:8px;vertical-align:2px}
+.tag-kept{background:var(--good-bg);color:var(--good-fg)}
+.tag-changed{background:var(--warn-bg);color:var(--warn-fg)}
+.p0wrap{min-width:780px}
+.p0head,details.p0 summary{display:grid;
+  grid-template-columns:18px 80px 130px 88px 118px 148px 1fr;
+  gap:10px;align-items:center;padding:7px 12px}
+.p0head{font-size:12px;color:var(--text-2);font-weight:600;letter-spacing:.02em}
+details.p0{background:var(--surface-1);border:1px solid var(--line);border-radius:8px;
+  margin:6px 0;font-size:13px}
+details.p0 summary{cursor:pointer;list-style:none;font-variant-numeric:tabular-nums}
+details.p0 summary::-webkit-details-marker{display:none}
+details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
+details.p0[open] summary::before{content:"\2212"}
+details.p0[open] summary{border-bottom:1px solid var(--line)}
+.p0body{padding:10px 16px 12px 40px}
+</style>
+</head>
+<body>
+<header class="site"><div class="wrap">
+<h1>literature</h1>
+<p class="sub">What the model-driven reading loop searched, found, and fed back into the search.</p>
+<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="tradeoffs.html">trade-offs</a><a href="tracks.html">research tracks</a><a href="literature.html" class="on">literature</a><a href="methodology.html">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-02)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+</div></header>
+<div class="wrap">
+
+<p class="herolead">Every ~50 cycles the run's planning model searches the web for one
+topic, writes a digest with citations, and from then on that digest is injected into
+the directive and hypothesis prompts. This page is the human summary of what the loop
+has read so far: what was searched, what came back, and where it touched the search.
+The raw digests, as stored, are on the findings literature page
+(<a href="findings/literature.html">snapshot</a>,
+<a href="https://jgoetzmann.github.io/rk-findings/literature.html">live</a>).</p>
+<p class="note">The digests are model-written text and their sources are
+model-collected citations; verify both before relying on them. Nothing on this page is
+a measurement from this project, and no measured page depends on anything written
+here.</p>
+
+<div class="chips"><div class="chip"><div class="v">8</div><div class="k">digests collected by the loop</div></div><div class="chip"><div class="v">4</div><div class="k">topic groups summarized below</div></div><div class="chip"><div class="v">43</div><div class="k">sources cited across the digests</div></div></div>
+<section class="lit-topic"><h2>Rounding bias and roundoff accumulation</h2><p class="meta-line">3 digests (cycles 549, 700, 750), collected 2026-08-30 to 2026-09-01; 16 sources cited</p><p>The loop's core question: what is known about roundoff inside Runge&ndash;Kutta
+steps at low precision, and about floor rounding specifically. The digests came back
+consistent. Stage perturbations propagate through a method's internal-stability
+polynomials, so algebraically equivalent implementations can amplify errors
+differently. Probabilistic analyses give roundoff growth like &radic;n for zero-mean
+rounding, but floor rounding is one-sided, so it drifts instead of cancelling. The
+published fixed-point ODE experiments the model found (Hopkins et al., on neural ODEs)
+report exactly the pattern this archive measures: downward rounding harmed accuracy,
+round-to-nearest helped, and stochastic rounding helped more at about 30% overhead in
+an RK2 benchmark.</p><p>How it fed the search: this group gave the prompts the published vocabulary and
+prior evidence for the floor-bias mechanism the archive was measuring on its own
+(<a href="results.html#floor-flip">key finding 2</a>), and the overhead numbers for
+stochastic rounding back the design ruling that rounding mode stays pinned rather than
+becoming a search dimension.</p><details class="fold"><summary>sources these digests cite (model-collected; verify before relying on them)</summary><div><ul><li><a href="https://arxiv.org/abs/1309.1317">Propagation of internal errors in explicit Runge–Kutta methods and internal stability of SSP and extrapolation methods</a></li><li><a href="https://www.sciencedirect.com/science/article/pii/S0168927496000402">Error propagation in Runge-Kutta methods</a></li><li><a href="https://arxiv.org/abs/2010.16225">Effects of round-to-nearest and stochastic rounding in the numerical solution of the heat equation in low precision</a></li><li><a href="https://arm-software.github.io/CMSIS-DSP/main/group__FIXED.html">CMSIS-DSP: Fixed point datatypes</a></li><li><a href="https://developer.arm.com/-/media/Arm%20Developer%20Community/PDF/Processor%20Datasheets/Arm%20Cortex-M0%20plus%20Processor%20Datasheet.pdf">Arm Cortex-M0+ Processor Datasheet</a></li><li><a href="https://eprints.lancs.ac.uk/id/eprint/26135/">A quantitative probabilistic investigation into the accumulation of rounding errors in numerical ODE solution</a></li><li><a href="https://arxiv.org/abs/1309.1317">Propagation of internal errors in explicit Runge–Kutta methods and internal stability of SSP and extrapolation methods</a></li><li><a href="https://epubs.siam.org/doi/10.1137/20M1334796">Stochastic Rounding and Its Probabilistic Backward Error Analysis</a></li><li><a href="https://epubs.siam.org/doi/10.1137/24M1681458">Probabilistic Error Analysis of Limited-Precision Stochastic Rounding</a></li><li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7015297/">Stochastic rounding and reduced-precision fixed-point arithmetic for solving neural ordinary differential equations</a></li><li><a href="https://pubmed.ncbi.nlm.nih.gov/26313605/">Accuracy and Efficiency in Fixed-Point Neural ODE Solvers</a></li><li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7015297/">Stochastic rounding and reduced-precision fixed-point arithmetic for solving neural ordinary differential equations</a></li><li><a href="https://ora.ox.ac.uk/objects/uuid%3Af6c94ad6-3dd8-4aa4-adaf-afa331dd6dd5">Effects of round-to-nearest and stochastic rounding in the numerical solution of the heat equation in low precision</a></li><li><a href="https://arxiv.org/abs/1309.1317">Propagation of internal errors in explicit Runge–Kutta methods and internal stability of SSP and extrapolation methods</a></li><li><a href="https://direct.mit.edu/neco/article/27/10/2148/8085/Accuracy-and-Efficiency-in-Fixed-Point-Neural-ODE">Accuracy and Efficiency in Fixed-Point Neural ODE Solvers</a></li><li><a href="https://arm-software.github.io/CMSIS-DSP/v1.11.0/group__BasicMult.html">CMSIS-DSP: Vector Multiplication</a></li></ul></div></details></section>
+<section class="lit-topic"><h2>Prior art in tableau search</h2><p class="meta-line">2 digests (cycles 550, 800), collected 2026-08-30 to 2026-09-01; 12 sources cited</p><p>What was searched: how existing projects optimize low-order Runge&ndash;Kutta
+tableaus. The digests cover the standard line: order conditions as rooted-tree
+polynomial constraints, free parameters in low-order families, and the tools that
+search them numerically (RKTK, RK-Opt, interval constraint programming), usually with
+multistart methods because the space is nonconvex. One caution recurs: principal error
+constants compare fairly only within an order, and application tests can disagree with
+rankings built on asymptotic constants alone.</p><p>The two digests overlap heavily; the second (cycle 800) re-covers the same tools
+from different sources and adds little. The useful negative result stands either way:
+none of the surveyed work models Q15 coefficient representability, per-operation floor
+rounding, or a hardware cycle budget. That absence is the project's gap, and it is
+stated with sources under <a href="design-decisions.html">prior art</a>.</p><details class="fold"><summary>sources these digests cite (model-collected; verify before relying on them)</summary><div><ul><li><a href="https://arxiv.org/abs/1804.04847">Runge-Kutta Theory and Constraint Programming</a></li><li><a href="https://juliapackages.com/p/rungekuttatoolkit">RungeKuttaToolKit.jl and RKTK overview</a></li><li><a href="https://numerics.kaust.edu.sa/papers/stability_polynomials/stability_polynomials_2012.html">Optimal stability polynomials for numerical integration of initial value problems</a></li><li><a href="https://ntrs.nasa.gov/api/citations/19990064369/downloads/19990064369.pdf">Low-storage, Explicit Runge-Kutta Schemes for the Compressible Navier-Stokes Equations</a></li><li><a href="https://oaktrust.library.tamu.edu/items/22e83987-3290-4ac5-a05d-8fd665a2a47a">Optimum Runge-Kutta Formulas of Third-, Fourth-, and Fifth-Orders</a></li><li><a href="https://repository.kaust.edu.sa/items/a215d7c0-3df7-406f-a058-ca3e0bd82b7f">Optimized low-order explicit Runge-Kutta schemes for high-order spectral difference method</a></li><li><a href="https://doi.org/10.1016/S0377-0427(00)00455-6">Numerical methods for ordinary differential equations in the 20th century</a></li><li><a href="https://rk-opt.readthedocs.io/_/downloads/en/latest/pdf/">RK-Opt User Manual</a></li><li><a href="https://joss.theoj.org/papers/10.21105/joss.02514">RK-Opt: A package for the design of numerical ODE solvers</a></li><li><a href="https://juliapackages.com/p/rungekuttatoolkit">RungeKuttaToolKit.jl and RKTK</a></li><li><a href="https://arxiv.org/abs/1207.5830">Optimized explicit Runge-Kutta schemes for the spectral difference method applied to wave propagation problems</a></li><li><a href="https://doi.org/10.1016/S0377-0427(01)00492-7">Practical symplectic partitioned Runge–Kutta and Runge–Kutta–Nyström methods</a></li></ul></div></details></section>
+<section class="lit-topic"><h2>The target hardware</h2><p class="meta-line">2 digests (cycles 600, 800), collected 2026-08-30 to 2026-09-01; 9 sources cited</p><p>What was searched: what multiplication actually costs on Cortex-M0+. The
+digests summarize Arm's documentation: the core ships with either a single-cycle or a
+32-cycle iterative multiplier, adds and shifts are one cycle, and an arithmetic right
+shift floors toward negative infinity, which is where the harness's ASRS semantics
+come from. On the constant-multiply side, CSD form minimizes nonzero signed digits but
+does not guarantee the shortest software sequence.</p><p>These are the thinnest digests of the set: two short restatements of the
+technical reference manual plus CSD notes, and the second largely repeats the first.
+Thin is still useful here. They confirm the two cost models (m0plus_fast,
+m0plus_slow) match documented silicon options rather than invented ones, and the CSD
+caution matches the cost model's rule of taking the cheaper of shift-add and hardware
+multiply.</p><details class="fold"><summary>sources these digests cite (model-collected; verify before relying on them)</summary><div><ul><li><a href="https://documentation-service.arm.com/static/60411750ee937942ba301773">Arm Cortex-M0+ Technical Reference Manual</a></li><li><a href="https://documentation-service.arm.com/static/5f04aadfdbdee951c1cdc957">Arm Cortex-M0+ Devices Generic User Guide</a></li><li><a href="https://gcc.gnu.org/legacy-ml/gcc-patches/2014-10/msg02027.html">GCC patch: Small multiplier support in Cortex-M0/1/+</a></li><li><a href="https://cseweb.ucsd.edu/~kastner/papers/phd-thesis-hosangadi.pdf">Polynomial Transformations for Efficient Implementation of Linear DSP Systems</a></li><li><a href="https://documentation-service.arm.com/static/60411750ee937942ba301773">Cortex-M0+ Technical Reference Manual</a></li><li><a href="https://documentation-service.arm.com/static/5f04abc8dbdee951c1cdc9f7">Cortex-M0+ Devices Generic User Guide</a></li><li><a href="https://www.keil.com/dd/docs/datashts/arm/cortex_m0p/r0p1/ddi0484c_cortex_m0p_r0p1_trm.pdf">Cortex-M0+ Technical Reference Manual, instruction cycle timing</a></li><li><a href="https://publications.lib.chalmers.se/records/fulltext/202866/202866.pdf">Single Constant Multiplication</a></li><li><a href="https://users.utcluj.ro/~baruch/resources/JBits/RR2000-18.pdf">Constant Multiplication Using Minimum Add/Subtract Operations</a></li></ul></div></details></section>
+<section class="lit-topic"><h2>Precision under real-time budgets</h2><p class="meta-line">1 digest (cycle 650), collected 2026-08-31; 6 sources cited</p><p>What was searched: how low-precision integration behaves under hard real-time
+constraints. The digest reports that fixed-step, fixed-cost solvers are the standard
+route to predictable execution; that naive reduced-precision Runge&ndash;Kutta can get
+worse as steps shrink; and that mixed-precision results depend on the tableau, the
+precision assignment and the hardware, so equal formal order does not imply equal
+error at an equal budget.</p><p>How it fed the search: independent support for the harness's equal-budget
+framing, and for scoring methods across orders instead of assuming the higher order
+wins. The same digest flags energy-preserving constructions as needing implicit or
+quadrature work, which is part of why the implicit design waits for its own epoch
+(<a href="tracks.html">research tracks</a>).</p><details class="fold"><summary>sources these digests cite (model-collected; verify before relying on them)</summary><div><ul><li><a href="https://doi.org/10.1007/s40324-026-00428-9">Reduced- and mixed-precision Runge–Kutta methods in floating-point arithmetic</a></li><li><a href="https://arxiv.org/abs/2212.11849">Stability Analysis and Performance Evaluation of Mixed-Precision Runge-Kutta Methods</a></li><li><a href="https://arxiv.org/abs/2412.16638">Performance evaluation of mixed-precision Runge-Kutta methods for the solution of partial differential equations</a></li><li><a href="https://www.mathworks.com/help/simscape/ug/solvers-for-real-time-simulation.html">Solvers for Real-Time Simulation</a></li><li><a href="https://epubs.siam.org/doi/10.1137/15M1020861">A Characterization of Energy-Preserving Methods and the Construction of Parallel Integrators for Hamiltonian Systems</a></li><li><a href="https://arxiv.org/abs/astro-ph/9408024">Symplectic Integration without Roundoff Error</a></li></ul></div></details></section>
+<p class="note">Summaries above are human-written from the stored digests; the digests themselves, verbatim as the prompts received them, are on the <a href="findings/literature.html">findings literature page</a> (or the <a href="https://jgoetzmann.github.io/rk-findings/literature.html">live copy</a>).</p>
+<footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-02 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
+</div>
+</body>
+</html>

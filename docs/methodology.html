@@ -121,6 +121,18 @@ footer p{margin:3px 0;max-width:none}
 footer p.prov a{color:var(--text-2)}
 
 .herolead{font-size:17.5px;line-height:1.6;max-width:74ch}
+ul.rbul{list-style:none;margin:20px 0 8px;padding:0;max-width:104ch}
+.rbul li{background:var(--surface-1);border:1px solid var(--line);
+  border-left:4px solid var(--s1);border-radius:10px;padding:13px 18px;margin:10px 0;
+  font-size:15.5px;line-height:1.6;max-width:none}
+.rbul li strong{font-variant-numeric:tabular-nums}
+.rbul .rlab{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--s1);margin-right:10px}
+.rbul .golink{font-size:12.5px;white-space:nowrap;margin-left:6px}
+.lit-topic{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin:14px 0}
+.lit-topic h2{margin-top:0;font-size:16px}
+.lit-topic .meta-line{font-size:12px;color:var(--text-3);margin:0 0 10px}
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 8px}
 .chip{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
   padding:10px 16px;min-width:120px}
@@ -201,7 +213,7 @@ details.p0[open] summary{border-bottom:1px solid var(--line)}
 <header class="site"><div class="wrap">
 <h1>methodology</h1>
 <p class="sub">The method: setup, measurement, protocol, trust, testing, and its limits.</p>
-<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="tradeoffs.html">trade-offs</a><a href="tracks.html">research tracks</a><a href="methodology.html" class="on">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-02)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="tradeoffs.html">trade-offs</a><a href="tracks.html">research tracks</a><a href="literature.html">literature</a><a href="methodology.html" class="on">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-02)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
 </div></header>
 <div class="wrap">
 
@@ -282,8 +294,9 @@ restored, it gated green.</p>
 <h3>What the container cannot reach</h3>
 
 <p>The GitHub credential never enters the container: the env file is filtered on the
-host, the runner only commits into the mounted checkouts, and the host watchdog pushes
-with the owner's own credentials (an earlier token-scoping design failed its probe;
+host, and every push happens host-side, as the
+<a href="architecture.html">architecture page</a> draws in detail (an earlier
+token-scoping design failed its probe;
 see <a href="design-decisions.html#credentials">credentials outside the container</a>).
 Model-written problems execute only after the quarantine's admission checks, join the
 held-out set alone, and shadow for 10 cycles; the check list is on the
@@ -291,7 +304,7 @@ held-out set alone, and shadow for 10 cycles; the check list is on the
 
 <h2 id="tests">Testing</h2>
 
-<p>The suite collects <strong>1,093 tests</strong> in twelve numbered tiers that
+<p>The suite collects <strong>1,104 tests</strong> in twelve numbered tiers that
 mirror the dependency stack. Golden tests (G-numbered) pin behaviour to fixture values written
 before the build existed, down to exact measured orders and cycle counts. Canary tests
 (K-numbered) are anti-gaming: K1 plants a candidate tuned on the search set and asserts
