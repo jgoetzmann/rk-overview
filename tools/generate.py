@@ -39,7 +39,7 @@ from rk_harness import coeffrep, costmodel, enumeration  # noqa: E402
 from rk_harness import tableau as tableau_mod  # noqa: E402
 from rk_harness import timefmt  # noqa: E402
 
-SNAPSHOT_DATE = "2026-09-02"   # the date the snapshot was taken, US Central
+SNAPSHOT_DATE = "2026-09-04"   # the date the snapshot was taken, US Central
 DOCS = ROOT / "docs"
 LIVE_URL = "https://jgoetzmann.github.io/rk-findings/"
 
@@ -1831,6 +1831,9 @@ def _lit_group(topic: str) -> str:
         return "Prior art in tableau search"
     if "real-time" in t:
         return "Precision under real-time budgets"
+    if ("embedded runge" in t or "pairs" in t or "step control" in t or "implicit" in t
+            or "sdirk" in t or "radau" in t or "rosenbrock" in t or "stability region" in t):
+        return "Adaptive pairs and implicit methods"
     return "Rounding bias and roundoff accumulation"
 
 

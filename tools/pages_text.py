@@ -1068,7 +1068,7 @@ here.</p>
 # attaches collection dates and source counts from the file and fails loudly on a
 # mismatch, so these summaries cannot drift from the digests silently.
 LIT_TOPICS = [
-    ("Rounding bias and roundoff accumulation", (549, 700, 750), [
+    ("Rounding bias and roundoff accumulation", (549, 700, 750, 850), [
         """The loop's core question: what is known about roundoff inside Runge&ndash;Kutta
 steps at low precision, and about floor rounding specifically. The digests came back
 consistent. Stage perturbations propagate through a method's internal-stability
@@ -1079,13 +1079,21 @@ published fixed-point ODE experiments the model found (Hopkins et al., on neural
 report exactly the pattern this archive measures: downward rounding harmed accuracy,
 round-to-nearest helped, and stochastic rounding helped more at about 30% overhead in
 an RK2 benchmark.""",
+        """The fourth digest (cycle 850) is the closest outside match to what the archive
+found. It reports published fixed-point ODE experiments where a compiler's default
+downward rounding of constants and products damaged accuracy, and it states the
+mechanism in the same terms the harness uses: under floor rounding every inexact
+product carries a non-positive error, so zero-mean roundoff models do not apply and
+the error accumulates in one direction. It lands on the same conclusion the search
+did, that formal order alone does not determine fixed-point error, and notes that
+stochastic rounding removes the leading bias at a cost.""",
         """How it fed the search: this group gave the prompts the published vocabulary and
 prior evidence for the floor-bias mechanism the archive was measuring on its own
 (<a href="results.html#floor-flip">key finding 2</a>), and the overhead numbers for
 stochastic rounding back the design ruling that rounding mode stays pinned rather than
 becoming a search dimension.""",
     ]),
-    ("Prior art in tableau search", (550, 800), [
+    ("Prior art in tableau search", (550, 800, 950), [
         """What was searched: how existing projects optimize low-order Runge&ndash;Kutta
 tableaus. The digests cover the standard line: order conditions as rooted-tree
 polynomial constraints, free parameters in low-order families, and the tools that
@@ -1093,25 +1101,33 @@ search them numerically (RKTK, RK-Opt, interval constraint programming), usually
 multistart methods because the space is nonconvex. One caution recurs: principal error
 constants compare fairly only within an order, and application tests can disagree with
 rankings built on asymptotic constants alone.""",
-        """The two digests overlap heavily; the second (cycle 800) re-covers the same tools
-from different sources and adds little. The useful negative result stands either way:
-none of the surveyed work models Q15 coefficient representability, per-operation floor
-rounding, or a hardware cycle budget. That absence is the project's gap, and it is
-stated with sources under <a href="design-decisions.html">prior art</a>.""",
+        """The middle digest (cycle 800) re-covers the same tools from different sources
+and adds little. The third (cycle 950) is the one that pays: the literature it surveys
+does not support ranking methods by formal order alone, since extra stages buy useful
+free parameters, and principal error constants describe exact-arithmetic behavior while
+rounding-induced stage errors depend on the implementation. Both points are what the
+archive measured independently, which is the closest thing here to outside
+corroboration.""",
+        """The useful negative result stands either way: none of the surveyed work models
+Q15 coefficient representability, per-operation floor rounding, or a hardware cycle
+budget. That absence is the project's gap, and it is stated with sources under
+<a href="design-decisions.html">prior art</a>.""",
     ]),
-    ("The target hardware", (600, 800), [
+    ("The target hardware", (600, 800, 1000), [
         """What was searched: what multiplication actually costs on Cortex-M0+. The
 digests summarize Arm's documentation: the core ships with either a single-cycle or a
 32-cycle iterative multiplier, adds and shifts are one cycle, and an arithmetic right
 shift floors toward negative infinity, which is where the harness's ASRS semantics
 come from. On the constant-multiply side, CSD form minimizes nonzero signed digits but
 does not guarantee the shortest software sequence.""",
-        """These are the thinnest digests of the set: two short restatements of the
-technical reference manual plus CSD notes, and the second largely repeats the first.
-Thin is still useful here. They confirm the two cost models (m0plus_fast,
-m0plus_slow) match documented silicon options rather than invented ones, and the CSD
-caution matches the cost model's rule of taking the cheaper of shift-add and hardware
-multiply.""",
+        """The earlier two are the thinnest digests of the set: short restatements of the
+technical reference manual plus CSD notes, the second largely repeating the first. The
+third (cycle 1000) states the consequence outright: because MULS costs one cycle or
+thirty-two depending on which multiplier the vendor configured, a cycle model cannot
+assign a single universal Cortex-M0+ multiplication cost and has to carry both. That is
+the design the harness already runs (m0plus_fast and m0plus_slow), so the digest reads
+as confirmation rather than news, and the CSD caution matches the cost model's rule of
+taking the cheaper of shift-add and hardware multiply.""",
     ]),
     ("Precision under real-time budgets", (650,), [
         """What was searched: how low-precision integration behaves under hard real-time
@@ -1125,6 +1141,22 @@ framing, and for scoring methods across orders instead of assuming the higher or
 wins. The same digest flags energy-preserving constructions as needing implicit or
 quadrature work, which is part of why the implicit design waits for its own epoch
 (<a href="tracks.html">research tracks</a>).""",
+    ]),
+    ("Adaptive pairs and implicit methods", (900,), [
+        """What was searched: the method families the two side efforts are built on. The
+digest covers embedded pairs, where two weight vectors share one set of stages so the
+difference between them estimates the local error. Bogacki&ndash;Shampine 3(2) has four
+stages and the FSAL property, which lets the last derivative of an accepted step open
+the next one for about three new evaluations per step, while Dormand&ndash;Prince 5(4)
+needs seven stages and six new evaluations. The caution attached to both is that
+rejected steps can erase the cycle saving adaptive stepping is supposed to buy.""",
+        """How it fed the work: Bogacki&ndash;Shampine 3(2) is the pair the adaptive
+prototype implements, and the rejected-step caution is why the epoch-2 design books
+rejected steps as real cost instead of billing only accepted ones. The digest also
+makes a point the project keeps meeting from different directions: comparisons resting
+on formal order or stage count alone are incomplete once accepted cost, rejections and
+quantized error are in play. Implicit-method digests have not arrived yet; the loop
+reaches those topics on its own rotation, and this page will say so when they do.""",
     ]),
 ]
 

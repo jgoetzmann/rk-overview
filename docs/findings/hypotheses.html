@@ -130,7 +130,7 @@ footer p.prov a{color:var(--text-2)}
 <div class="wrap">
 <p class="lead">The <a href="glossary.html#hypothesis-ledger">hypothesis ledger</a>: statements the planning model committed to before the data could answer them, each resolved mechanically against the archive. Click a hypothesis to see its full text, predicate and resolution provenance.</p>
 <details class="explain"><summary>How to read this</summary><div><p>A hypothesis is a falsifiable statement about archive cells, recorded with a proposed mechanism, a control (what should happen instead if the mechanism is wrong), and a machine-checkable predicate over per-cell statistics, for example <span class="mono">slow.p3s4.heldout &lt; slow.p4s4.heldout</span>. The p and s numbers name an (order, stages) cell; the leading word picks the cost model.</p><p>Verdicts come from code, never from the model. Once every cell a predicate references has at least min_samples records, the predicate is evaluated against the cells' running statistics and the result is supported or refuted. The effect size is <a href="glossary.html#cohens-d">Cohen&#x27;s d</a>, the absolute difference of the two populations' means divided by their pooled standard deviation; when populations are compared and d is below 0.2 the verdict is inconclusive no matter which way the comparison went, so weak effects cannot be claimed as findings.</p><p>A predicate that references a cell with no data is also inconclusive: absence of evidence never refutes. n is the smallest record count among the referenced cells. Hypotheses carry cycle numbers rather than clock times; cycles are the run's unit of progress.</p></div></details>
-<div class="cards"><div class="card"><div class="k">open</div><div class="v">22</div></div><div class="card"><div class="k">supported</div><div class="v">87</div></div><div class="card"><div class="k">refuted</div><div class="v">40</div></div><div class="card"><div class="k">inconclusive</div><div class="v">0</div></div></div>
+<div class="cards"><div class="card"><div class="k">open</div><div class="v">53</div></div><div class="card"><div class="k">supported</div><div class="v">146</div></div><div class="card"><div class="k">refuted</div><div class="v">74</div></div><div class="card"><div class="k">inconclusive</div><div class="v">27</div></div></div>
 <p class="note">Verdicts are computed by code from the archive; the model never writes one. A missing cell reads as inconclusive, never refuted.</p>
 <details class="fold"><summary><span class="mono">H-001</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.603339, n = 44</span></summary><div><dl class="meta">
 <dt>statement</dt><dd>The order-2, three-stage archive cell does better than the order-2, two-stage cell on held-out error under the slow cost model.</dd>
@@ -1919,6 +1919,1818 @@ footer p.prov a{color:var(--text-2)}
 <dt>proposed at cycle</dt><dd>808</dd>
 <dt>resolved at cycle</dt><dd>808</dd>
 <dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 808; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-150</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.928438, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, four-stage archive cell does better than the order-3, five-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>With single-cycle multiplication, the four-stage method benefits from lower stage overhead without needing multiplier-avoidant coefficients.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, five-stage cell should instead achieve lower held-out error if multiplier-avoidant coefficient structure drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s4.heldout &lt; fast.p3s5.heldout AND slow.p3s5.heldout &lt; slow.p2s4.heldout</span></dd>
+<dt>min_samples</dt><dd>50</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.928438</dd>
+<dt>proposed at cycle</dt><dd>810</dd>
+<dt>resolved at cycle</dt><dd>810</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 810; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-151</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.435851, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, five-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>Expensive multiplication favors the order-3 cell&#x27;s shift-add-friendly coefficients enough for its higher-order accuracy to outweigh its added arithmetic.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, five-stage cell should instead have lower held-out error because cheap multiplication removes that structural advantage.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s5.heldout &lt; slow.p2s5.heldout AND fast.p2s5.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.435851</dd>
+<dt>proposed at cycle</dt><dd>812</dd>
+<dt>resolved at cycle</dt><dd>812</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 812; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-152</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.684019, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-2, four-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow multiplier cost rewards the order-3 cell&#x27;s shift-add-friendly coefficients enough to offset its stricter order constraints.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, four-stage cell should instead have lower held-out error if multiplier latency drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s4.heldout &lt; slow.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>100</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.684019</dd>
+<dt>proposed at cycle</dt><dd>813</dd>
+<dt>resolved at cycle</dt><dd>813</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 813; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-153</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 1.97337, n = 103</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, two-stage archive cell does better than the order-3, five-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>A fast single-cycle multiplier removes the advantage of shift-add-friendly coefficients, allowing the lower-stage method&#x27;s reduced execution overhead to dominate.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, five-stage cell should beat the order-2, two-stage cell if multiplier latency drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s2.heldout &lt; fast.p3s5.heldout AND slow.p3s5.heldout &lt; slow.p2s2.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>103</dd>
+<dt>effect_size</dt><dd>1.97337</dd>
+<dt>proposed at cycle</dt><dd>814</dd>
+<dt>resolved at cycle</dt><dd>814</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 814; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-154</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.683565, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, four-stage archive cell does better than the order-3, four-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow multiplier makes the order-3 cell&#x27;s additional fixed-point arithmetic costly enough that the order-2 cell can devote more of its budget to lower-error coefficients.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, four-stage cell should beat the order-2, four-stage cell if multiplication cost drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p2s4.heldout &lt; slow.p3s4.heldout AND fast.p3s4.heldout &lt; fast.p2s4.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.683565</dd>
+<dt>proposed at cycle</dt><dd>815</dd>
+<dt>resolved at cycle</dt><dd>815</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 815; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-155</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.685334, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, four-stage archive cell does better than the order-3, four-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>With single-cycle multiplication, the order-2 cell can exploit coefficient choices that improve held-out generalization without paying a constant-complexity penalty.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, four-stage cell should instead win if expensive multiplication reverses that advantage.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s4.heldout &lt; fast.p3s4.heldout AND slow.p3s4.heldout &lt; slow.p2s4.heldout</span></dd>
+<dt>min_samples</dt><dd>267</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.685334</dd>
+<dt>proposed at cycle</dt><dd>816</dd>
+<dt>resolved at cycle</dt><dd>816</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 816; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-156</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, five-stage archive cell does better than the order-3, four-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>Single-cycle multiplication makes the extra stage inexpensive, allowing the five-stage search to exploit its larger coefficient space.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, four-stage cell should beat the order-2, five-stage cell because the extra stage amplifies multiplication cost.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s5.heldout &lt; fast.p3s4.heldout AND slow.p3s4.heldout &lt; slow.p2s5.heldout</span></dd>
+<dt>min_samples</dt><dd>267</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>817</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-157</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.688927, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, four-stage archive cell does better than the order-3, four-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>A single-cycle multiplier favors the simpler order-2 construction by avoiding any benefit from coefficient structures optimized for expensive multiplication.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, four-stage cell should instead beat the order-2, four-stage cell if multiplier cost drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s4.heldout &lt; fast.p3s4.heldout AND slow.p3s4.heldout &lt; slow.p2s4.heldout</span></dd>
+<dt>min_samples</dt><dd>267</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.688927</dd>
+<dt>proposed at cycle</dt><dd>818</dd>
+<dt>resolved at cycle</dt><dd>818</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 818; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-158</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.928438, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, four-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow multiplier makes shift-add-friendly higher-stage coefficients advantageous despite their additional arithmetic.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, four-stage cell should instead have lower held-out error.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s5.heldout &lt; slow.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>50</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.928438</dd>
+<dt>proposed at cycle</dt><dd>819</dd>
+<dt>resolved at cycle</dt><dd>819</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 819; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-159</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.928438, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, four-stage archive cell does better than the order-3, five-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>A single-cycle multiplier rewards the shorter order-2, four-stage implementation more than shift-add-friendly higher-stage structure.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, five-stage cell should instead achieve lower held-out error if multiplier latency drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s4.heldout &lt; fast.p3s5.heldout AND slow.p3s5.heldout &lt; slow.p2s4.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.928438</dd>
+<dt>proposed at cycle</dt><dd>820</dd>
+<dt>resolved at cycle</dt><dd>820</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 820; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-160</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.674264, n = 296</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, three-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow iterative multiplier rewards the six-stage cell&#x27;s greater opportunity to replace costly multiplications with shift-add coefficient structures.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, three-stage cell should beat the order-3, six-stage cell if this mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s3.heldout AND fast.p2s3.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>296</dd>
+<dt>effect_size</dt><dd>0.674264</dd>
+<dt>proposed at cycle</dt><dd>822</dd>
+<dt>resolved at cycle</dt><dd>822</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 822; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-161</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.435851, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, five-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow multiplier makes coefficient arithmetic expensive enough that the higher-order cell&#x27;s accuracy advantage outweighs its added arithmetic cost.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, five-stage cell should beat the order-3, five-stage cell if multiplier cost drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s5.heldout &lt; slow.p2s5.heldout AND fast.p2s5.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.435851</dd>
+<dt>proposed at cycle</dt><dd>823</dd>
+<dt>resolved at cycle</dt><dd>823</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 823; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-162</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.676317, n = 296</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, three-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow multiplier rewards shift-add-friendly coefficients enough for the six-stage cell&#x27;s higher-order accuracy to outweigh its additional stages.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, three-stage cell should beat the order-3, six-stage cell because extra stages lose their coefficient-cost advantage.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s3.heldout AND fast.p2s3.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>296</dd>
+<dt>effect_size</dt><dd>0.676317</dd>
+<dt>proposed at cycle</dt><dd>824</dd>
+<dt>resolved at cycle</dt><dd>824</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 824; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-163</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.69474, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-2, four-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>With equal stage counts, the fast multiplier makes the higher-order method&#x27;s accuracy benefit outweigh its additional coefficient arithmetic.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-2, four-stage cell should beat the order-3, four-stage cell because iterative multiplication amplifies the higher-order method&#x27;s arithmetic cost.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s4.heldout &lt; fast.p2s4.heldout AND slow.p2s4.heldout &lt; slow.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>267</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.69474</dd>
+<dt>proposed at cycle</dt><dd>825</dd>
+<dt>resolved at cycle</dt><dd>825</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 825; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-164</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 1.17484, n = 296</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, three-stage archive cell does better than the order-3, five-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>With single-cycle multiplication, the three-stage method avoids extra stage overhead without needing coefficient sparsity to remain competitive.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, five-stage cell should win if its additional stages enable cheaper shift-add coefficient implementations.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s3.heldout &lt; fast.p3s5.heldout AND slow.p3s5.heldout &lt; slow.p2s3.heldout</span></dd>
+<dt>min_samples</dt><dd>296</dd>
+<dt>n_samples</dt><dd>296</dd>
+<dt>effect_size</dt><dd>1.17484</dd>
+<dt>proposed at cycle</dt><dd>826</dd>
+<dt>resolved at cycle</dt><dd>826</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 826; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-165</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, six-stage archive cell does better than the order-2, four-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The AVR-like multiplication penalty rewards the order-4, six-stage cell&#x27;s shift-add-friendly coefficients enough to offset its additional stages.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, four-stage cell should beat the order-4, six-stage cell because cheap multiplication restores the advantage of fewer stages.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p4s6.heldout &lt; avr_approx.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p4s6.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>827</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-166</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 1.17484, n = 296</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, three-stage archive cell does better than the order-3, five-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>Cheap multiplication lets the lower-stage cell retain more accurate coefficients within the same cycle budget.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, five-stage cell should beat the order-2, three-stage cell if multiplication cost drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s3.heldout &lt; fast.p3s5.heldout AND slow.p3s5.heldout &lt; slow.p2s3.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>296</dd>
+<dt>effect_size</dt><dd>1.17484</dd>
+<dt>proposed at cycle</dt><dd>828</dd>
+<dt>resolved at cycle</dt><dd>828</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 828; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-167</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.330035, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-2, five-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>AVR-specific constant-multiplication costs favor the four-stage higher-order scheme enough to offset its stricter order constraints.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, five-stage cell should retain lower held-out error if the advantage is caused by AVR-specific costs.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p3s4.heldout &lt; avr_approx.p2s5.heldout AND fast.p2s5.heldout &lt; fast.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.330035</dd>
+<dt>proposed at cycle</dt><dd>829</dd>
+<dt>resolved at cycle</dt><dd>829</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 829; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-168</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.682895, n = 296</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, three-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow multiplier makes shift-add-friendly coefficients valuable enough for the higher-order, higher-stage cell to offset its additional arithmetic.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, three-stage cell should beat the order-3, six-stage cell because its lower stage count dominates when multiplication is cheap.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s3.heldout AND fast.p2s3.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>296</dd>
+<dt>effect_size</dt><dd>0.682895</dd>
+<dt>proposed at cycle</dt><dd>830</dd>
+<dt>resolved at cycle</dt><dd>830</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 830; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-169</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.435851, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, five-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>With equal stage count, the slow multiplier penalty favors order-3 coefficients whose constant products admit cheaper shift-add realizations.</dd>
+<dt>control</dt><dd>If this mechanism is real, the order-2, five-stage cell should beat the order-3, five-stage cell under the fast cost model.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s5.heldout &lt; slow.p2s5.heldout AND fast.p2s5.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>249</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.435851</dd>
+<dt>proposed at cycle</dt><dd>832</dd>
+<dt>resolved at cycle</dt><dd>832</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 832; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-170</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.970827, n = 103</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, two-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>Expensive multiplication rewards the six-stage cell&#x27;s greater opportunity to replace constant products with short shift-add sequences while retaining higher-order accuracy.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, two-stage cell should instead achieve lower held-out error because its smaller stage count avoids unnecessary instruction overhead.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s2.heldout AND fast.p2s2.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>103</dd>
+<dt>n_samples</dt><dd>103</dd>
+<dt>effect_size</dt><dd>0.970827</dd>
+<dt>proposed at cycle</dt><dd>833</dd>
+<dt>resolved at cycle</dt><dd>833</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 833; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-171</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.435851, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, five-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>With equal stage counts, the slow multiplier makes the higher-order cell&#x27;s coefficient structure more favorable despite its additional order constraints.</dd>
+<dt>control</dt><dd>If slow multiplication drives the advantage, the order-2, five-stage cell should beat the order-3, five-stage cell under the fast cost model.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s5.heldout &lt; slow.p2s5.heldout AND fast.p2s5.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.435851</dd>
+<dt>proposed at cycle</dt><dd>834</dd>
+<dt>resolved at cycle</dt><dd>834</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 834; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-172</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 1.17484, n = 296</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, three-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>Cheap arithmetic under the fast model lets the higher-order, higher-stage method exploit its greater approximation capacity without a prohibitive cycle penalty.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-2, three-stage cell should beat the order-3, five-stage cell if arithmetic cost drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s5.heldout &lt; fast.p2s3.heldout AND slow.p2s3.heldout &lt; slow.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>296</dd>
+<dt>n_samples</dt><dd>296</dd>
+<dt>effect_size</dt><dd>1.17484</dd>
+<dt>proposed at cycle</dt><dd>835</dd>
+<dt>resolved at cycle</dt><dd>835</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 835; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-173</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.928438, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, four-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow multiplier cost favors the order-3, five-stage cell because its extra stages permit coefficients whose shift-add implementations avoid expensive iterative multiplications.</dd>
+<dt>control</dt><dd>If this mechanism is real, the order-2, four-stage cell should beat the order-3, five-stage cell under the fast cost model, where multiplication avoidance offers no advantage.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s5.heldout &lt; slow.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.928438</dd>
+<dt>proposed at cycle</dt><dd>836</dd>
+<dt>resolved at cycle</dt><dd>836</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 836; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-174</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.960291, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, three-stage archive cell does better than the order-2, five-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow multiplier makes the three-stage method&#x27;s lower multiplication count more valuable despite its tighter third-order constraints.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, five-stage cell should instead achieve lower held-out error if multiplication cost drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s3.heldout &lt; slow.p2s5.heldout AND fast.p2s5.heldout &lt; fast.p3s3.heldout</span></dd>
+<dt>min_samples</dt><dd>100</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.960291</dd>
+<dt>proposed at cycle</dt><dd>837</dd>
+<dt>resolved at cycle</dt><dd>837</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 837; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-175</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, four-stage archive cell does better than the order-2, three-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow multiplier makes shift-add-friendly coefficients more valuable, allowing the higher-order cell&#x27;s accuracy advantage to outweigh its added stage cost.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, three-stage cell should instead have lower held-out error if multiplier cost drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p4s4.heldout &lt; slow.p2s3.heldout AND fast.p2s3.heldout &lt; fast.p4s4.heldout</span></dd>
+<dt>min_samples</dt><dd>100</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>838</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-176</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.692199, n = 296</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, three-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow iterative multiplier rewards the six-stage cell&#x27;s shift-add-friendly coefficients enough to offset its additional stages.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, three-stage cell should beat the order-3, six-stage cell because single-cycle multiplication removes that advantage.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s3.heldout AND fast.p2s3.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>296</dd>
+<dt>effect_size</dt><dd>0.692199</dd>
+<dt>proposed at cycle</dt><dd>839</dd>
+<dt>resolved at cycle</dt><dd>839</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 839; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-177</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.928438, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, four-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow multiplier makes coefficient realizations with fewer shift-add operations disproportionately favorable, allowing the higher-order five-stage cell to generalize better.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, four-stage cell should instead have lower held-out error because multiplication is cheap and its lower stage count dominates.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s5.heldout &lt; slow.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.928438</dd>
+<dt>proposed at cycle</dt><dd>840</dd>
+<dt>resolved at cycle</dt><dd>840</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 840; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-178</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.928438, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, four-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>Shift-add-friendly coefficient structure lets the higher-order five-stage method spend its AVR cycle budget more effectively despite its extra stage.</dd>
+<dt>control</dt><dd>Under the fast cost model, where stage overhead dominates, the order-2, four-stage cell should beat the order-3, five-stage cell.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p3s5.heldout &lt; avr_approx.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>100</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.928438</dd>
+<dt>proposed at cycle</dt><dd>842</dd>
+<dt>resolved at cycle</dt><dd>842</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 842; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-179</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, four-stage archive cell does better than the order-3, six-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>AVR-like multiplication costs favor the higher-order method&#x27;s reduced stage count enough to outweigh its more complex coefficients.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, six-stage cell should instead have lower held-out error if multiplication cost drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p4s4.heldout &lt; avr_approx.p3s6.heldout AND fast.p3s6.heldout &lt; fast.p4s4.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>843</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-180</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.928438, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, four-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow multiplier makes shift-add-friendly coefficients valuable enough for the extra-stage cell to achieve better numerical accuracy within the same cycle budget.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, four-stage cell should beat the order-3, five-stage cell because its lower stage count avoids extra arithmetic overhead.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s5.heldout &lt; slow.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.928438</dd>
+<dt>proposed at cycle</dt><dd>844</dd>
+<dt>resolved at cycle</dt><dd>844</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 844; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-181</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.928438, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, four-stage archive cell does better than the order-3, five-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>Cheap multiplication lets the four-stage method exploit its lower-complexity search space without the extra constraints and stage of the order-3 method.</dd>
+<dt>control</dt><dd>If this mechanism is real, the order-3, five-stage cell should beat the order-2, four-stage cell under the slow cost model.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s4.heldout &lt; fast.p3s5.heldout AND slow.p3s5.heldout &lt; slow.p2s4.heldout</span></dd>
+<dt>min_samples</dt><dd>100</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.928438</dd>
+<dt>proposed at cycle</dt><dd>845</dd>
+<dt>resolved at cycle</dt><dd>845</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 845; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-182</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.435851, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, five-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>Expensive multiplication rewards the higher-order cell because its added accuracy can offset multiplier latency without adding stages.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, five-stage cell should retain lower held-out error if multiplier latency drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s5.heldout &lt; slow.p2s5.heldout AND fast.p2s5.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>40</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.435851</dd>
+<dt>proposed at cycle</dt><dd>846</dd>
+<dt>resolved at cycle</dt><dd>846</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 846; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-183</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.435851, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, five-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow cost model rewards order-3 formulas whose coefficients admit cheaper shift-add implementations, allowing the search to retain better-generalizing methods than in the order-2 cell.</dd>
+<dt>control</dt><dd>If this mechanism is real, the order-2, five-stage cell should beat the order-3, five-stage cell under the fast cost model, where coefficient sparsity offers less benefit.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s5.heldout &lt; slow.p2s5.heldout AND fast.p2s5.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>249</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.435851</dd>
+<dt>proposed at cycle</dt><dd>847</dd>
+<dt>resolved at cycle</dt><dd>847</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 847; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-184</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.335263, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, five-stage archive cell does better than the order-3, four-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The order-2 method&#x27;s simpler constraints permit coefficients whose shift-add implementations align better with AVR instruction costs than the higher-order alternative.</dd>
+<dt>control</dt><dd>If this mechanism is real, the order-3, four-stage cell should beat the order-2, five-stage cell under the fast cost model, where shift-add-friendly coefficients lose their cost advantage.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p2s5.heldout &lt; avr_approx.p3s4.heldout AND fast.p3s4.heldout &lt; fast.p2s5.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.335263</dd>
+<dt>proposed at cycle</dt><dd>848</dd>
+<dt>resolved at cycle</dt><dd>848</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 848; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-185</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, four-stage archive cell does better than the order-2, four-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>Expensive multiplication makes the higher-order cell&#x27;s improved accuracy per multiplication outweigh its added arithmetic complexity.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, four-stage cell should instead have lower held-out error if multiplication cost drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p4s4.heldout &lt; avr_approx.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p4s4.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>849</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-186</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.316027, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, three-stage archive cell does better than the order-2, four-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>A single-cycle multiplier makes the three-stage method&#x27;s lower stage count more valuable than the four-stage method&#x27;s coefficient-level arithmetic advantages.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-2, four-stage cell should beat the order-2, three-stage cell if multiplication cost drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s3.heldout &lt; fast.p2s4.heldout AND slow.p2s4.heldout &lt; slow.p2s3.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.316027</dd>
+<dt>proposed at cycle</dt><dd>850</dd>
+<dt>resolved at cycle</dt><dd>850</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 850; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-187</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, five-stage archive cell does better than the order-3, five-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>Under the slow cost model, the lower-order cell can spend its fixed-point budget on coefficients that incur less systematic floor-rounding bias despite using the same number of stages.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, five-stage cell should instead beat the order-2, five-stage cell if budget-dependent coefficient selection drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p2s5.heldout &lt; slow.p3s5.heldout AND fast.p3s5.heldout &lt; fast.p2s5.heldout</span></dd>
+<dt>min_samples</dt><dd>296</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>852</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-188</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.982489, n = 103</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, two-stage archive cell does better than the order-2, four-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast model favors the two-stage cell because fewer rounded operations reduce biased quantization accumulation and stage cost.</dd>
+<dt>control</dt><dd>Under the slow cost model, the four-stage cell should instead achieve lower held-out error if the reversal is genuinely cost-model-driven.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s2.heldout &lt; fast.p2s4.heldout AND slow.p2s4.heldout &lt; slow.p2s2.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>103</dd>
+<dt>effect_size</dt><dd>0.982489</dd>
+<dt>proposed at cycle</dt><dd>853</dd>
+<dt>resolved at cycle</dt><dd>853</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 853; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-189</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, three-stage archive cell does better than the order-4, six-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>AVR-weighted multiplication costs favor the shorter method by preserving more search budget while avoiding the extra floor-rounded operations of six stages.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-4, six-stage cell should instead achieve lower held-out error if AVR-specific operation weighting drives the effect.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p2s3.heldout &lt; avr_approx.p4s6.heldout AND slow.p4s6.heldout &lt; slow.p2s3.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>854</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-190</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.701751, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, five-stage archive cell does better than the order-2, three-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast model can afford the five-stage method&#x27;s additional evaluations, allowing its richer operation graph to reduce discretization error despite extra floor-rounded operations.</dd>
+<dt>control</dt><dd>Under the slow cost model, the three-stage cell should beat the five-stage cell because expensive additional stages erase that advantage.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s5.heldout &lt; fast.p2s3.heldout AND slow.p2s3.heldout &lt; slow.p2s5.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.701751</dd>
+<dt>proposed at cycle</dt><dd>855</dd>
+<dt>resolved at cycle</dt><dd>855</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 855; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-191</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, four-stage archive cell does better than the order-2, two-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>AVR-aware costing gives the higher-order method enough effective integration accuracy to overcome the extra fixed-point rounding sites introduced by its additional stages.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, two-stage cell should instead have lower held-out error if the advantage is caused by AVR-specific operation costs.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p4s4.heldout &lt; avr_approx.p2s2.heldout AND fast.p2s2.heldout &lt; fast.p4s4.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>856</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-192</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 1.42482, n = 4933</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, three-stage archive cell does better than the order-3, four-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow model penalizes the fourth stage enough that its extra rounded operations amplify systematic floor-rounding bias without compensating accuracy gains.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, four-stage cell should instead beat the order-3, three-stage cell if that cost-dependent mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s3.heldout &lt; slow.p3s4.heldout AND fast.p3s4.heldout &lt; fast.p3s3.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>4933</dd>
+<dt>effect_size</dt><dd>1.42482</dd>
+<dt>proposed at cycle</dt><dd>857</dd>
+<dt>resolved at cycle</dt><dd>857</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 857; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-193</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.239781, n = 103</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, two-stage archive cell does better than the order-3, three-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>With cheap arithmetic, the two-stage method incurs fewer systematically downward-rounded fixed-point operations, reducing accumulated quantization bias despite its lower formal order.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, three-stage cell should instead achieve lower held-out error if hardware-sensitive budget allocation drives the crossover.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s2.heldout &lt; fast.p3s3.heldout AND slow.p3s3.heldout &lt; slow.p2s2.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>103</dd>
+<dt>effect_size</dt><dd>0.239781</dd>
+<dt>proposed at cycle</dt><dd>858</dd>
+<dt>resolved at cycle</dt><dd>858</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 858; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-194</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.928438, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, four-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow model gives the higher-order method enough numerical benefit to outweigh the extra quantized stage operations.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, four-stage cell should instead have lower held-out error if the mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s5.heldout &lt; slow.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>100</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.928438</dd>
+<dt>proposed at cycle</dt><dd>859</dd>
+<dt>resolved at cycle</dt><dd>859</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 859; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-195</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 1.17484, n = 296</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, three-stage archive cell does better than the order-3, five-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The AVR-approximate model penalizes the five-stage method&#x27;s additional floor-rounded products, allowing systematic quantization bias to outweigh its higher formal order.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, five-stage cell should instead beat the order-2, three-stage cell if hardware-sensitive stage overhead drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p2s3.heldout &lt; avr_approx.p3s5.heldout AND fast.p3s5.heldout &lt; fast.p2s3.heldout</span></dd>
+<dt>min_samples</dt><dd>296</dd>
+<dt>n_samples</dt><dd>296</dd>
+<dt>effect_size</dt><dd>1.17484</dd>
+<dt>proposed at cycle</dt><dd>860</dd>
+<dt>resolved at cycle</dt><dd>860</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 860; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-196</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.699556, n = 296</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, three-stage archive cell does better than the order-3, six-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast model favors the three-stage method because fewer floor-rounded operations reduce systematic quantization bias.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, six-stage cell should instead achieve lower held-out error if the mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s3.heldout &lt; fast.p3s6.heldout AND slow.p3s6.heldout &lt; slow.p2s3.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>296</dd>
+<dt>effect_size</dt><dd>0.699556</dd>
+<dt>proposed at cycle</dt><dd>862</dd>
+<dt>resolved at cycle</dt><dd>862</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 862; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-197</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.698556, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-2, four-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>With stage count fixed, the AVR-approximate budget can expose the order-3 method&#x27;s truncation-error advantage without adding extra quantized stage operations.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, four-stage cell should retain lower held-out error if the advantage is specific to AVR-approximate costing.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p3s4.heldout &lt; avr_approx.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>267</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.698556</dd>
+<dt>proposed at cycle</dt><dd>863</dd>
+<dt>resolved at cycle</dt><dd>863</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 863; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-198</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, four-stage archive cell does better than the order-2, five-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow cost model rewards the four-stage method&#x27;s higher formal order while avoiding the fifth stage&#x27;s additional biased floor-rounded operations.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, five-stage cell should instead have lower held-out error if cost-sensitive quantization accumulation is the mechanism.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p4s4.heldout &lt; slow.p2s5.heldout AND fast.p2s5.heldout &lt; fast.p4s4.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>864</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-199</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.928438, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, four-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>Cheap multiplication lets the five-stage method exploit its higher formal order without its extra rounded operations exhausting the evaluation budget.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-2, four-stage cell should beat the order-3, five-stage cell because the additional stages become costly.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s5.heldout &lt; fast.p2s4.heldout AND slow.p2s4.heldout &lt; slow.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.928438</dd>
+<dt>proposed at cycle</dt><dd>865</dd>
+<dt>resolved at cycle</dt><dd>865</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 865; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-200</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.960291, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, three-stage archive cell does better than the order-2, five-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The higher formal order and fewer rounded stage operations reduce truncation and downward-rounding accumulation under AVR-like costs.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, five-stage cell should instead have lower held-out error if cost-dependent search pressure drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p3s3.heldout &lt; avr_approx.p2s5.heldout AND fast.p2s5.heldout &lt; fast.p3s3.heldout</span></dd>
+<dt>min_samples</dt><dd>249</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.960291</dd>
+<dt>proposed at cycle</dt><dd>866</dd>
+<dt>resolved at cycle</dt><dd>866</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 866; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-201</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 1.55161, n = 4933</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, three-stage archive cell does better than the order-3, five-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>Using fewer stages reduces both floor-rounded operations and cycle cost, limiting systematic quantization accumulation under the fast model.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, five-stage cell should instead achieve lower held-out error if the advantage is cost-model-specific.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s3.heldout &lt; fast.p3s5.heldout AND slow.p3s5.heldout &lt; slow.p3s3.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>4933</dd>
+<dt>effect_size</dt><dd>1.55161</dd>
+<dt>proposed at cycle</dt><dd>867</dd>
+<dt>resolved at cycle</dt><dd>867</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 867; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-202</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.7047, n = 296</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, three-stage archive cell does better than the order-3, six-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast model favors the three-stage method because fewer fixed-point operations reduce both cycle pressure and accumulated downward-rounding bias.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, six-stage cell should instead have lower held-out error if the crossover is genuinely cost-driven.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s3.heldout &lt; fast.p3s6.heldout AND slow.p3s6.heldout &lt; slow.p2s3.heldout</span></dd>
+<dt>min_samples</dt><dd>100</dd>
+<dt>n_samples</dt><dd>296</dd>
+<dt>effect_size</dt><dd>0.7047</dd>
+<dt>proposed at cycle</dt><dd>868</dd>
+<dt>resolved at cycle</dt><dd>868</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 868; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-203</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 1.22687, n = 296</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-2, three-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast cost model can favor the four-stage method&#x27;s improved truncation behavior enough to offset its additional floor-rounded operations.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-2, three-stage cell should instead have lower held-out error if stage-cost sensitivity drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s4.heldout &lt; fast.p2s3.heldout AND slow.p2s3.heldout &lt; slow.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>296</dd>
+<dt>n_samples</dt><dd>296</dd>
+<dt>effect_size</dt><dd>1.22687</dd>
+<dt>proposed at cycle</dt><dd>869</dd>
+<dt>resolved at cycle</dt><dd>869</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 869; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-204</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, six-stage archive cell does better than the order-3, three-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow cost model rewards the six-stage method&#x27;s higher formal order enough to outweigh its additional floor-rounded operations.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, three-stage cell should instead have lower held-out error if the cost-dependent mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p4s6.heldout &lt; slow.p3s3.heldout AND fast.p3s3.heldout &lt; fast.p4s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>870</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-205</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 1.00243, n = 103</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, two-stage archive cell does better than the order-3, six-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The two-stage method incurs fewer downward-rounded fixed-point operations, reducing systematic quantization-bias accumulation enough to outweigh its lower formal order.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, six-stage cell should beat the order-2, two-stage cell if reduced rounding accumulation drives the AVR-approximate advantage.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p2s2.heldout &lt; avr_approx.p3s6.heldout AND fast.p3s6.heldout &lt; fast.p2s2.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>103</dd>
+<dt>effect_size</dt><dd>1.00243</dd>
+<dt>proposed at cycle</dt><dd>872</dd>
+<dt>resolved at cycle</dt><dd>872</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 872; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-206</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, six-stage archive cell does better than the order-3, five-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The AVR-approximate budget favors the six-stage method&#x27;s higher formal order enough to outweigh its additional floor-rounded operations.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, five-stage cell should instead have lower held-out error if the mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p4s6.heldout &lt; avr_approx.p3s5.heldout AND fast.p3s5.heldout &lt; fast.p4s6.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>873</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-207</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.744715, n = 103</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, two-stage archive cell does better than the order-2, three-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast cost model favors fewer stages because each additional stage adds floor-rounded operations whose systematic negative bias can outweigh any accuracy benefit.</dd>
+<dt>control</dt><dd>If this mechanism is real, the order-2, three-stage cell should beat the order-2, two-stage cell under the slow cost model, where the stage-cost tradeoff differs.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s2.heldout &lt; fast.p2s3.heldout AND slow.p2s3.heldout &lt; slow.p2s2.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>103</dd>
+<dt>effect_size</dt><dd>0.744715</dd>
+<dt>proposed at cycle</dt><dd>874</dd>
+<dt>resolved at cycle</dt><dd>874</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 874; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-208</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, four-stage archive cell does better than the order-3, three-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The extra stage and order condition reduce truncation error enough under AVR-like costs to outweigh the additional floor-rounded operations.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, three-stage cell should beat the order-4, four-stage cell if the advantage depends on AVR-like stage costs.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p4s4.heldout &lt; avr_approx.p3s3.heldout AND fast.p3s3.heldout &lt; fast.p4s4.heldout</span></dd>
+<dt>min_samples</dt><dd>40</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>875</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-209</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.435851, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, five-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>At equal stage count, the higher formal order reduces truncation error enough under AVR-like weighting to overcome its fixed-point coefficient sensitivity.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, five-stage cell should retain lower held-out error if the advantage is specific to AVR-like weighting.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p3s5.heldout &lt; avr_approx.p2s5.heldout AND fast.p2s5.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.435851</dd>
+<dt>proposed at cycle</dt><dd>876</dd>
+<dt>resolved at cycle</dt><dd>876</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 876; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-210</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 1.55161, n = 4933</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, three-stage archive cell does better than the order-3, five-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast cost model favors the three-stage method because fewer floor-rounded operations reduce systematic quantization-bias accumulation.</dd>
+<dt>control</dt><dd>Under the slow cost model, the five-stage cell should instead beat the three-stage cell if the reversal is genuinely caused by cost-sensitive rounding exposure.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s3.heldout &lt; fast.p3s5.heldout AND slow.p3s5.heldout &lt; slow.p3s3.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>4933</dd>
+<dt>effect_size</dt><dd>1.55161</dd>
+<dt>proposed at cycle</dt><dd>877</dd>
+<dt>resolved at cycle</dt><dd>877</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 877; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-211</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, six-stage archive cell does better than the order-2, three-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The AVR-approximate budget rewards the higher-order cell&#x27;s truncation-error reduction enough to outweigh the extra floor-rounded stage operations.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, three-stage cell should have lower held-out error if the advantage is caused by the AVR-specific cost tradeoff.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p4s6.heldout &lt; avr_approx.p2s3.heldout AND fast.p2s3.heldout &lt; fast.p4s6.heldout</span></dd>
+<dt>min_samples</dt><dd>40</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>878</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-212</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, four-stage archive cell does better than the order-2, four-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>With equal stage count, the slow model affords enough arithmetic budget for fourth-order truncation-error reduction to outweigh its greater coefficient-quantization sensitivity.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, four-stage cell should instead have lower held-out error because the tighter budget favors its simpler operation graph.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p4s4.heldout &lt; slow.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p4s4.heldout</span></dd>
+<dt>min_samples</dt><dd>267</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>879</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-213</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.59193, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, three-stage archive cell does better than the order-2, four-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast cost model rewards the three-stage method&#x27;s shorter rounded operation graph, reducing both execution cost and accumulated downward-quantization bias.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-2, four-stage cell should instead achieve lower held-out error if hardware-dependent stage cost drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s3.heldout &lt; fast.p2s4.heldout AND slow.p2s4.heldout &lt; slow.p3s3.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.59193</dd>
+<dt>proposed at cycle</dt><dd>880</dd>
+<dt>resolved at cycle</dt><dd>880</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 880; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-214</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, four-stage archive cell does better than the order-3, four-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>At equal stage count, the AVR-approximate budget preserves the order-4 cell&#x27;s truncation-error advantage without adding extra floor-rounded operations.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, four-stage cell should instead have lower held-out error if AVR-specific selection pressure causes the advantage.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p4s4.heldout &lt; avr_approx.p3s4.heldout AND fast.p3s4.heldout &lt; fast.p4s4.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>882</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-215</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, four-stage archive cell does better than the order-2, three-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>AVR-weighted search rewards the four-stage method&#x27;s higher formal order enough to offset its additional floor-rounded operations.</dd>
+<dt>control</dt><dd>Under the fast cost model, the cheaper order-2, three-stage cell should instead have lower held-out error if the advantage is cost-model-specific.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p4s4.heldout &lt; avr_approx.p2s3.heldout AND fast.p2s3.heldout &lt; fast.p4s4.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>883</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-216</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, two-stage archive cell does better than the order-4, six-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The AVR-approximate model penalizes the six-stage method&#x27;s additional floor-rounded operations enough for reduced quantization accumulation to outweigh its higher formal order.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-4, six-stage cell should instead beat the order-2, two-stage cell if the mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p2s2.heldout &lt; avr_approx.p4s6.heldout AND slow.p4s6.heldout &lt; slow.p2s2.heldout</span></dd>
+<dt>min_samples</dt><dd>103</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>884</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-217</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.316027, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, four-stage archive cell does better than the order-2, three-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The AVR-approximate schedule rewards the four-stage cell&#x27;s improved truncation behavior enough to offset its additional floor-rounded operations.</dd>
+<dt>control</dt><dd>Under the fast cost model, the three-stage cell should win because fewer rounded operations reduce systematic quantization bias.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p2s4.heldout &lt; avr_approx.p2s3.heldout AND fast.p2s3.heldout &lt; fast.p2s4.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.316027</dd>
+<dt>proposed at cycle</dt><dd>886</dd>
+<dt>resolved at cycle</dt><dd>886</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 886; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-218</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 1.97337, n = 103</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, two-stage archive cell does better than the order-3, five-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The five-stage method incurs more downward-rounded fixed-point operations, allowing systematic quantization bias to outweigh its higher formal order under AVR-like costs.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, five-stage cell should retain lower held-out error because additional stages are less strongly penalized.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p2s2.heldout &lt; avr_approx.p3s5.heldout AND fast.p3s5.heldout &lt; fast.p2s2.heldout</span></dd>
+<dt>min_samples</dt><dd>103</dd>
+<dt>n_samples</dt><dd>103</dd>
+<dt>effect_size</dt><dd>1.97337</dd>
+<dt>proposed at cycle</dt><dd>887</dd>
+<dt>resolved at cycle</dt><dd>887</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 887; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-219</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.716986, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-2, four-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>At equal stage count, the AVR-approximate model rewards the order-3 cell&#x27;s lower truncation error enough to overcome its fixed-point coefficient sensitivity.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, four-stage cell should instead have lower held-out error if AVR-specific operation costs drive the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p3s4.heldout &lt; avr_approx.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>267</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.716986</dd>
+<dt>proposed at cycle</dt><dd>888</dd>
+<dt>resolved at cycle</dt><dd>888</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 888; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-220</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.928438, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, four-stage archive cell does better than the order-3, five-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>AVR-like operation costs favor the shorter four-stage graph because its fewer floor-rounded operations accumulate less systematic quantization bias.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, five-stage cell should instead beat the order-2, four-stage cell if operation-cost-sensitive quantization is the mechanism.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p2s4.heldout &lt; avr_approx.p3s5.heldout AND fast.p3s5.heldout &lt; fast.p2s4.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.928438</dd>
+<dt>proposed at cycle</dt><dd>889</dd>
+<dt>resolved at cycle</dt><dd>889</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 889; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-221</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 1.10942, n = 103</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, two-stage archive cell does better than the order-2, five-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow cost model penalizes extra stages strongly enough to favor simpler methods with fewer systematically floor-rounded operations.</dd>
+<dt>control</dt><dd>Under the fast cost model, the five-stage cell should instead beat the two-stage cell if stage-cost sensitivity drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p2s2.heldout &lt; slow.p2s5.heldout AND fast.p2s5.heldout &lt; fast.p2s2.heldout</span></dd>
+<dt>min_samples</dt><dd>40</dd>
+<dt>n_samples</dt><dd>103</dd>
+<dt>effect_size</dt><dd>1.10942</dd>
+<dt>proposed at cycle</dt><dd>890</dd>
+<dt>resolved at cycle</dt><dd>890</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 890; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-222</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 1.47414, n = 4933</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-3, three-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The AVR-approximate budget makes the extra stage affordable enough for its truncation-error reduction to outweigh the added floor-rounded operations.</dd>
+<dt>control</dt><dd>Under the fast cost model, the three-stage cell should beat the four-stage cell because the extra quantized operations provide no compensating budget advantage.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p3s4.heldout &lt; avr_approx.p3s3.heldout AND fast.p3s3.heldout &lt; fast.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>100</dd>
+<dt>n_samples</dt><dd>4933</dd>
+<dt>effect_size</dt><dd>1.47414</dd>
+<dt>proposed at cycle</dt><dd>892</dd>
+<dt>resolved at cycle</dt><dd>892</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 892; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-223</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.705299, n = 296</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, three-stage archive cell does better than the order-3, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>Expensive multiplication makes the six-stage method sacrifice enough search depth or timestep efficiency that its higher formal order cannot offset its extra rounded operations.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, six-stage cell should instead beat the order-2, three-stage cell if multiplication cost drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p2s3.heldout &lt; slow.p3s6.heldout AND fast.p3s6.heldout &lt; fast.p2s3.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>296</dd>
+<dt>effect_size</dt><dd>0.705299</dd>
+<dt>proposed at cycle</dt><dd>893</dd>
+<dt>resolved at cycle</dt><dd>893</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 893; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-224</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 1.47782, n = 4933</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-3, three-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast cost model rewards the four-stage cell&#x27;s extra approximation capacity enough to offset its additional quantized operations.</dd>
+<dt>control</dt><dd>Under the slow cost model, the three-stage cell should beat the four-stage cell because the extra stage&#x27;s arithmetic cost and floor-rounding bias outweigh its accuracy benefit.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s4.heldout &lt; fast.p3s3.heldout AND slow.p3s3.heldout &lt; slow.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>4933</dd>
+<dt>effect_size</dt><dd>1.47782</dd>
+<dt>proposed at cycle</dt><dd>894</dd>
+<dt>resolved at cycle</dt><dd>894</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 894; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-225</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 1e+09, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, five-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>AVR-specific instruction costs favor the higher-order cell enough to offset its additional fixed-point rounding exposure.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-2, five-stage cell should instead have lower held-out error if the advantage is AVR-specific.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p3s5.heldout &lt; avr_approx.p2s5.heldout AND slow.p2s5.heldout &lt; slow.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>1e+09</dd>
+<dt>proposed at cycle</dt><dd>895</dd>
+<dt>resolved at cycle</dt><dd>895</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 895; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-226</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, three-stage archive cell does better than the order-4, six-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast model favors the shorter operation graph because fewer stages create fewer floor-rounded products and sums within the budget.</dd>
+<dt>control</dt><dd>Under the AVR-approximate cost model, the order-4, six-stage cell should instead achieve lower held-out error if model-specific stage cost drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s3.heldout &lt; fast.p4s6.heldout AND avr_approx.p4s6.heldout &lt; avr_approx.p3s3.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>896</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-227</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.70674, n = 296</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, three-stage archive cell does better than the order-3, six-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast model favors fewer stages because they incur fewer systematically downward-rounded fixed-point operations.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, six-stage cell should beat the order-2, three-stage cell if stage-dependent rounding cost drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s3.heldout &lt; fast.p3s6.heldout AND slow.p3s6.heldout &lt; slow.p2s3.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>296</dd>
+<dt>effect_size</dt><dd>0.70674</dd>
+<dt>proposed at cycle</dt><dd>897</dd>
+<dt>resolved at cycle</dt><dd>897</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 897; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-228</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.999275, n = 103</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, two-stage archive cell does better than the order-3, six-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast model favors the shorter method because fewer stages create fewer floor-rounded operations and less accumulated negative quantization bias.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, six-stage cell should instead beat the order-2, two-stage cell if cost-sensitive rounding accumulation drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s2.heldout &lt; fast.p3s6.heldout AND slow.p3s6.heldout &lt; slow.p2s2.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>103</dd>
+<dt>effect_size</dt><dd>0.999275</dd>
+<dt>proposed at cycle</dt><dd>898</dd>
+<dt>resolved at cycle</dt><dd>898</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 898; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-229</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.982489, n = 103</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, four-stage archive cell does better than the order-2, two-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast cost model can afford the four-stage method&#x27;s improved trajectory approximation despite its extra rounded operations.</dd>
+<dt>control</dt><dd>Under the slow cost model, the two-stage cell should beat the four-stage cell because additional stage costs and quantization opportunities erase that advantage.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s4.heldout &lt; fast.p2s2.heldout AND slow.p2s2.heldout &lt; slow.p2s4.heldout</span></dd>
+<dt>min_samples</dt><dd>103</dd>
+<dt>n_samples</dt><dd>103</dd>
+<dt>effect_size</dt><dd>0.982489</dd>
+<dt>proposed at cycle</dt><dd>899</dd>
+<dt>resolved at cycle</dt><dd>899</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 899; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-230</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.618686, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, four-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The AVR-approximate budget rewards the six-stage method’s greater truncation-error suppression enough to offset its additional floor-rounded operations.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, four-stage cell should instead have lower held-out error if the AVR-specific cost tradeoff is real.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p3s6.heldout &lt; avr_approx.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.618686</dd>
+<dt>proposed at cycle</dt><dd>900</dd>
+<dt>resolved at cycle</dt><dd>900</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 900; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-231</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.960291, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, three-stage archive cell does better than the order-2, five-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast cost model favors the higher-order cell&#x27;s accuracy per stage despite its tighter stage budget.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-2, five-stage cell should instead achieve lower held-out error if the mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s3.heldout &lt; fast.p2s5.heldout AND slow.p2s5.heldout &lt; slow.p3s3.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.960291</dd>
+<dt>proposed at cycle</dt><dd>902</dd>
+<dt>resolved at cycle</dt><dd>902</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 902; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-232</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.59193, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, four-stage archive cell does better than the order-3, three-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow cost model rewards the extra fixed-point refinement capacity of the four-stage cell more than the formal-order advantage of the three-stage cell.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, three-stage cell should beat the order-2, four-stage cell if the mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p2s4.heldout &lt; slow.p3s3.heldout AND fast.p3s3.heldout &lt; fast.p2s4.heldout</span></dd>
+<dt>min_samples</dt><dd>267</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.59193</dd>
+<dt>proposed at cycle</dt><dd>903</dd>
+<dt>resolved at cycle</dt><dd>903</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 903; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-233</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.435851, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, five-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow cost model gives the higher-order method enough effective accuracy benefit to outweigh its additional fixed-point work.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, five-stage cell should retain lower held-out error if the reversal is genuinely cost-model-driven.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s5.heldout &lt; slow.p2s5.heldout AND fast.p2s5.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.435851</dd>
+<dt>proposed at cycle</dt><dd>904</dd>
+<dt>resolved at cycle</dt><dd>904</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 904; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-234</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 1e+09, n = 4933</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, three-stage archive cell does better than the order-3, six-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>AVR-like stage overhead should favor the shorter method enough to outweigh the six-stage cell&#x27;s added approximation flexibility.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, six-stage cell should retain lower held-out error if the reversal is specifically caused by AVR-like stage overhead.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p3s3.heldout &lt; avr_approx.p3s6.heldout AND slow.p3s6.heldout &lt; slow.p3s3.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>4933</dd>
+<dt>effect_size</dt><dd>1e+09</dd>
+<dt>proposed at cycle</dt><dd>905</dd>
+<dt>resolved at cycle</dt><dd>905</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 905; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-235</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.928438, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, four-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow cost model rewards the higher-order cell&#x27;s accuracy enough to offset its additional stage cost.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, four-stage cell should instead have lower held-out error if the mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s5.heldout &lt; slow.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>267</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.928438</dd>
+<dt>proposed at cycle</dt><dd>906</dd>
+<dt>resolved at cycle</dt><dd>906</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 906; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-236</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.928438, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, four-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow cost model rewards the additional stage and higher order enough to improve generalization despite their greater computational expense.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, four-stage cell should instead have lower held-out error if the mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s5.heldout &lt; slow.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>267</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.928438</dd>
+<dt>proposed at cycle</dt><dd>907</dd>
+<dt>resolved at cycle</dt><dd>907</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 907; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-237</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, six-stage archive cell does better than the order-2, two-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>Cheap stages let the six-stage method exploit its higher order without incurring a prohibitive execution penalty.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-2, two-stage cell should beat the order-4, six-stage cell if stage-cost sensitivity drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p4s6.heldout &lt; fast.p2s2.heldout AND slow.p2s2.heldout &lt; slow.p4s6.heldout</span></dd>
+<dt>min_samples</dt><dd>40</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>908</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-238</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.337213, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-2, five-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>Under the slow cost model, the extra order reduces truncation error enough to outweigh the four-stage cell&#x27;s per-step cost disadvantage.</dd>
+<dt>control</dt><dd>If this mechanism is real, the order-2, five-stage cell should beat the order-3, four-stage cell under the fast cost model.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s4.heldout &lt; slow.p2s5.heldout AND fast.p2s5.heldout &lt; fast.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.337213</dd>
+<dt>proposed at cycle</dt><dd>909</dd>
+<dt>resolved at cycle</dt><dd>909</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 909; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-239</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.02562, n = 17689</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-3, four-stage cell on search error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast cost model rewards the six-stage method&#x27;s greater optimization flexibility enough to offset its additional stage cost.</dd>
+<dt>control</dt><dd>If this mechanism is real, the order-3, four-stage cell should beat the six-stage cell on search error under the slow cost model.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s6.search &lt; fast.p3s4.search AND slow.p3s4.search &lt; slow.p3s6.search</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>17689</dd>
+<dt>effect_size</dt><dd>0.02562</dd>
+<dt>proposed at cycle</dt><dd>910</dd>
+<dt>resolved at cycle</dt><dd>910</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 910; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-240</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.316027, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, four-stage archive cell does better than the order-2, three-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The AVR-approximate model rewards the four-stage cell&#x27;s greater scheduling flexibility enough to offset its additional stage cost.</dd>
+<dt>control</dt><dd>Under the fast cost model, the lower-overhead three-stage cell should instead achieve lower held-out error.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p2s4.heldout &lt; avr_approx.p2s3.heldout AND fast.p2s3.heldout &lt; fast.p2s4.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.316027</dd>
+<dt>proposed at cycle</dt><dd>912</dd>
+<dt>resolved at cycle</dt><dd>912</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 912; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-241</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.316027, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, four-stage archive cell does better than the order-2, three-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>AVR-like instruction costs favor the four-stage method&#x27;s coefficient structure enough to offset its extra stage.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, three-stage cell should beat the order-2, four-stage cell.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p2s4.heldout &lt; avr_approx.p2s3.heldout AND fast.p2s3.heldout &lt; fast.p2s4.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.316027</dd>
+<dt>proposed at cycle</dt><dd>913</dd>
+<dt>resolved at cycle</dt><dd>913</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 913; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-242</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.713493, n = 296</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, three-stage archive cell does better than the order-3, six-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast cost model favors the lower stage count enough to outweigh the accuracy benefit of higher order.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, six-stage cell should beat the order-2, three-stage cell if the mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s3.heldout &lt; fast.p3s6.heldout AND slow.p3s6.heldout &lt; slow.p2s3.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>296</dd>
+<dt>effect_size</dt><dd>0.713493</dd>
+<dt>proposed at cycle</dt><dd>914</dd>
+<dt>resolved at cycle</dt><dd>914</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 914; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-243</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, four-stage archive cell does better than the order-3, six-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>Fast-cost optimization favors the four-stage method because its lower stage count reduces execution overhead enough to outweigh the six-stage method&#x27;s extra approximation capacity.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, six-stage cell should instead achieve lower held-out error if stage-cost sensitivity drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p4s4.heldout &lt; fast.p3s6.heldout AND slow.p3s6.heldout &lt; slow.p4s4.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>915</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-244</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.79477, n = 14871</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-3, five-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast cost model favors the four-stage method because its lower stage overhead outweighs the fifth stage&#x27;s accuracy benefit.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, five-stage cell should instead beat the order-3, four-stage cell on held-out error.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s4.heldout &lt; fast.p3s5.heldout AND slow.p3s5.heldout &lt; slow.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>14871</dd>
+<dt>effect_size</dt><dd>0.79477</dd>
+<dt>proposed at cycle</dt><dd>916</dd>
+<dt>resolved at cycle</dt><dd>916</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 916; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-245</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.960291, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, three-stage archive cell does better than the order-2, five-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>Under the fast cost model, the higher-order three-stage method gains accuracy without incurring the overhead that makes additional stages advantageous.</dd>
+<dt>control</dt><dd>If this mechanism is real, the order-2, five-stage cell should beat the order-3, three-stage cell under the slow cost model.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s3.heldout &lt; fast.p2s5.heldout AND slow.p2s5.heldout &lt; slow.p3s3.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.960291</dd>
+<dt>proposed at cycle</dt><dd>917</dd>
+<dt>resolved at cycle</dt><dd>917</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 917; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-246</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 0.782216, n = 62</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, six-stage archive cell does better than the order-2, five-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow cost model rewards the additional stage because its accuracy gain outweighs its evaluation overhead.</dd>
+<dt>control</dt><dd>Under the fast cost model, the five-stage cell should beat the six-stage cell if stage overhead drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p2s6.heldout &lt; slow.p2s5.heldout AND fast.p2s5.heldout &lt; fast.p2s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>62</dd>
+<dt>effect_size</dt><dd>0.782216</dd>
+<dt>proposed at cycle</dt><dd>918</dd>
+<dt>resolved at cycle</dt><dd>918</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 918; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-247</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>With stage count fixed, the slow cost model rewards the additional accuracy constraints of fourth order enough to overcome their optimization burden.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead have lower held-out error if the reversal is genuinely cost-model driven.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p4s6.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p4s6.heldout</span></dd>
+<dt>min_samples</dt><dd>40</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>940</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-248</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 1.6758, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, six-stage archive cell does better than the order-2, four-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>AVR instruction costs reward the six-stage method&#x27;s richer stability structure enough to offset its additional stages.</dd>
+<dt>control</dt><dd>Under the fast cost model, the four-stage cell should beat the six-stage cell because uniform stage overhead removes that advantage.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p2s6.heldout &lt; avr_approx.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p2s6.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>1.6758</dd>
+<dt>proposed at cycle</dt><dd>941</dd>
+<dt>resolved at cycle</dt><dd>941</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 941; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-249</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>At equal stage count, the AVR-approximate objective rewards the higher-order cell&#x27;s improved truncation accuracy enough to offset its added arithmetic.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead have lower held-out error because simpler order conditions favor cheaper execution.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p4s6.heldout &lt; avr_approx.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p4s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>942</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-250</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, four-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow cost model rewards the higher-order cell&#x27;s accuracy enough to offset its stage-efficiency disadvantage.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead have lower held-out error if the mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p4s4.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p4s4.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>943</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-251</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0587287, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>With stage count fixed, the slow model rewards the order-3 cell&#x27;s greater accuracy enough to offset its added computational complexity.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead have lower held-out error if the mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0587287</dd>
+<dt>proposed at cycle</dt><dd>944</dd>
+<dt>resolved at cycle</dt><dd>944</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 944; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-252</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0590473, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, six-stage archive cell does better than the order-3, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow cost model rewards the lower-order cell&#x27;s reduced arithmetic burden while retaining the stability benefits of six stages.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, six-stage cell should instead achieve lower held-out error.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p2s6.heldout &lt; slow.p3s6.heldout AND fast.p3s6.heldout &lt; fast.p2s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0590473</dd>
+<dt>proposed at cycle</dt><dd>945</dd>
+<dt>resolved at cycle</dt><dd>945</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 945; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-253</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, four-stage archive cell does better than the order-2, six-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The AVR-weighted objective favors the higher-order four-stage scheme because its added algebraic accuracy outweighs the cost of its more complex stages.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead achieve lower held-out error if AVR-specific instruction costs drive the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p4s4.heldout &lt; avr_approx.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p4s4.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>946</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-254</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 1.88563, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, three-stage archive cell does better than the order-2, six-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast cost model favors the lower stage overhead of the three-stage method, while slower stage execution gives the six-stage method enough representational benefit to win.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-2, six-stage cell should beat the order-2, three-stage cell on held-out error.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s3.heldout &lt; fast.p2s6.heldout AND slow.p2s6.heldout &lt; slow.p2s3.heldout</span></dd>
+<dt>min_samples</dt><dd>40</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>1.88563</dd>
+<dt>proposed at cycle</dt><dd>947</dd>
+<dt>resolved at cycle</dt><dd>947</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 947; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-255</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0585255, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>At equal stage count, the slow cost model rewards the greater accuracy structure of third-order methods enough to offset their added arithmetic.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead have lower held-out error if cost-sensitive arithmetic is the mechanism.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>62</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0585255</dd>
+<dt>proposed at cycle</dt><dd>948</dd>
+<dt>resolved at cycle</dt><dd>948</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 948; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-256</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0587693, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>With stage count fixed, the slow cost model rewards the additional order conditions because their accuracy gain outweighs their implementation overhead.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead have lower held-out error if cost-dependent overhead drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0587693</dd>
+<dt>proposed at cycle</dt><dd>950</dd>
+<dt>resolved at cycle</dt><dd>950</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 950; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-257</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, six-stage archive cell does better than the order-4, four-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast cost model rewards the six-stage method&#x27;s extra optimization freedom enough to offset its lower formal order.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-4, four-stage cell should instead beat the order-2, six-stage cell if the advantage is cost-model-specific.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s6.heldout &lt; fast.p4s4.heldout AND slow.p4s4.heldout &lt; slow.p2s6.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>951</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-258</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0585364, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>With stage count fixed, the slow model can exploit the stronger order conditions of the order-3 method without incurring additional stage overhead.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should beat the order-3, six-stage cell if the advantage is genuinely cost-model dependent.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>62</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0585364</dd>
+<dt>proposed at cycle</dt><dd>952</dd>
+<dt>resolved at cycle</dt><dd>952</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 952; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-259</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0586274, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow cost model rewards the six-stage order-3 cell&#x27;s extra accuracy constraints enough to offset its fixed-point roundoff amplification.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead have lower held-out error if the advantage is cost-model-specific.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0586274</dd>
+<dt>proposed at cycle</dt><dd>953</dd>
+<dt>resolved at cycle</dt><dd>953</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 953; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-260</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.619457, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>When stages are costly, the higher-order five-stage method should achieve better accuracy per unit cost than the lower-order six-stage method.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should retain the lower held-out error because its extra stage is less heavily penalized.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s5.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.619457</dd>
+<dt>proposed at cycle</dt><dd>954</dd>
+<dt>resolved at cycle</dt><dd>954</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 954; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-261</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 1.78224, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, six-stage archive cell does better than the order-3, three-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The extra stages provide enough coefficient freedom to reduce fixed-point rounding and internal-error amplification when slow arithmetic makes that freedom affordable.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, three-stage cell should instead beat the order-2, six-stage cell because the additional stages incur a larger relative cost.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p2s6.heldout &lt; slow.p3s3.heldout AND fast.p3s3.heldout &lt; fast.p2s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>1.78224</dd>
+<dt>proposed at cycle</dt><dd>955</dd>
+<dt>resolved at cycle</dt><dd>955</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 955; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-262</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0596747, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, six-stage archive cell does better than the order-3, six-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>At equal stage count, the fast model rewards the order-2 cell&#x27;s greater coefficient freedom and lower cycle burden, allowing better tuning against fixed-point error.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, six-stage cell should instead achieve lower held-out error if the reversal is genuinely cost-model driven.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s6.heldout &lt; fast.p3s6.heldout AND slow.p3s6.heldout &lt; slow.p2s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0596747</dd>
+<dt>proposed at cycle</dt><dd>956</dd>
+<dt>resolved at cycle</dt><dd>956</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 956; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-263</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0600254, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, six-stage archive cell does better than the order-3, six-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>AVR-specific instruction costs favor the order-2 tableau&#x27;s simpler fixed-point implementation enough to offset its lower formal order.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, six-stage cell should instead have lower held-out error if AVR-specific implementation cost drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p2s6.heldout &lt; avr_approx.p3s6.heldout AND fast.p3s6.heldout &lt; fast.p2s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0600254</dd>
+<dt>proposed at cycle</dt><dd>957</dd>
+<dt>resolved at cycle</dt><dd>957</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 957; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-264</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 2.69859, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The higher-order four-stage method uses fewer costly stage evaluations while retaining enough tableau freedom to suppress implementation-level error.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should beat the order-3, four-stage cell if costly stage evaluations drive the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s4.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>114</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>2.69859</dd>
+<dt>proposed at cycle</dt><dd>958</dd>
+<dt>resolved at cycle</dt><dd>958</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 958; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-265</span> <span class="badge badge-refuted">refuted</span> <span class="when">effect size 1.78224, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, six-stage archive cell does better than the order-3, three-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>AVR-weighted optimization rewards the six-stage cell&#x27;s extra tableau freedom enough to offset its lower formal order.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, three-stage cell should instead have lower held-out error if AVR-specific stage costs drive the advantage.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p2s6.heldout &lt; avr_approx.p3s3.heldout AND fast.p3s3.heldout &lt; fast.p2s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>1.78224</dd>
+<dt>proposed at cycle</dt><dd>960</dd>
+<dt>resolved at cycle</dt><dd>960</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 960; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-266</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0613037, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>At equal stage count, the fast cost model makes the third-order constraints improve truncation error without imposing an additional cycle penalty.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-2, six-stage cell should instead have lower held-out error if implementation overhead reverses the advantage.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s6.heldout &lt; fast.p2s6.heldout AND slow.p2s6.heldout &lt; slow.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>114</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0613037</dd>
+<dt>proposed at cycle</dt><dd>961</dd>
+<dt>resolved at cycle</dt><dd>961</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 961; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-267</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 2.70586, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow model makes the four-stage cell&#x27;s lower execution cost valuable enough for its higher formal order to dominate the six-stage cell&#x27;s extra optimization freedom.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead beat the order-3, four-stage cell because its additional stages are less costly.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s4.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>2.70586</dd>
+<dt>proposed at cycle</dt><dd>962</dd>
+<dt>resolved at cycle</dt><dd>962</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 962; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-268</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0615347, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>At equal stage count, the slow cost model can exploit the order-3 cell&#x27;s stronger truncation-error control without imposing an additional stage-cost penalty.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead achieve lower held-out error if the advantage is genuinely cost-model-specific.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0615347</dd>
+<dt>proposed at cycle</dt><dd>963</dd>
+<dt>resolved at cycle</dt><dd>963</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 963; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-269</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0618897, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, six-stage archive cell does better than the order-3, six-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>With stage count fixed, the fast model favors the greater coefficient freedom and lower order-condition burden of the order-2 cell, enabling coefficients with less fixed-point roundoff amplification.</dd>
+<dt>control</dt><dd>If this mechanism is real, the order-3, six-stage cell should beat the order-2, six-stage cell under the slow cost model, where improved truncation accuracy can outweigh roundoff-sensitive coefficient choices.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s6.heldout &lt; fast.p3s6.heldout AND slow.p3s6.heldout &lt; slow.p2s6.heldout</span></dd>
+<dt>min_samples</dt><dd>114</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0618897</dd>
+<dt>proposed at cycle</dt><dd>964</dd>
+<dt>resolved at cycle</dt><dd>964</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 964; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-270</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0612412, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, six-stage archive cell does better than the order-3, six-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>AVR-like fixed-point arithmetic makes the additional order constraints amplify quantization error at equal stage count.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, six-stage cell should beat the order-2, six-stage cell if quantization is the cause.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p2s6.heldout &lt; avr_approx.p3s6.heldout AND fast.p3s6.heldout &lt; fast.p2s6.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0612412</dd>
+<dt>proposed at cycle</dt><dd>965</dd>
+<dt>resolved at cycle</dt><dd>965</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 965; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-271</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0612454, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, six-stage archive cell does better than the order-3, six-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>At equal stage count, the fast cost model rewards the greater coefficient flexibility of the lower-order method.</dd>
+<dt>control</dt><dd>If this mechanism is real, the order-3, six-stage cell should beat the order-2, six-stage cell under the slow cost model.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s6.heldout &lt; fast.p3s6.heldout AND slow.p3s6.heldout &lt; slow.p2s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0612454</dd>
+<dt>proposed at cycle</dt><dd>966</dd>
+<dt>resolved at cycle</dt><dd>966</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 966; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-272</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, six-stage archive cell does better than the order-4, six-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>With stage count fixed, the fast cost model favors the less constrained order-2 search space, allowing lower held-out error.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-4, six-stage cell should instead have lower held-out error if the advantage is cost-model-specific.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s6.heldout &lt; fast.p4s6.heldout AND slow.p4s6.heldout &lt; slow.p2s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>967</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-273</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0615298, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>With stage count fixed, the slow model rewards the stronger truncation-error control of third order enough to outweigh its fixed-point sensitivity.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead have lower held-out error if the reversal is genuinely cost-model-driven.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0615298</dd>
+<dt>proposed at cycle</dt><dd>968</dd>
+<dt>resolved at cycle</dt><dd>968</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 968; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-274</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, four-stage archive cell does better than the order-2, six-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast cost model favors the four-stage method because fewer stage evaluations leave more search budget for exploiting its higher-order accuracy.</dd>
+<dt>control</dt><dd>If this mechanism is real, the order-2, six-stage cell should beat the order-4, four-stage cell under the slow cost model.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p4s4.heldout &lt; fast.p2s6.heldout AND slow.p2s6.heldout &lt; slow.p4s4.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>970</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-275</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.06249, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>With stage count fixed, the slow model can favor the order-3 cell&#x27;s extra accuracy constraints because its coefficient implementation incurs less consequential fixed-point amplification.</dd>
+<dt>control</dt><dd>If this mechanism is real, the order-2, six-stage cell should beat the order-3, six-stage cell under the fast cost model.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.06249</dd>
+<dt>proposed at cycle</dt><dd>971</dd>
+<dt>resolved at cycle</dt><dd>971</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 971; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-276</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.619457, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-2, six-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The higher-order five-stage method should use AVR-weighted work more effectively by reducing truncation error without paying for a sixth stage.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead have lower held-out error if the advantage is caused by AVR-specific stage costs.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p3s5.heldout &lt; avr_approx.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.619457</dd>
+<dt>proposed at cycle</dt><dd>972</dd>
+<dt>resolved at cycle</dt><dd>972</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 972; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-277</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.733836, n = 296</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, three-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>The extra stages and higher order provide coefficient freedom that reduces fixed-point truncation error when AVR-like operation costs are optimized.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, three-stage cell should retain lower held-out error if the advantage is specifically caused by AVR-like costs.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p3s6.heldout &lt; avr_approx.p2s3.heldout AND fast.p2s3.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>296</dd>
+<dt>effect_size</dt><dd>0.733836</dd>
+<dt>proposed at cycle</dt><dd>973</dd>
+<dt>resolved at cycle</dt><dd>973</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 973; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-278</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.72931, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-2, four-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>At equal stage count, the extra order condition reduces implementation-level truncation error enough to outweigh AVR arithmetic effects.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, four-stage cell should retain lower held-out error if the advantage is specific to AVR-approximate arithmetic.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p3s4.heldout &lt; avr_approx.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>40</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.72931</dd>
+<dt>proposed at cycle</dt><dd>974</dd>
+<dt>resolved at cycle</dt><dd>974</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 974; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-279</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0614426, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, six-stage archive cell does better than the order-3, six-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>At equal stage count, the lower-order tableau has freer coefficients that can reduce fixed-point rounding amplification under AVR-like arithmetic.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, six-stage cell should retain lower held-out error if the advantage is specific to AVR-like arithmetic.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p2s6.heldout &lt; avr_approx.p3s6.heldout AND fast.p3s6.heldout &lt; fast.p2s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0614426</dd>
+<dt>proposed at cycle</dt><dd>975</dd>
+<dt>resolved at cycle</dt><dd>975</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 975; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-280</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-4, four-stage archive cell does better than the order-3, four-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>At equal stage count, the fast model rewards the higher-order cell&#x27;s accuracy enough to outweigh its added arithmetic complexity.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, four-stage cell should instead have lower held-out error if cost-dependent arithmetic complexity drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p4s4.heldout &lt; fast.p3s4.heldout AND slow.p3s4.heldout &lt; slow.p4s4.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>976</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-281</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, three-stage archive cell does better than the order-4, four-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast model rewards the lower stage count enough that reduced cycle exposure and fixed-point roundoff amplification outweigh the fourth-order cell&#x27;s higher formal accuracy.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-4, four-stage cell should instead achieve lower held-out error if the cost-sensitive mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s3.heldout &lt; fast.p4s4.heldout AND slow.p4s4.heldout &lt; slow.p3s3.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>977</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-282</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.062351, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>At equal stage count, the slow model rewards the order-3 cell&#x27;s lower truncation error enough to outweigh its fixed-point sensitivity.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead have lower held-out error if the mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.062351</dd>
+<dt>proposed at cycle</dt><dd>978</dd>
+<dt>resolved at cycle</dt><dd>978</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 978; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-283</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0632515, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>With stage count fixed, the slow model can afford the order-3 constraints while benefiting from their lower truncation error.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should beat the order-3, six-stage cell because its additional free parameters can better optimize fixed-point behavior.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0632515</dd>
+<dt>proposed at cycle</dt><dd>980</dd>
+<dt>resolved at cycle</dt><dd>980</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 980; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-284</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0634585, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>With stage count fixed, the slow model can exploit the tighter truncation-error control of third-order tableaus without changing stage-related cost.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead have lower held-out error if the advantage is genuinely cost-model dependent.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0634585</dd>
+<dt>proposed at cycle</dt><dd>981</dd>
+<dt>resolved at cycle</dt><dd>981</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 981; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-285</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0638253, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, six-stage archive cell does better than the order-3, six-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>AVR-like operation costs favor the simpler second-order tableau when both methods use six stages.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-3, six-stage cell should instead have lower held-out error.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p2s6.heldout &lt; avr_approx.p3s6.heldout AND fast.p3s6.heldout &lt; fast.p2s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0638253</dd>
+<dt>proposed at cycle</dt><dd>982</dd>
+<dt>resolved at cycle</dt><dd>982</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 982; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-286</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 2.65687, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow cost model penalizes the two extra stages enough that search favors the more accurate four-stage, third-order structure.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead have lower held-out error if stage-cost sensitivity causes the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s4.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>2.65687</dd>
+<dt>proposed at cycle</dt><dd>983</dd>
+<dt>resolved at cycle</dt><dd>983</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 983; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-287</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0642983, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, six-stage archive cell does better than the order-3, six-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>With equal stage count, the fast model favors the lower-order cell because its simpler constraints leave more freedom to minimize fixed-point error.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, six-stage cell should instead beat the order-2, six-stage cell.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s6.heldout &lt; fast.p3s6.heldout AND slow.p3s6.heldout &lt; slow.p2s6.heldout</span></dd>
+<dt>min_samples</dt><dd>40</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0642983</dd>
+<dt>proposed at cycle</dt><dd>984</dd>
+<dt>resolved at cycle</dt><dd>984</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 984; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-288</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 2.65903, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow cost model penalizes the two extra stages enough that the higher-order four-stage method has the better accuracy-cost tradeoff.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should beat the order-3, four-stage cell if stage-cost sensitivity drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s4.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>2.65903</dd>
+<dt>proposed at cycle</dt><dd>985</dd>
+<dt>resolved at cycle</dt><dd>985</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 985; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-289</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.029923, n = 14924</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell has lower search error than the order-3, five-stage cell under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast cost model rewards the additional stage&#x27;s optimization flexibility enough to offset its execution cost.</dd>
+<dt>control</dt><dd>If this mechanism is real, the five-stage cell should have lower search error under the slow cost model, where the extra stage is more heavily penalized.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s6.search &lt; fast.p3s5.search AND slow.p3s5.search &lt; slow.p3s6.search</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>14924</dd>
+<dt>effect_size</dt><dd>0.029923</dd>
+<dt>proposed at cycle</dt><dd>986</dd>
+<dt>resolved at cycle</dt><dd>986</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 986; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-290</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.064765, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>With equal stage count, the slow model rewards the order-3 cell&#x27;s greater truncation accuracy enough to offset its fixed-point overhead.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead have lower held-out error if slow-cost weighting drives the advantage.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.064765</dd>
+<dt>proposed at cycle</dt><dd>987</dd>
+<dt>resolved at cycle</dt><dd>987</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 987; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-291</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0651687, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>With stage count fixed, the slow model rewards the order-3 cell&#x27;s greater truncation-error suppression enough to offset its fixed-point roundoff sensitivity.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead have lower held-out error if cycle-sensitive selection drives the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0651687</dd>
+<dt>proposed at cycle</dt><dd>988</dd>
+<dt>resolved at cycle</dt><dd>988</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 988; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-292</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 2.66778, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow cost model penalizes the two additional stages enough that the higher-order four-stage method has the better accuracy-cost tradeoff.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead achieve lower held-out error if inexpensive extra stages drive the reversal.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s4.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>2.66778</dd>
+<dt>proposed at cycle</dt><dd>990</dd>
+<dt>resolved at cycle</dt><dd>990</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 990; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-293</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, five-stage archive cell does better than the order-4, four-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>Under the fast cost model, the extra fourth-order constraints reduce coefficient flexibility more than they improve accuracy at this stage count.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-4, four-stage cell should instead beat the order-3, five-stage cell if the mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p3s5.heldout &lt; fast.p4s4.heldout AND slow.p4s4.heldout &lt; slow.p3s5.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>991</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-294</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.437145, n = 249</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, five-stage archive cell does better than the order-3, five-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>At equal stage count, the fast model rewards the greater coefficient freedom of the lower-order cell, allowing it to reduce fixed-point roundoff amplification.</dd>
+<dt>control</dt><dd>If coefficient freedom drives the advantage, the slow cost model should instead favor the order-3, five-stage cell because its stronger truncation-error constraints matter more when arithmetic overhead is less dominant.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s5.heldout &lt; fast.p3s5.heldout AND slow.p3s5.heldout &lt; slow.p2s5.heldout</span></dd>
+<dt>min_samples</dt><dd>40</dd>
+<dt>n_samples</dt><dd>249</dd>
+<dt>effect_size</dt><dd>0.437145</dd>
+<dt>proposed at cycle</dt><dd>992</dd>
+<dt>resolved at cycle</dt><dd>992</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 992; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-295</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 2.67266, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>The slow model makes the six-stage method&#x27;s extra fixed-point operations and internal roundoff amplification outweigh its additional optimization freedom.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead beat the order-3, four-stage cell.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s4.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>2.67266</dd>
+<dt>proposed at cycle</dt><dd>993</dd>
+<dt>resolved at cycle</dt><dd>993</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 993; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-296</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0640028, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>At equal stage count, third-order consistency should exploit the slow model&#x27;s lower relative penalty for arithmetic to reduce truncation error.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead have lower held-out error if the mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0640028</dd>
+<dt>proposed at cycle</dt><dd>994</dd>
+<dt>resolved at cycle</dt><dd>994</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 994; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-297</span> <span class="badge badge-open">open</span> <span class="when">effect size n/a, n = n/a</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, five-stage archive cell does better than the order-4, four-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>Fast-cost selection favors the lower-order cell because its five stages provide error-tuning freedom without the constraints and overhead of satisfying fourth-order conditions.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-4, four-stage cell should instead achieve lower held-out error if the cost-sensitive mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s5.heldout &lt; fast.p4s4.heldout AND slow.p4s4.heldout &lt; slow.p2s5.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>n/a</dd>
+<dt>effect_size</dt><dd>n/a</dd>
+<dt>proposed at cycle</dt><dd>995</dd>
+<dt>resolved at cycle</dt><dd>n/a</dd>
+<dt>provenance</dt><dd>open: the ledger resolves it automatically once every cell the predicate references has at least min_samples records</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-298</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.930796, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-2, four-stage archive cell does better than the order-3, five-stage cell on held-out error under the fast cost model.</dd>
+<dt>mechanism</dt><dd>The fast model favors the simpler four-stage tableau because its lower execution and fixed-point accumulation burden outweighs the fifth stage&#x27;s accuracy benefit.</dd>
+<dt>control</dt><dd>Under the slow cost model, the order-3, five-stage cell should instead achieve lower held-out error if the stage-cost mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">fast.p2s4.heldout &lt; fast.p3s5.heldout AND slow.p3s5.heldout &lt; slow.p2s4.heldout</span></dd>
+<dt>min_samples</dt><dd>267</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.930796</dd>
+<dt>proposed at cycle</dt><dd>996</dd>
+<dt>resolved at cycle</dt><dd>996</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 996; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-299</span> <span class="badge badge-inconclusive">inconclusive</span> <span class="when">effect size 0.0650104, n = 114</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, six-stage archive cell does better than the order-2, six-stage cell on held-out error under the slow cost model.</dd>
+<dt>mechanism</dt><dd>With stage count fixed, the slow model makes the additional order conditions more valuable than the implementation-specific advantages available to the order-2 method.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, six-stage cell should instead have lower held-out error if the mechanism is real.</dd>
+<dt>predicate</dt><dd><span class="mono">slow.p3s6.heldout &lt; slow.p2s6.heldout AND fast.p2s6.heldout &lt; fast.p3s6.heldout</span></dd>
+<dt>min_samples</dt><dd>30</dd>
+<dt>n_samples</dt><dd>114</dd>
+<dt>effect_size</dt><dd>0.0650104</dd>
+<dt>proposed at cycle</dt><dd>997</dd>
+<dt>resolved at cycle</dt><dd>997</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 997; the model never writes verdicts</dd>
+</dl></div></details>
+<details class="fold"><summary><span class="mono">H-300</span> <span class="badge badge-supported">supported</span> <span class="when">effect size 0.74373, n = 267</span></summary><div><dl class="meta">
+<dt>statement</dt><dd>The order-3, four-stage archive cell does better than the order-2, four-stage cell on held-out error under the AVR-approximate cost model.</dd>
+<dt>mechanism</dt><dd>At equal stage count, the AVR-weighted search favors the tighter truncation-error structure of third order enough to offset its fixed-point sensitivity.</dd>
+<dt>control</dt><dd>Under the fast cost model, the order-2, four-stage cell should instead achieve lower held-out error if AVR-specific weighting drives the advantage.</dd>
+<dt>predicate</dt><dd><span class="mono">avr_approx.p3s4.heldout &lt; avr_approx.p2s4.heldout AND fast.p2s4.heldout &lt; fast.p3s4.heldout</span></dd>
+<dt>min_samples</dt><dd>20</dd>
+<dt>n_samples</dt><dd>267</dd>
+<dt>effect_size</dt><dd>0.74373</dd>
+<dt>proposed at cycle</dt><dd>998</dd>
+<dt>resolved at cycle</dt><dd>998</dd>
+<dt>provenance</dt><dd>verdict computed by the ledger from archive cell statistics at cycle 998; the model never writes verdicts</dd>
 </dl></div></details>
 <footer>
 <p>rk-harness findings: Q15 fixed point, equal cycle budget, Cortex-M0+ cost models.</p>
