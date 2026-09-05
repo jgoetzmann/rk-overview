@@ -349,7 +349,7 @@ click.</span></p>
 
 <ul class="rbul">
 <li><span class="rlab">discovery</span>Discovered integrators lead the classical anchors
-in <strong>14 of 15 archive cells</strong> and on <strong>4 of
+in <strong>15 of 16 archive cells</strong> and on <strong>4 of
 5 practical embedded problems</strong> at an equal 65,536-cycle budget (best archive
 cell <strong>2.95&times; lower error</strong>; practical-suite median ratio 0.475).
 <a class="golink" href="results.html">key findings</a></li>
@@ -360,14 +360,14 @@ r&nbsp;=&nbsp;0.98 cycle model vs time), with the lower error on <strong>5 of
 7 problems</strong>. <a class="golink" href="tradeoffs.html#speed">measured
 speed</a></li>
 <li><span class="rlab">infrastructure</span>An autonomous discovery harness (24/7
-containerized search, <strong>1,129 tests</strong>, a hash-pinned verifier, an LLM in
+containerized search, <strong>1,166 tests</strong>, a hash-pinned verifier, an LLM in
 the loop under guarded publication) found and mechanized the <strong>floor-rounding
 bias</strong> that reorders classical methods in 16-bit arithmetic.
 <a class="golink" href="methodology.html">methodology</a></li>
 </ul>
 
 <h2 id="scale">What it took</h2>
-<div class="chips"><div class="chip"><div class="v">67,692</div><div class="k">verified tableaus archived</div></div><div class="chip"><div class="v">1,011</div><div class="k">search cycles completed</div></div><div class="chip"><div class="v">4,400</div><div class="k">candidates rejected by the verifier</div></div><div class="chip"><div class="v">17</div><div class="k">MAP-Elites grid cells occupied</div></div></div>
+<div class="chips"><div class="chip"><div class="v">80,748</div><div class="k">verified tableaus archived</div></div><div class="chip"><div class="v">1,147</div><div class="k">search cycles completed</div></div><div class="chip"><div class="v">5,372</div><div class="k">candidates rejected by the verifier</div></div><div class="chip"><div class="v">18</div><div class="k">MAP-Elites grid cells occupied</div></div></div>
 <h2 id="source">The source</h2>
 <p class="lead">Three repositories, so every number above can be traced to the code that produced it.</p>
 <div class="grid-cards"><a class="gcard" href="https://github.com/jgoetzmann/rk-harness"><div class="t">rk-harness &#8599;</div><div class="d">The package the container runs: verifier, cost model, evaluator, search, site generator, and the test suite that gates all of it.</div></a><a class="gcard" href="https://github.com/jgoetzmann/rk-findings"><div class="t">rk-findings &#8599;</div><div class="d">The machine-generated numbers site. Written by the container once per cycle, with no human in the loop.</div></a><a class="gcard" href="https://github.com/jgoetzmann/rk-overview"><div class="t">rk-overview &#8599;</div><div class="d">This site, and the tools that build it from the run archive.</div></a></div>

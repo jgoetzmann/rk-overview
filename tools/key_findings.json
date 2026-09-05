@@ -9,8 +9,8 @@
   "budget_cycles": 65536,
   "cost_model": "m0plus_fast",
   "rounding_mode": "floor (ASRS), per HANDOFF 4.2",
-  "archive_records": 67692,
-  "archive_last_cycle_id": 1010,
+  "archive_records": 80748,
+  "archive_last_cycle_id": 1146,
   "archive_dates": [
    "2026-08-29",
    "2026-08-30",
@@ -18,7 +18,8 @@
    "2026-09-01",
    "2026-09-02",
    "2026-09-03",
-   "2026-09-04"
+   "2026-09-04",
+   "2026-09-05"
   ],
   "classical_seed_check": "all 8 classical anchors identified by tableau content-hash; each appears exactly once, at cycle_id 0 / seed 0",
   "floor_round_vs_archive_max_rel_diff": 0.0,
@@ -26,19 +27,19 @@
   "nonfinite_written_as_null": 6
  },
  "efficiency": {
-  "verdict": "Yes. At the shared 65,536-cycle budget under floor-rounded Q15, 14 of 15 archive cells holding a discovered method beat every classical anchor of equal or lower per-step cost on held-out error; the best discovered method (order 2, 3 stages, 22 cycles/step) reaches held-out error 0.0286 against 0.0844 for the best classical anchor (midpoint), a 3.0x reduction. The remaining classical cells are euler (sole order-1 entry) and rk38, which no discovered 4-stage order-4 method displaced in its own cell.",
+  "verdict": "Yes. At the shared 65,536-cycle budget under floor-rounded Q15, 15 of 16 archive cells holding a discovered method beat every classical anchor of equal or lower per-step cost on held-out error; the best discovered method (order 2, 3 stages, 22 cycles/step) reaches held-out error 0.0286 against 0.0844 for the best classical anchor (midpoint), a 3.0x reduction. The remaining classical cells are euler (sole order-1 entry) and rk38, which no discovered 4-stage order-4 method displaced in its own cell.",
   "numbers": {
    "budget_cycles": 65536,
    "cost_model": "m0plus_fast",
    "rounding_mode": "floor (ASRS)",
-   "archive_records": 67692,
-   "unique_tableaus": 67692,
-   "last_cycle_id": 1010,
-   "grid_cells_total": 17,
-   "cells_held_by_discovered": 15,
+   "archive_records": 80748,
+   "unique_tableaus": 80748,
+   "last_cycle_id": 1146,
+   "grid_cells_total": 18,
+   "cells_held_by_discovered": 16,
    "cells_held_by_classical": 2,
-   "cells_where_discovered_beats_all_cheaper_or_equal_anchors": 14,
-   "median_error_ratio_discovered_over_anchor": 0.7145267355507311,
+   "cells_where_discovered_beats_all_cheaper_or_equal_anchors": 15,
+   "median_error_ratio_discovered_over_anchor": 0.715213015277578,
    "median_error_ratio_winning_cells": 0.7145267355507311,
    "best_error_ratio": 0.338892529701108,
    "best_discovered": {
@@ -271,6 +272,19 @@
      "tableau_hash": "4f501ec6a5ce8c6258fc99ab267807e5d5f35445e222252b1b5a82a15671416c",
      "best_cheaper_or_equal_anchor_error": 0.0844458969940956,
      "error_ratio_vs_best_cheaper_anchor": 0.5644575465772085
+    },
+    {
+     "kind": "discovered",
+     "name": null,
+     "order": 2,
+     "stages": 4,
+     "cycle_bucket": 1,
+     "cycles": 30,
+     "heldout_error": 0.08361675440981786,
+     "tier": "unreplicated",
+     "tableau_hash": "5fef0bd2b5fee5a8f7c9f5fd2ebca84942995c1310723b8c371865a5a7a1936b",
+     "best_cheaper_or_equal_anchor_error": 0.0844458969940956,
+     "error_ratio_vs_best_cheaper_anchor": 0.9901813751313967
     },
     {
      "kind": "classical",

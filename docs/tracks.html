@@ -304,7 +304,7 @@ so per-step cost stays deterministic. See
 <a href="design-decisions.html">design decisions</a> for the original reasoning.</p>
 
 <h2>Where the loop stands</h2>
-<div class="panel"><p style="margin:0 0 6px"><strong>Epoch 1</strong> <span class="badge badge-active">active</span> <span class="when">scored method class: explicit fixed-step Runge-Kutta</span></p><dl class="meta"><dt>last progress</dt><dd>2026-09-03 22:29 CT (heldout_verified)</dd><dt>saturation counter</dt><dd>0 consecutive saturating checks; 6 trigger a freeze</dd><dt>last check</dt><dd>2026-09-04 18:50 CT, verdict CONTINUE</dd><dt>falsification file</dt><dd>present</dd></dl></div>
+<div class="panel"><p style="margin:0 0 6px"><strong>Epoch 1</strong> <span class="badge badge-active">active</span> <span class="when">scored method class: explicit fixed-step Runge-Kutta</span></p><dl class="meta"><dt>last progress</dt><dd>2026-09-04 22:56 CT (new_cell)</dd><dt>saturation counter</dt><dd>0 consecutive saturating checks; 6 trigger a freeze</dd><dt>last check</dt><dd>2026-09-05 18:25 CT, verdict CONTINUE</dd><dt>falsification file</dt><dd>present</dd></dl></div>
 
 <p class="note">This panel is read from the run's state files
 (<code>events.jsonl</code>, <code>saturation_state.json</code>,
@@ -318,14 +318,14 @@ saturated. The freeze that once fired automatically on that signal is advisory n
 <h2>Current focus: the scored fixed-step search (epoch 1, live)</h2>
 
 <p>The scored search over explicit fixed-step tableaus at a 65,536-cycle budget is
-live. The archive holds <strong>67,692 verified records</strong> across
-1,011 cycles, with 17 grid cells occupied. The saturation orchestrator froze
+live. The archive holds <strong>80,748 verified records</strong> across
+1,147 cycles, with 18 grid cells occupied. The saturation orchestrator froze
 epoch 1 once, at the cycle-808 boundary, after its stale-progress checks tripped; the
 owner reopened the run and demoted the automatic freeze to advisory, and the panel
 above reads whatever the state files say now. The scientific yield is on the
 <a href="results.html">key findings page</a>: the floor-bias
 mechanism, the anchor reversal, the rc_thermal quantization floor, the closed phase-0
-result, and 14 of 15 discovered cells ahead of every
+result, and 15 of 16 discovered cells ahead of every
 cheaper-or-equal classical anchor.</p>
 <p>The paper-facing analysis that gates the epoch-2 handover has landed. The practical
 validation suite grew to <strong>8 problems</strong> by adding three moderately stiff
