@@ -98,12 +98,16 @@ def _collect_suite() -> tuple[list[tuple[str, int, str]], int]:
         tail = (proc.stdout[-800:] + proc.stderr[-800:]).strip()
         raise SystemExit("could not collect the test suite; run pytest in rk-harness "
                          f"first\n{tail}")
-    rows.sort(key=lambda r: int(r[0][1:]))
-    undescribed = [t for t, _n in rows if t not in _SUITE_DESC]
+    # A tier can span several files (test_t5_config_watch.py and test_t5_status.py both
+    # sit in T5), so counts are summed per tier rather than listed per file.
+    totals: dict[str, int] = {}
+    for tier, n in rows:
+        totals[tier] = totals.get(tier, 0) + n
+    undescribed = sorted(t for t in totals if t not in _SUITE_DESC)
     if undescribed:
         raise SystemExit(f"add {undescribed} to _SUITE_DESC in generate.py: the site says "
                          "what every test tier covers, so a new tier needs a description")
-    tiers = [(t, n, _SUITE_DESC[t]) for t, n in rows]
+    tiers = [(t, totals[t], _SUITE_DESC[t]) for t in sorted(totals, key=lambda k: int(k[1:]))]
     return tiers, sum(n for _t, n, _d in tiers)
 
 # Pre-flight report figures, from rk-harness docs/REVIEW-REPORT.md (2026-08-30 run):
