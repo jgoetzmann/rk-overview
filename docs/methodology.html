@@ -119,6 +119,41 @@ footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);
   font-size:12px;color:var(--text-3)}
 footer p{margin:3px 0;max-width:none}
 footer p.prov a{color:var(--text-2)}
+nav.tabs.sub2{margin-top:0;padding-bottom:2px}
+nav.tabs.sub2 a{font-size:12.5px;padding:4px 12px;border-radius:7px;color:var(--text-3)}
+nav.tabs.sub2 a:hover{color:var(--text-1)}
+nav.tabs.sub2 a.on{background:var(--surface-0);border:1px solid var(--line);
+  color:var(--text-1);font-weight:600;box-shadow:none}
+
+/* one-line ledger rows: the summary carries the whole record, the body carries prose */
+.ledger{min-width:820px}
+.ledhead,details.led>summary{display:grid;
+  grid-template-columns:14px 78px 104px 1fr 58px 62px 52px;
+  gap:12px;align-items:center;padding:6px 12px}
+.ledhead{font-size:11px;color:var(--text-2);font-weight:600;letter-spacing:.04em;
+  text-transform:uppercase}
+details.led{background:var(--surface-1);border:1px solid var(--line);border-radius:8px;
+  margin:4px 0;font-size:12.5px}
+details.led>summary{cursor:pointer;list-style:none;font-variant-numeric:tabular-nums}
+details.led>summary::-webkit-details-marker{display:none}
+details.led>summary::before{content:"+";color:var(--text-3);font-weight:600}
+details.led[open]>summary::before{content:"2"}
+details.led[open]>summary{border-bottom:1px solid var(--line)}
+details.led>div{padding:10px 16px 12px 40px}
+details.led .pred{font:12px ui-monospace,Consolas,monospace;color:var(--text-2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+details.led .num,.ledhead .num{text-align:right}
+details.led .badge{justify-self:start}
+details.led .mono{font-size:12px;color:var(--text-2)}
+details.led .rep{color:var(--text-3);font-weight:600}
+details.led table{font-size:12px;margin:6px 0 0}
+details.repeats{margin:10px 0;font-size:13px;color:var(--text-2);border:1px solid var(--line);
+  border-radius:8px;background:var(--surface-0)}
+details.repeats>summary{cursor:pointer;padding:6px 12px;color:var(--text-3);font-size:12.5px}
+details.repeats>summary:hover{color:var(--text-1)}
+details.repeats[open]>summary{border-bottom:1px solid var(--line);color:var(--text-2)}
+details.repeats>div{padding:4px 12px 8px}
+.hash a,a.hash{font:12px ui-monospace,Consolas,monospace}
 
 .herolead{font-size:17.5px;line-height:1.6;max-width:74ch}
 ul.rbul{list-style:none;margin:20px 0 8px;padding:0;max-width:104ch}
@@ -207,13 +242,49 @@ details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
 details.p0[open] summary::before{content:"\2212"}
 details.p0[open] summary{border-bottom:1px solid var(--line)}
 .p0body{padding:10px 16px 12px 40px}
+nav.tabs.sub2{margin-top:0;padding-bottom:2px}
+nav.tabs.sub2 a{font-size:12.5px;padding:4px 12px;border-radius:7px;color:var(--text-3)}
+nav.tabs.sub2 a:hover{color:var(--text-1)}
+nav.tabs.sub2 a.on{background:var(--surface-0);border:1px solid var(--line);
+  color:var(--text-1);font-weight:600;box-shadow:none}
+p.herosub{font-size:14.5px;color:var(--text-2);margin:10px 0 0;max-width:74ch}
+ol.findex{list-style:none;counter-reset:fx;margin:20px 0 8px;padding:0;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px 20px;
+  max-width:none}
+ol.findex li{counter-increment:fx;position:relative;padding:8px 0 8px 34px;
+  border-top:1px solid var(--line)}
+ol.findex li::before{content:counter(fx);position:absolute;left:0;top:9px;
+  display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;
+  background:var(--grid);color:var(--text-2);font-size:12px;font-weight:700}
+ol.findex a{font-weight:650;font-size:14.5px;text-decoration:none}
+ol.findex a:hover{text-decoration:underline}
+ol.findex .d{display:block;font-size:13px;color:var(--text-2);margin-top:2px;
+  line-height:1.45}
+
+/* Landing page: a bigger opening, then a four-beat spine. The rest of the site keeps
+   the compact scale; only the front door is allowed to be loud. */
+body.home header.site h1{font-size:34px;line-height:1.15;max-width:22ch}
+@media (max-width:640px){body.home header.site h1{font-size:26px}}
+body.home .herolead{font-size:18.5px;line-height:1.55;max-width:66ch;margin:14px 0 0}
+.spine{display:grid;gap:0;margin:34px 0 8px;border-top:1px solid var(--line)}
+.spine section{padding:20px 0 18px;border-bottom:1px solid var(--line);
+  display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 28px;align-items:start}
+@media (max-width:760px){.spine section{grid-template-columns:1fr;gap:6px}}
+.spine .k{grid-row:1 / span 3;font-size:11px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--s1);padding-top:5px}
+@media (max-width:760px){.spine .k{grid-row:auto}}
+.spine h2{margin:0;font-size:19px;line-height:1.3;letter-spacing:-.012em;max-width:34ch}
+.spine p{margin:8px 0 0;font-size:14.5px;color:var(--text-2);max-width:70ch}
+.spine .more{font-size:13px;font-weight:600;text-decoration:none;margin-top:10px;
+  display:inline-block}
+.spine .more:hover{text-decoration:underline}
 </style>
 </head>
 <body>
 <header class="site"><div class="wrap">
 <h1>methodology</h1>
 <p class="sub">The method: setup, measurement, protocol, trust, testing, and its limits.</p>
-<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="tradeoffs.html">trade-offs</a><a href="tracks.html">research tracks</a><a href="literature.html">literature</a><a href="methodology.html" class="on">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-04)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+<nav class="tabs"><a href="index.html">overview</a><a href="demo.html">run it</a><a href="results.html">key findings</a><a href="tradeoffs.html">trade-offs</a></nav><nav class="tabs sub2"><a href="architecture.html">architecture</a><a href="methodology.html" class="on">methodology</a><a href="design-decisions.html">design decisions</a><a href="tracks.html">research tracks</a><a href="literature.html">literature</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings &#8599;</a></nav>
 </div></header>
 <div class="wrap">
 
@@ -221,10 +292,9 @@ details.p0[open] summary{border-bottom:1px solid var(--line)}
 the method behind them. This page is that method: what the experiment fixes in advance,
 what gets measured, how a claim earns a verdict, what stands between the model and the
 scorer, and what was tested. The formal version, always current on constants and
-thresholds, is the findings methodology page
-(<a href="findings/methodology.html">snapshot</a>,
-<a href="https://jgoetzmann.github.io/rk-findings/methodology.html">live</a>); the
-system internals live on the <a href="architecture.html">architecture page</a>.</p>
+thresholds, is the
+<a href="https://jgoetzmann.github.io/rk-findings/methodology.html">findings methodology page</a>; the system internals live on
+the <a href="architecture.html">architecture page</a>.</p>
 
 <h2 id="setup">Experimental setup</h2>
 
@@ -304,7 +374,7 @@ held-out set alone, and shadow for 10 cycles; the check list is on the
 
 <h2 id="tests">Testing</h2>
 
-<p>The suite collects <strong>1,104 tests</strong> in twelve numbered tiers that
+<p>The suite collects <strong>1,129 tests</strong> in 13 numbered tiers that
 mirror the dependency stack. Golden tests (G-numbered) pin behaviour to fixture values written
 before the build existed, down to exact measured orders and cycle counts. Canary tests
 (K-numbered) are anti-gaming: K1 plants a candidate tuned on the search set and asserts
@@ -340,7 +410,7 @@ in float64; error is judged at the final time, not along the trajectory; and flo
 one hardware convention among several. Optimality claims from the enumerated phases
 hold only within their lattices, and four held-out problems make a strong filter, not
 a statistical guarantee. The full list, with reasoning, is on the
-<a href="findings/methodology.html">findings methodology page</a>.</p>
+<a href="https://jgoetzmann.github.io/rk-findings/methodology.html">findings methodology page</a>.</p>
 
 <footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-04 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
 </div>

@@ -119,6 +119,41 @@ footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);
   font-size:12px;color:var(--text-3)}
 footer p{margin:3px 0;max-width:none}
 footer p.prov a{color:var(--text-2)}
+nav.tabs.sub2{margin-top:0;padding-bottom:2px}
+nav.tabs.sub2 a{font-size:12.5px;padding:4px 12px;border-radius:7px;color:var(--text-3)}
+nav.tabs.sub2 a:hover{color:var(--text-1)}
+nav.tabs.sub2 a.on{background:var(--surface-0);border:1px solid var(--line);
+  color:var(--text-1);font-weight:600;box-shadow:none}
+
+/* one-line ledger rows: the summary carries the whole record, the body carries prose */
+.ledger{min-width:820px}
+.ledhead,details.led>summary{display:grid;
+  grid-template-columns:14px 78px 104px 1fr 58px 62px 52px;
+  gap:12px;align-items:center;padding:6px 12px}
+.ledhead{font-size:11px;color:var(--text-2);font-weight:600;letter-spacing:.04em;
+  text-transform:uppercase}
+details.led{background:var(--surface-1);border:1px solid var(--line);border-radius:8px;
+  margin:4px 0;font-size:12.5px}
+details.led>summary{cursor:pointer;list-style:none;font-variant-numeric:tabular-nums}
+details.led>summary::-webkit-details-marker{display:none}
+details.led>summary::before{content:"+";color:var(--text-3);font-weight:600}
+details.led[open]>summary::before{content:"2"}
+details.led[open]>summary{border-bottom:1px solid var(--line)}
+details.led>div{padding:10px 16px 12px 40px}
+details.led .pred{font:12px ui-monospace,Consolas,monospace;color:var(--text-2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+details.led .num,.ledhead .num{text-align:right}
+details.led .badge{justify-self:start}
+details.led .mono{font-size:12px;color:var(--text-2)}
+details.led .rep{color:var(--text-3);font-weight:600}
+details.led table{font-size:12px;margin:6px 0 0}
+details.repeats{margin:10px 0;font-size:13px;color:var(--text-2);border:1px solid var(--line);
+  border-radius:8px;background:var(--surface-0)}
+details.repeats>summary{cursor:pointer;padding:6px 12px;color:var(--text-3);font-size:12.5px}
+details.repeats>summary:hover{color:var(--text-1)}
+details.repeats[open]>summary{border-bottom:1px solid var(--line);color:var(--text-2)}
+details.repeats>div{padding:4px 12px 8px}
+.hash a,a.hash{font:12px ui-monospace,Consolas,monospace}
 
 .herolead{font-size:17.5px;line-height:1.6;max-width:74ch}
 ul.rbul{list-style:none;margin:20px 0 8px;padding:0;max-width:104ch}
@@ -207,26 +242,110 @@ details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
 details.p0[open] summary::before{content:"\2212"}
 details.p0[open] summary{border-bottom:1px solid var(--line)}
 .p0body{padding:10px 16px 12px 40px}
+nav.tabs.sub2{margin-top:0;padding-bottom:2px}
+nav.tabs.sub2 a{font-size:12.5px;padding:4px 12px;border-radius:7px;color:var(--text-3)}
+nav.tabs.sub2 a:hover{color:var(--text-1)}
+nav.tabs.sub2 a.on{background:var(--surface-0);border:1px solid var(--line);
+  color:var(--text-1);font-weight:600;box-shadow:none}
+p.herosub{font-size:14.5px;color:var(--text-2);margin:10px 0 0;max-width:74ch}
+ol.findex{list-style:none;counter-reset:fx;margin:20px 0 8px;padding:0;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px 20px;
+  max-width:none}
+ol.findex li{counter-increment:fx;position:relative;padding:8px 0 8px 34px;
+  border-top:1px solid var(--line)}
+ol.findex li::before{content:counter(fx);position:absolute;left:0;top:9px;
+  display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;
+  background:var(--grid);color:var(--text-2);font-size:12px;font-weight:700}
+ol.findex a{font-weight:650;font-size:14.5px;text-decoration:none}
+ol.findex a:hover{text-decoration:underline}
+ol.findex .d{display:block;font-size:13px;color:var(--text-2);margin-top:2px;
+  line-height:1.45}
+
+/* Landing page: a bigger opening, then a four-beat spine. The rest of the site keeps
+   the compact scale; only the front door is allowed to be loud. */
+body.home header.site h1{font-size:34px;line-height:1.15;max-width:22ch}
+@media (max-width:640px){body.home header.site h1{font-size:26px}}
+body.home .herolead{font-size:18.5px;line-height:1.55;max-width:66ch;margin:14px 0 0}
+.spine{display:grid;gap:0;margin:34px 0 8px;border-top:1px solid var(--line)}
+.spine section{padding:20px 0 18px;border-bottom:1px solid var(--line);
+  display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 28px;align-items:start}
+@media (max-width:760px){.spine section{grid-template-columns:1fr;gap:6px}}
+.spine .k{grid-row:1 / span 3;font-size:11px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--s1);padding-top:5px}
+@media (max-width:760px){.spine .k{grid-row:auto}}
+.spine h2{margin:0;font-size:19px;line-height:1.3;letter-spacing:-.012em;max-width:34ch}
+.spine p{margin:8px 0 0;font-size:14.5px;color:var(--text-2);max-width:70ch}
+.spine .more{font-size:13px;font-weight:600;text-decoration:none;margin-top:10px;
+  display:inline-block}
+.spine .more:hover{text-decoration:underline}
+</style>
+<style>
+.hero{margin:22px 0 8px}
+.hero h2{font-size:15px;margin:0 0 4px;letter-spacing:.01em}
+.heroq{font-size:13.5px;color:var(--text-2);margin:0 0 12px;max-width:78ch}
+.flipwrap{background:var(--surface-1);border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px 10px}
+.flipbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 8px}
+.flipbar .lab{font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--text-3)}
+.flipseg{display:flex;flex-wrap:wrap;gap:3px;background:var(--grid);border-radius:9px;
+  padding:3px}
+.flipseg button{appearance:none;border:1px solid transparent;background:transparent;
+  color:var(--text-2);font:inherit;font-size:12.5px;padding:4px 10px;border-radius:7px;
+  cursor:pointer;white-space:nowrap}
+.flipseg button:hover{color:var(--text-1)}
+.flipseg button[aria-pressed="true"]{background:var(--surface-1);border-color:var(--line);
+  color:var(--text-1);font-weight:600}
+#flip{overflow-x:auto}
+#flipsay{font-size:14.5px;line-height:1.6;margin:10px 0 2px;max-width:80ch}
+#flipsay b{font-variant-numeric:tabular-nums}
+svg .fl{stroke:var(--text-3);stroke-width:1.4;fill:none;opacity:.5}
+svg .fl.up{stroke:var(--s3);opacity:1;stroke-width:2.2}
+svg .fl.dn{stroke:var(--s2);opacity:1;stroke-width:2.2}
+svg .fn{font-size:12.5px;fill:var(--text-2)}
+svg .fn.on{fill:var(--text-1);font-weight:700}
+svg .fh{font-size:11px;fill:var(--text-3);letter-spacing:.06em;text-transform:uppercase}
+svg .fd{fill:var(--text-3)}
+svg .fd.disc{fill:var(--s1)}
+.cta{margin:14px 0 0;font-size:14px}
+.cta a{font-weight:650;text-decoration:none}
+.cta a:hover{text-decoration:underline}
+.cta span{color:var(--text-2)}
 </style>
 </head>
-<body>
+<body class="home">
 <header class="site"><div class="wrap">
 <h1>Searching for Runge–Kutta methods that survive fixed-point arithmetic</h1>
 <p class="sub">An unattended search, a hash-pinned scorer, and what the numbers say so far.</p>
-<nav class="tabs"><a href="index.html" class="on">overview</a><a href="results.html">key findings</a><a href="tradeoffs.html">trade-offs</a><a href="tracks.html">research tracks</a><a href="literature.html">literature</a><a href="methodology.html">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-04)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+<nav class="tabs"><a href="index.html" class="on">overview</a><a href="demo.html">run it</a><a href="results.html">key findings</a><a href="tradeoffs.html">trade-offs</a></nav><nav class="tabs sub2"><a href="architecture.html">architecture</a><a href="methodology.html">methodology</a><a href="design-decisions.html">design decisions</a><a href="tracks.html">research tracks</a><a href="literature.html">literature</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings &#8599;</a></nav>
 </div></header>
 <div class="wrap">
 
-<p class="herolead">An unattended search for explicit Runge&ndash;Kutta tableaus that
-minimise <strong>end-to-end error in Q15 fixed point at a fixed cycle budget on
-Cortex-M0+</strong>, not the textbook criterion of truncation error in exact arithmetic.
-Classical tableaus assume exact arithmetic; on an FPU-less microcontroller every multiply
-rounds, the rounding is biased, and nobody had searched the gap between classically
-optimal and practically optimal coefficients. The scored search covers explicit
-fixed-step methods; adaptive embedded pairs and implicit SDIRK methods exist as working
-prototypes with measured curves on the <a href="tracks.html">research tracks page</a>.
-The whole thing runs inside a container that cannot edit its own scorer.</p>
+<p class="herolead">Textbook Runge&ndash;Kutta coefficients are optimal in exact
+arithmetic. Microcontrollers without an FPU do not have exact arithmetic: every multiply
+floors, and the bias always points the same way. This is an unattended search for the
+coefficients that are optimal <em>after</em> that rounding &mdash; scored on end-to-end
+error in Q15 at a fixed cycle budget on Cortex-M0+, inside a container that cannot edit
+its own scorer.</p>
 
+
+<div class="hero">
+<h2>The result, in one interaction</h2>
+<p class="heroq">Eleven Runge&ndash;Kutta methods, ranked by their error at an equal
+65,536-cycle budget. On the left the multiplies floor, which is what an FPU-less
+Cortex-M0+ actually does. On the right they round to nearest, which is what the textbooks
+assume. Hover a line; switch problems.</p>
+<div class="flipwrap">
+  <div class="flipbar"><span class="lab">test problem</span><div class="flipseg" id="flipseg"></div></div>
+  <div id="flip"></div>
+  <p id="flipsay"></p>
+</div>
+<p class="cta"><a href="demo.html">Run it yourself &rarr;</a> <span>change the method and
+the problem, watch the trajectory quantize, and read a Pareto frontier recomputed on every
+click.</span></p>
+</div>
+
+<div class="spine"><section><span class="k">problem</span><h2>Textbook coefficients are tuned for arithmetic the chip does not have</h2><p>Runge&ndash;Kutta tableaus are derived by cancelling truncation error in exact arithmetic. A Cortex-M0+ has no FPU, so state lives in Q15 and every multiply is a right shift that floors, biasing each product by half an LSB in the same direction. Nobody had searched the gap between the coefficients that are optimal on paper and the ones that are optimal after that rounding.</p><a class="more" href="results.html#crossover">the premise, tested before the search &rarr;</a></section><section><span class="k">approach</span><h2>Score end-to-end error at a fixed cycle budget, and pin the scorer</h2><p>Fitness is the error a method actually delivers inside 65,536 cycles, so a cheap method is allowed to take more and smaller steps. Cost is analytic cycles from the tableau under two Cortex-M0+ multiplier models. Candidates come from a MAP-Elites grid driven by a classical optimiser, with a language model in the outer loop choosing direction but never touching the scorer: ten files are hashed and the container refuses to start if the hash moves.</p><a class="more" href="architecture.html">how the system is built &rarr;</a></section><section><span class="k">result</span><h2>The rounding is a force to exploit, not noise to average away</h2><p>A floored product is wrong in the same direction every time, so the bias accumulates instead of cancelling. On one problem it lands the cheapest method exactly on the reference value while the textbook favourite drifts two decades away. Search against that bias rather than around it and the coefficients that come back are not the textbook ones:</p><a class="more" href="results.html">six findings, with the caveats &rarr;</a></section><section><span class="k">verify</span><h2>Every number traces to a file, and the demo checks itself</h2><p>Charts are built from a single analysis file recomputed from the run archive. The interactive page re-implements the Q15 integrator in the browser and compares all 154 of its runs against the pinned Python evaluator on load, matching the final int16 state bit for bit; the build fails if they diverge.</p><a class="more" href="methodology.html">what was tested, and the limits &rarr;</a></section></div>
 
 <ul class="rbul">
 <li><span class="rlab">discovery</span>Discovered integrators lead the classical anchors
@@ -241,17 +360,123 @@ r&nbsp;=&nbsp;0.98 cycle model vs time), with the lower error on <strong>5 of
 7 problems</strong>. <a class="golink" href="tradeoffs.html#speed">measured
 speed</a></li>
 <li><span class="rlab">infrastructure</span>An autonomous discovery harness (24/7
-containerized search, <strong>1,104 tests</strong>, a hash-pinned verifier, an LLM in
+containerized search, <strong>1,129 tests</strong>, a hash-pinned verifier, an LLM in
 the loop under guarded publication) found and mechanized the <strong>floor-rounding
 bias</strong> that reorders classical methods in 16-bit arithmetic.
 <a class="golink" href="methodology.html">methodology</a></li>
 </ul>
 
-<div class="chips"><div class="chip"><div class="v">66,555</div><div class="k">verified tableaus archived</div></div><div class="chip"><div class="v">1,000</div><div class="k">search cycles completed</div></div><div class="chip"><div class="v">4,312</div><div class="k">candidates rejected by the verifier</div></div><div class="chip"><div class="v">17</div><div class="k">MAP-Elites grid cells occupied</div></div><div class="chip"><div class="v">1,104</div><div class="k">tests in the harness suite</div></div><div class="chip"><div class="v">1.45×</div><div class="k">measured per-step speedup over rk4</div></div></div>
-<h2>Where everything lives</h2>
-<div class="teasers"><a class="tease" href="results.html"><span class="tn">1</span><span><span class="tt">Key findings.</span> <span class="td">Six findings with charts: the efficiency frontier, the floor-bias flip, the quantization crossover, the rc_thermal floor, one space closed by enumeration, practical validation.</span></span></a><a class="tease" href="tradeoffs.html"><span class="tn">2</span><span><span class="tt">Trade-offs and measured speed.</span> <span class="td">Discovered, classical and library methods in one matrix, every cell traced to a data file, plus the wall-clock head-to-head against rk4.</span></span></a><a class="tease" href="tracks.html"><span class="tn">3</span><span><span class="tt">Research tracks.</span> <span class="td">The live fixed-step scored search, and two side efforts (adaptive pairs, implicit SDIRK) with design docs, prototypes and measured curves.</span></span></a><a class="tease" href="literature.html"><span class="tn">4</span><span><span class="tt">Literature.</span> <span class="td">What the model-driven reading loop searched, what it found, and how it fed the search.</span></span></a><a class="tease" href="methodology.html"><span class="tn">5</span><span><span class="tt">Methodology.</span> <span class="td">The start gate, the pinned verifier hash, the test suite, the executed pre-flight, and the limits.</span></span></a><a class="tease" href="architecture.html"><span class="tn">6</span><span><span class="tt">Architecture.</span> <span class="td">The container boundary, the cycle loop, exact arithmetic, the cost model, and the search machinery.</span></span></a></div>
-<div class="grid-cards"><a class="gcard" href="design-decisions.html"><div class="t">Design decisions</div><div class="d">Fourteen choices and what the build did to them.</div></a><a class="gcard" href="findings/index.html"><div class="t">Findings snapshot (2026-09-04)</div><div class="d">The machine-generated numbers site, frozen at the snapshot date.</div></a><a class="gcard" href="https://jgoetzmann.github.io/rk-findings/"><div class="t">Live findings ↗</div><div class="d">The same machine-generated site, still updating with the run.</div></a></div>
+<h2 id="scale">What it took</h2>
+<div class="chips"><div class="chip"><div class="v">67,692</div><div class="k">verified tableaus archived</div></div><div class="chip"><div class="v">1,011</div><div class="k">search cycles completed</div></div><div class="chip"><div class="v">4,400</div><div class="k">candidates rejected by the verifier</div></div><div class="chip"><div class="v">17</div><div class="k">MAP-Elites grid cells occupied</div></div></div>
+<h2 id="source">The source</h2>
+<p class="lead">Three repositories, so every number above can be traced to the code that produced it.</p>
+<div class="grid-cards"><a class="gcard" href="https://github.com/jgoetzmann/rk-harness"><div class="t">rk-harness &#8599;</div><div class="d">The package the container runs: verifier, cost model, evaluator, search, site generator, and the test suite that gates all of it.</div></a><a class="gcard" href="https://github.com/jgoetzmann/rk-findings"><div class="t">rk-findings &#8599;</div><div class="d">The machine-generated numbers site. Written by the container once per cycle, with no human in the loop.</div></a><a class="gcard" href="https://github.com/jgoetzmann/rk-overview"><div class="t">rk-overview &#8599;</div><div class="d">This site, and the tools that build it from the run archive.</div></a></div>
+<h2>Everything else</h2>
+<div class="teasers"><a class="tease" href="tradeoffs.html"><span class="tn">1</span><span><span class="tt">Trade-offs and measured speed.</span> <span class="td">Discovered, classical and library methods in one matrix, every cell traced to a data file, plus the wall-clock head-to-head against rk4.</span></span></a><a class="tease" href="design-decisions.html"><span class="tn">2</span><span><span class="tt">Design decisions.</span> <span class="td">Fourteen choices made before the build, each annotated with what the build did to it and which two were revised.</span></span></a><a class="tease" href="tracks.html"><span class="tn">3</span><span><span class="tt">Research tracks.</span> <span class="td">The live fixed-step search, plus adaptive embedded pairs and implicit SDIRK as working prototypes with measured curves.</span></span></a><a class="tease" href="literature.html"><span class="tn">4</span><span><span class="tt">Literature.</span> <span class="td">What the model-driven reading loop searched, what it found, and where it touched the search.</span></span></a></div>
 <footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-04 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
 </div>
+<script>window.__RKFLIP__={"methods":[{"key":"euler","label":"euler","origin":"classical"},{"key":"midpoint","label":"midpoint","origin":"classical"},{"key":"heun2","label":"heun2","origin":"classical"},{"key":"ralston2","label":"ralston2","origin":"classical"},{"key":"heun3","label":"heun3","origin":"classical"},{"key":"kutta3","label":"kutta3","origin":"classical"},{"key":"rk4","label":"rk4","origin":"classical"},{"key":"rk38","label":"rk38","origin":"classical"},{"key":"11e898cb","label":"found p2s3","origin":"discovered"},{"key":"2d2c2b75","label":"found p2s2","origin":"discovered"},{"key":"4f501ec6","label":"found p3s3","origin":"discovered"}],"problems":["dahlquist","damped_osc","vanderpol_mild","pendulum","dc_motor","rc_thermal","quaternion"],"default_problem":"damped_osc","err":{"dahlquist":{"floor":[4.5399929762484854e-05,7.667038273751514e-05,4.5399929762484854e-05,4.5399929762484854e-05,0.00016747024226248486,0.00016747024226248486,0.00016747024226248486,4.5399929762484854e-05,0.00019874069523751514,4.5399929762484854e-05,0.027542490695237516],"nearest":[0.07991065475773751,0.036209482882737516,0.09223975632023751,0.024979014132737516,0.017410654757737516,0.015335459445237514,0.036209482882737516,0.033279795382737516,0.018021006320237516,0.2399448344452375,0.013626475070237514]},"damped_osc":{"floor":[0.01420474495373885,0.006682451072882086,0.005542856617862107,0.015266707873699218,0.006519279786923354,0.005353562299354354,0.01592481589265515,0.00817433518563924,0.003939476715808808,0.00817433518563924,0.02256772255938788],"nearest":[0.008008549327178212,0.000626530932236836,0.013035239880741168,0.00463329654287779,0.0007401989273146357,0.007574205842697583,0.007359123803889368,0.0005331638629503505,0.0002710678346870621,0.0018757273421466662,0.006610667493233176]},"vanderpol_mild":{"floor":[0.017224456856685954,0.021772742195347725,0.02963212564304778,0.038119788227827585,0.027597147483354355,0.0943037543534842,0.10097267020647743,0.0371158023739345,0.019468228198280157,0.019284155930467672,0.060458159271868074],"nearest":[0.012300071623552605,0.0020275573760571244,0.04999554387368987,0.015393501634668464,0.018011474397553812,0.055096936621347244,0.033689989351977576,0.007079199605176021,0.007721393714683593,0.010768092026526566,0.02449905397630865]},"pendulum":{"floor":[0.5942848111443483,6.44553796067338e-05,0.004214897111370254,0.004732681514435422,0.009713322840046354,0.0003826290377943037,0.0040323428220641975,0.001100483753618598,0.004744384784578245,0.003305687820387876,0.005478597815253304],"nearest":[0.5538720172239101,0.004400983165005654,0.00116041179880806,0.003209756059796729,0.00012450435890192204,0.0004684053274071953,0.002765217641793491,0.0024416252949300025,0.0006662938025701532,0.0023216473906161206,0.0014306476038736357]},"dc_motor":{"floor":[0.1710447625539884,0.05677772182887742,0.09741163194331529,0.07880731045212863,0.05432323516371821,0.04819929724182171,0.07635890248163581,0.05199695242231674,0.027647584508691654,0.04158692513481159,0.041348465746714226],"nearest":[0.01623550300369505,0.012001643961700907,0.07181090291603405,0.008632819167140598,0.006221962655066991,0.005452751587198856,0.012088185234060142,0.011398690466783773,0.00676908809212425,0.009157327090316213,0.0052251952957243835]},"rc_thermal":{"floor":[0.1559050126465386,0.1557632379378313,0.1559050126465386,0.1559050126465386,0.155982860818894,0.15823691889515895,0.15815914382342158,0.15611574711712428,0.046087531063901954,0.11224905825757357,0.07543073857658758],"nearest":[0.1486355365820598,0.07253416052491507,0.1969129734070993,0.0016987648526209961,0.027114400278404314,0.03459625456178057,0.06631716157221952,0.05105368618724063,0.00587736678655277,0.007567064024032453,0.01697930174299118]},"quaternion":{"floor":[0.05958228351610484,0.03222635463559009,0.05594214635311068,0.05662635355938217,0.04056790270154331,0.05567798013301739,0.054056370405000886,0.04466254979733597,0.019105502156982923,0.026534283283096927,0.04072751490431081],"nearest":[0.012404228025449049,0.0005907012808179513,0.02736412869391991,0.011759937582092483,0.008808220739584316,0.0012750484208265966,0.0017139007946047613,0.005575032459760543,0.00022405856091367582,0.0017522577310820076,0.002450377158908834]}}};</script>
+<script>
+(function(){
+"use strict";
+var H=window.__RKFLIP__;
+if(!H||!document.getElementById("flip")) return;
+var prob=H.default_problem, hot=null;
+
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function fmt(v){
+  if(!isFinite(v)) return "n/a";
+  var a=Math.abs(v);
+  if(a>=1e4||a<1e-3) return v.toExponential(2);
+  return String(Number(v.toPrecision(3)));
+}
+/* Competition rank: exact ties share a number, because under floor several methods land
+   on the reference value itself and a tie is not movement. */
+function ranked(mode){
+  var xs=H.methods.map(function(m,i){ return {m:m, e:H.err[prob][mode][i]}; })
+        .filter(function(z){ return z.e!==null && isFinite(z.e) && z.e>0; });
+  xs.sort(function(a,b){ return a.e-b.e || (a.m.key<b.m.key?-1:1); });
+  var prev=null, r=0;
+  xs.forEach(function(z,i){ if(prev===null||z.e!==prev){ r=i+1; prev=z.e; } z.rank=r; });
+  return xs;
+}
+
+function draw(){
+  var L=ranked("floor"), R=ranked("nearest");
+  var pos={}; R.forEach(function(z,i){ pos[z.m.key]=i; });
+  var rank={}; R.forEach(function(z){ rank[z.m.key]=z.rank; });
+  var rowh=25, top=44, W=760, H2=top+L.length*rowh+16;
+  var xl=250, xr=W-250;
+  var o=['<svg viewBox="0 0 '+W+' '+H2+'" width="'+W+'" height="'+H2+'" role="img" '+
+         'aria-label="method ranking under floor rounding against round-to-nearest">'];
+  o.push('<text class="fh" x="'+xl+'" y="20" text-anchor="end">floor (what the chip does)</text>');
+  o.push('<text class="fh" x="'+xr+'" y="20" text-anchor="start">round-to-nearest</text>');
+  L.forEach(function(z,i){
+    var j=pos[z.m.key], y1=top+i*rowh, y2=top+j*rowh, d=z.rank-rank[z.m.key];
+    var cls="fl"+(d>0?" up":d<0?" dn":"");
+    var on=hot===z.m.key;
+    o.push('<g class="hot" data-k="'+esc(z.m.key)+'">');
+    o.push('<rect x="0" y="'+(y1-rowh/2)+'" width="'+W+'" height="'+rowh+'" fill="transparent"/>');
+    o.push('<title>'+esc(z.m.label)+": rank "+z.rank+" under floor, rank "+rank[z.m.key]+
+           " under round-to-nearest</title>");
+    o.push('<path class="'+cls+(on?" on":"")+'" d="M'+(xl+8)+' '+y1+' C'+(xl+80)+' '+y1+' '+
+           (xr-80)+' '+y2+' '+(xr-8)+' '+y2+'"'+(on?' stroke-width="3"':'')+'/>');
+    o.push('<circle class="fd'+(z.m.origin==="discovered"?" disc":"")+'" cx="'+(xl+8)+'" cy="'+y1+'" r="3.5"/>');
+    o.push('<text class="fn'+(on?" on":"")+'" x="'+(xl-6)+'" y="'+(y1+4)+'" text-anchor="end">'+
+           z.rank+"  "+esc(z.m.label)+'  <tspan class="fd">'+fmt(z.e)+"</tspan></text>");
+    o.push("</g>");
+  });
+  R.forEach(function(z,j){
+    var y=top+j*rowh, on=hot===z.m.key;
+    o.push('<g class="hot" data-k="'+esc(z.m.key)+'">');
+    o.push('<circle class="fd'+(z.m.origin==="discovered"?" disc":"")+'" cx="'+(xr-8)+'" cy="'+y+'" r="3.5"/>');
+    o.push('<text class="fn'+(on?" on":"")+'" x="'+(xr+6)+'" y="'+(y+4)+'">'+z.rank+"  "+
+           esc(z.m.label)+'  <tspan class="fd">'+fmt(z.e)+"</tspan></text>");
+    o.push("</g>");
+  });
+  o.push("</svg>");
+  document.getElementById("flip").innerHTML=o.join("");
+
+  var moved=L.filter(function(z){ return z.rank!==rank[z.m.key]; });
+  var big=moved.slice().sort(function(a,b){
+    return Math.abs(b.rank-rank[b.m.key])-Math.abs(a.rank-rank[a.m.key]); })[0];
+  var tied=L.filter(function(z){ return z.e===L[0].e; }).length;
+  var lead = tied>1
+    ? "<b>"+tied+" methods</b> tie for first"
+    : "<b>"+esc(L[0].m.label)+"</b> comes first";
+  document.getElementById("flipsay").innerHTML =
+    "On <b>"+esc(prob)+"</b>, the hardware's rounding alone moves <b>"+moved.length+" of "+
+    L.length+"</b> methods. "+lead+" once every multiply floors"+
+    (big?", and <b>"+esc(big.m.label)+"</b> shifts "+Math.abs(big.rank-rank[big.m.key])+
+     " place"+(Math.abs(big.rank-rank[big.m.key])===1?"":"s"):"")+
+    ". Same tableaus, same budget, same problems; only the rounding changed.";
+}
+
+function sync(){
+  Array.prototype.forEach.call(document.querySelectorAll("#flipseg button"),function(b){
+    b.setAttribute("aria-pressed", b.getAttribute("data-v")===prob?"true":"false");
+  });
+}
+document.addEventListener("DOMContentLoaded",function(){
+  var seg=document.getElementById("flipseg");
+  seg.innerHTML=H.problems.map(function(p){
+    return '<button type="button" data-v="'+esc(p)+'" aria-pressed="false">'+esc(p)+"</button>";
+  }).join("");
+  seg.addEventListener("click",function(ev){
+    var b=ev.target.closest("button");
+    if(!b) return;
+    prob=b.getAttribute("data-v"); hot=null; sync(); draw();
+  });
+  var f=document.getElementById("flip");
+  f.addEventListener("mouseover",function(ev){
+    var g=ev.target.closest("g[data-k]");
+    var k=g?g.getAttribute("data-k"):null;
+    if(k!==hot){ hot=k; draw(); }
+  });
+  f.addEventListener("mouseleave",function(){ if(hot){ hot=null; draw(); } });
+  sync(); draw();
+});
+})();
+</script>
 </body>
 </html>

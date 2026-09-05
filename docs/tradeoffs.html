@@ -119,6 +119,41 @@ footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);
   font-size:12px;color:var(--text-3)}
 footer p{margin:3px 0;max-width:none}
 footer p.prov a{color:var(--text-2)}
+nav.tabs.sub2{margin-top:0;padding-bottom:2px}
+nav.tabs.sub2 a{font-size:12.5px;padding:4px 12px;border-radius:7px;color:var(--text-3)}
+nav.tabs.sub2 a:hover{color:var(--text-1)}
+nav.tabs.sub2 a.on{background:var(--surface-0);border:1px solid var(--line);
+  color:var(--text-1);font-weight:600;box-shadow:none}
+
+/* one-line ledger rows: the summary carries the whole record, the body carries prose */
+.ledger{min-width:820px}
+.ledhead,details.led>summary{display:grid;
+  grid-template-columns:14px 78px 104px 1fr 58px 62px 52px;
+  gap:12px;align-items:center;padding:6px 12px}
+.ledhead{font-size:11px;color:var(--text-2);font-weight:600;letter-spacing:.04em;
+  text-transform:uppercase}
+details.led{background:var(--surface-1);border:1px solid var(--line);border-radius:8px;
+  margin:4px 0;font-size:12.5px}
+details.led>summary{cursor:pointer;list-style:none;font-variant-numeric:tabular-nums}
+details.led>summary::-webkit-details-marker{display:none}
+details.led>summary::before{content:"+";color:var(--text-3);font-weight:600}
+details.led[open]>summary::before{content:"2"}
+details.led[open]>summary{border-bottom:1px solid var(--line)}
+details.led>div{padding:10px 16px 12px 40px}
+details.led .pred{font:12px ui-monospace,Consolas,monospace;color:var(--text-2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+details.led .num,.ledhead .num{text-align:right}
+details.led .badge{justify-self:start}
+details.led .mono{font-size:12px;color:var(--text-2)}
+details.led .rep{color:var(--text-3);font-weight:600}
+details.led table{font-size:12px;margin:6px 0 0}
+details.repeats{margin:10px 0;font-size:13px;color:var(--text-2);border:1px solid var(--line);
+  border-radius:8px;background:var(--surface-0)}
+details.repeats>summary{cursor:pointer;padding:6px 12px;color:var(--text-3);font-size:12.5px}
+details.repeats>summary:hover{color:var(--text-1)}
+details.repeats[open]>summary{border-bottom:1px solid var(--line);color:var(--text-2)}
+details.repeats>div{padding:4px 12px 8px}
+.hash a,a.hash{font:12px ui-monospace,Consolas,monospace}
 
 .herolead{font-size:17.5px;line-height:1.6;max-width:74ch}
 ul.rbul{list-style:none;margin:20px 0 8px;padding:0;max-width:104ch}
@@ -207,13 +242,49 @@ details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
 details.p0[open] summary::before{content:"\2212"}
 details.p0[open] summary{border-bottom:1px solid var(--line)}
 .p0body{padding:10px 16px 12px 40px}
+nav.tabs.sub2{margin-top:0;padding-bottom:2px}
+nav.tabs.sub2 a{font-size:12.5px;padding:4px 12px;border-radius:7px;color:var(--text-3)}
+nav.tabs.sub2 a:hover{color:var(--text-1)}
+nav.tabs.sub2 a.on{background:var(--surface-0);border:1px solid var(--line);
+  color:var(--text-1);font-weight:600;box-shadow:none}
+p.herosub{font-size:14.5px;color:var(--text-2);margin:10px 0 0;max-width:74ch}
+ol.findex{list-style:none;counter-reset:fx;margin:20px 0 8px;padding:0;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px 20px;
+  max-width:none}
+ol.findex li{counter-increment:fx;position:relative;padding:8px 0 8px 34px;
+  border-top:1px solid var(--line)}
+ol.findex li::before{content:counter(fx);position:absolute;left:0;top:9px;
+  display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;
+  background:var(--grid);color:var(--text-2);font-size:12px;font-weight:700}
+ol.findex a{font-weight:650;font-size:14.5px;text-decoration:none}
+ol.findex a:hover{text-decoration:underline}
+ol.findex .d{display:block;font-size:13px;color:var(--text-2);margin-top:2px;
+  line-height:1.45}
+
+/* Landing page: a bigger opening, then a four-beat spine. The rest of the site keeps
+   the compact scale; only the front door is allowed to be loud. */
+body.home header.site h1{font-size:34px;line-height:1.15;max-width:22ch}
+@media (max-width:640px){body.home header.site h1{font-size:26px}}
+body.home .herolead{font-size:18.5px;line-height:1.55;max-width:66ch;margin:14px 0 0}
+.spine{display:grid;gap:0;margin:34px 0 8px;border-top:1px solid var(--line)}
+.spine section{padding:20px 0 18px;border-bottom:1px solid var(--line);
+  display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 28px;align-items:start}
+@media (max-width:760px){.spine section{grid-template-columns:1fr;gap:6px}}
+.spine .k{grid-row:1 / span 3;font-size:11px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--s1);padding-top:5px}
+@media (max-width:760px){.spine .k{grid-row:auto}}
+.spine h2{margin:0;font-size:19px;line-height:1.3;letter-spacing:-.012em;max-width:34ch}
+.spine p{margin:8px 0 0;font-size:14.5px;color:var(--text-2);max-width:70ch}
+.spine .more{font-size:13px;font-weight:600;text-decoration:none;margin-top:10px;
+  display:inline-block}
+.spine .more:hover{text-decoration:underline}
 </style>
 </head>
 <body>
 <header class="site"><div class="wrap">
 <h1>trade-offs</h1>
 <p class="sub">Discovered, classical and library methods in one table; every cell traced to a data file.</p>
-<nav class="tabs"><a href="index.html">overview</a><a href="results.html">key findings</a><a href="tradeoffs.html" class="on">trade-offs</a><a href="tracks.html">research tracks</a><a href="literature.html">literature</a><a href="methodology.html">methodology</a><a href="architecture.html">architecture</a><a href="design-decisions.html">design decisions</a><a href="findings/index.html">findings snapshot (2026-09-04)</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings ↗</a></nav>
+<nav class="tabs"><a href="index.html">overview</a><a href="demo.html">run it</a><a href="results.html">key findings</a><a href="tradeoffs.html" class="on">trade-offs</a></nav><nav class="tabs sub2"><a href="architecture.html">architecture</a><a href="methodology.html">methodology</a><a href="design-decisions.html">design decisions</a><a href="tracks.html">research tracks</a><a href="literature.html">literature</a><a href="https://jgoetzmann.github.io/rk-findings/">live findings &#8599;</a></nav>
 </div></header>
 <div class="wrap">
 
@@ -245,7 +316,7 @@ work. Which method to ship depends on which multiplier the chip shipped with. Th
 project's thesis demonstrated in two methods everyone already knows; the
 <a href="results.html">key findings</a> show what a search does with it.</p>
 </div>
-<div class="panel"><figure><figcaption>Analytic cycles per step for rk4 and rk38 under the fast and slow multiplier cost models. Bar height is per-step cost; the printed number is the exact cycle count. The cheaper of the two <a href="findings/glossary.html#anchor-methods">anchor methods</a> swaps between the multiplier models, the sanity check the whole cost model hangs on.</figcaption><div class="legend"><span><span class="sw" style="background:var(--s1)"></span>m0plus_fast (1-cycle multiplier)</span><span><span class="sw" style="background:var(--s2)"></span>m0plus_slow (32-cycle multiplier)</span></div><svg viewBox="0 0 460 260" width="460" height="260" role="img" aria-label="Cycles per step for rk4 and rk38 under the fast and slow multiplier models"><line class="axis" x1="46" y1="220" x2="450" y2="220"/><path d="M 87.50 220.00 L 87.50 155.13 Q 87.50 151.13 91.50 151.13 L 139.50 151.13 Q 143.50 151.13 143.50 155.13 L 143.50 220.00 Z" fill="var(--s1)" class="cellstroke"><title>rk4 under m0plus_fast: 33 cycles per step</title></path><text class="lbl" x="115.50" y="146.13" text-anchor="middle">33</text><path d="M 145.50 220.00 L 145.50 46.61 Q 145.50 42.61 149.50 42.61 L 197.50 42.61 Q 201.50 42.61 201.50 46.61 L 201.50 220.00 Z" fill="var(--s2)" class="cellstroke"><title>rk4 under m0plus_slow: 85 cycles per step</title></path><text class="lbl" x="173.50" y="37.61" text-anchor="middle">85</text><text x="144.50" y="236" text-anchor="middle">rk4</text><path d="M 284.50 220.00 L 284.50 148.87 Q 284.50 144.87 288.50 144.87 L 336.50 144.87 Q 340.50 144.87 340.50 148.87 L 340.50 220.00 Z" fill="var(--s1)" class="cellstroke"><title>rk38 under m0plus_fast: 36 cycles per step</title></path><text class="lbl" x="312.50" y="139.87" text-anchor="middle">36</text><path d="M 342.50 220.00 L 342.50 90.43 Q 342.50 86.43 346.50 86.43 L 394.50 86.43 Q 398.50 86.43 398.50 90.43 L 398.50 220.00 Z" fill="var(--s2)" class="cellstroke"><title>rk38 under m0plus_slow: 64 cycles per step</title></path><text class="lbl" x="370.50" y="81.43" text-anchor="middle">64</text><text x="341.50" y="236" text-anchor="middle">rk38</text></svg></figure></div>
+<div class="panel"><figure><figcaption>Analytic cycles per step for rk4 and rk38 under the fast and slow multiplier cost models. Bar height is per-step cost; the printed number is the exact cycle count. The cheaper of the two <a href="https://jgoetzmann.github.io/rk-findings/glossary.html#anchor-methods">anchor methods</a> swaps between the multiplier models, the sanity check the whole cost model hangs on.</figcaption><div class="legend"><span><span class="sw" style="background:var(--s1)"></span>m0plus_fast (1-cycle multiplier)</span><span><span class="sw" style="background:var(--s2)"></span>m0plus_slow (32-cycle multiplier)</span></div><svg viewBox="0 0 460 260" width="460" height="260" role="img" aria-label="Cycles per step for rk4 and rk38 under the fast and slow multiplier models"><line class="axis" x1="46" y1="220" x2="450" y2="220"/><path d="M 87.50 220.00 L 87.50 155.13 Q 87.50 151.13 91.50 151.13 L 139.50 151.13 Q 143.50 151.13 143.50 155.13 L 143.50 220.00 Z" fill="var(--s1)" class="cellstroke"><title>rk4 under m0plus_fast: 33 cycles per step</title></path><text class="lbl" x="115.50" y="146.13" text-anchor="middle">33</text><path d="M 145.50 220.00 L 145.50 46.61 Q 145.50 42.61 149.50 42.61 L 197.50 42.61 Q 201.50 42.61 201.50 46.61 L 201.50 220.00 Z" fill="var(--s2)" class="cellstroke"><title>rk4 under m0plus_slow: 85 cycles per step</title></path><text class="lbl" x="173.50" y="37.61" text-anchor="middle">85</text><text x="144.50" y="236" text-anchor="middle">rk4</text><path d="M 284.50 220.00 L 284.50 148.87 Q 284.50 144.87 288.50 144.87 L 336.50 144.87 Q 340.50 144.87 340.50 148.87 L 340.50 220.00 Z" fill="var(--s1)" class="cellstroke"><title>rk38 under m0plus_fast: 36 cycles per step</title></path><text class="lbl" x="312.50" y="139.87" text-anchor="middle">36</text><path d="M 342.50 220.00 L 342.50 90.43 Q 342.50 86.43 346.50 86.43 L 394.50 86.43 Q 398.50 86.43 398.50 90.43 L 398.50 220.00 Z" fill="var(--s2)" class="cellstroke"><title>rk38 under m0plus_slow: 64 cycles per step</title></path><text class="lbl" x="370.50" y="81.43" text-anchor="middle">64</text><text x="341.50" y="236" text-anchor="middle">rk38</text></svg></figure></div>
 </div>
 <h2>The matrix</h2>
 <figure class="panel"><figcaption>The matrix's held-out-error column, drawn. One dot per scored method, sorted best-first: x is held-out RMS error at the shared 65,536-cycle budget under Q15 floor arithmetic, log scale. The three discovered rows hold the top three places; euler sits a decade right of the field. Library rows have no dot because they never ran this protocol.<span class="src">data: tools/key_findings.json, frontier series + classical anchors</span></figcaption><div class="legend"><span><span class="sw" style="background:var(--s1)"></span>discovered</span><span><span class="sw" style="background:var(--s2)"></span>classical anchor</span></div><div class="scroll"><svg viewBox="0 0 780 357" width="780" height="357" role="img" aria-label="Held-out error at the shared budget for every scored method, discovered and classical, log scale"><line class="gridline" x1="224.00" y1="10" x2="224.00" y2="315"/><text x="224.00" y="331" text-anchor="middle">1e-2</text><line class="gridline" x1="458.00" y1="10" x2="458.00" y2="315"/><text x="458.00" y="331" text-anchor="middle">1e-1</text><line class="gridline" x1="692.00" y1="10" x2="692.00" y2="315"/><text x="692.00" y="331" text-anchor="middle">1e0</text><text x="214" y="31.50" text-anchor="end">11e898cb (discovered champion)</text><line x1="224" y1="27.50" x2="330.85" y2="27.50" stroke="var(--grid)" stroke-width="1.5"/><circle cx="330.85" cy="27.50" r="5.5" fill="var(--s1)" class="cellstroke"><title>11e898cb (discovered champion): held-out error 0.0286 at the 65,536-cycle budget</title></circle><text class="dlab" x="340.85" y="31.50">0.0286</text><text x="214" y="58.50" text-anchor="end">42863b93 (best order-3 elite)</text><line x1="224" y1="54.50" x2="358.74" y2="54.50" stroke="var(--grid)" stroke-width="1.5"/><circle cx="358.74" cy="54.50" r="5.5" fill="var(--s1)" class="cellstroke"><title>42863b93 (best order-3 elite): held-out error 0.0377 at the 65,536-cycle budget</title></circle><text class="dlab" x="368.74" y="58.50">0.0377</text><text x="214" y="85.50" text-anchor="end">196b1d17 (best order-4 elite)</text><line x1="224" y1="81.50" x2="406.66" y2="81.50" stroke="var(--grid)" stroke-width="1.5"/><circle cx="406.66" cy="81.50" r="5.5" fill="var(--s1)" class="cellstroke"><title>196b1d17 (best order-4 elite): held-out error 0.0603 at the 65,536-cycle budget</title></circle><text class="dlab" x="416.66" y="85.50">0.0603</text><text x="214" y="112.50" text-anchor="end">midpoint</text><line x1="224" y1="108.50" x2="440.82" y2="108.50" stroke="var(--grid)" stroke-width="1.5"/><circle cx="440.82" cy="108.50" r="5.5" fill="var(--s2)" class="cellstroke"><title>midpoint: held-out error 0.0844 at the 65,536-cycle budget</title></circle><text class="dlab" x="450.82" y="112.50">0.0844</text><text x="214" y="139.50" text-anchor="end">heun3</text><line x1="224" y1="135.50" x2="441.70" y2="135.50" stroke="var(--grid)" stroke-width="1.5"/><circle cx="441.70" cy="135.50" r="5.5" fill="var(--s2)" class="cellstroke"><title>heun3: held-out error 0.0852 at the 65,536-cycle budget</title></circle><text class="dlab" x="451.70" y="139.50">0.0852</text><text x="214" y="166.50" text-anchor="end">rk38</text><line x1="224" y1="162.50" x2="441.79" y2="162.50" stroke="var(--grid)" stroke-width="1.5"/><circle cx="441.79" cy="162.50" r="5.5" fill="var(--s2)" class="cellstroke"><title>rk38: held-out error 0.0853 at the 65,536-cycle budget</title></circle><text class="dlab" x="451.79" y="166.50">0.0853</text><text x="214" y="193.50" text-anchor="end">kutta3</text><line x1="224" y1="189.50" x2="444.16" y2="189.50" stroke="var(--grid)" stroke-width="1.5"/><circle cx="444.16" cy="189.50" r="5.5" fill="var(--s2)" class="cellstroke"><title>kutta3: held-out error 0.0873 at the 65,536-cycle budget</title></circle><text class="dlab" x="454.16" y="193.50">0.0873</text><text x="214" y="220.50" text-anchor="end">ralston2</text><line x1="224" y1="216.50" x2="449.36" y2="216.50" stroke="var(--grid)" stroke-width="1.5"/><circle cx="449.36" cy="216.50" r="5.5" fill="var(--s2)" class="cellstroke"><title>ralston2: held-out error 0.0919 at the 65,536-cycle budget</title></circle><text class="dlab" x="459.36" y="220.50">0.0919</text><text x="214" y="247.50" text-anchor="end">rk4</text><line x1="224" y1="243.50" x2="449.42" y2="243.50" stroke="var(--grid)" stroke-width="1.5"/><circle cx="449.42" cy="243.50" r="5.5" fill="var(--s2)" class="cellstroke"><title>rk4: held-out error 0.0919 at the 65,536-cycle budget</title></circle><text class="dlab" x="459.42" y="247.50">0.0919</text><text x="214" y="274.50" text-anchor="end">heun2</text><line x1="224" y1="270.50" x2="453.96" y2="270.50" stroke="var(--grid)" stroke-width="1.5"/><circle cx="453.96" cy="270.50" r="5.5" fill="var(--s2)" class="cellstroke"><title>heun2: held-out error 0.0961 at the 65,536-cycle budget</title></circle><text class="dlab" x="463.96" y="274.50">0.0961</text><text x="214" y="301.50" text-anchor="end">euler</text><line x1="224" y1="297.50" x2="576.29" y2="297.50" stroke="var(--grid)" stroke-width="1.5"/><circle cx="576.29" cy="297.50" r="5.5" fill="var(--s2)" class="cellstroke"><title>euler: held-out error 0.32 at the 65,536-cycle budget</title></circle><text class="dlab" x="586.29" y="301.50">0.32</text><text x="458.00" y="349" text-anchor="middle">held-out RMS error at the 65,536-cycle budget (log; left is better)</text></svg></div></figure>
@@ -318,7 +389,7 @@ column is the standing weakness of the whole explicit class and the case for epo
 expensive tableaus take large steps at a fixed budget, large steps leave the stability
 region, and the run overflows, whoever found the coefficients.</p>
 
-<p>The stiff column's failure pattern is measured in detail on the <a href="findings/validation.html">findings validation page</a> (stiff subset) and motivates the <a href="tracks.html">implicit SDIRK side effort</a>.</p>
+<p>The stiff column's failure pattern is measured in detail on the <a href="https://jgoetzmann.github.io/rk-findings/validation.html">findings validation page</a> (stiff subset) and motivates the <a href="tracks.html">implicit SDIRK side effort</a>.</p>
 <footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-04 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
 </div>
 </body>

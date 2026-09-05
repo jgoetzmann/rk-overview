@@ -22,6 +22,7 @@ import math
 import re
 import shutil
 import statistics
+import subprocess
 import sys
 from collections import Counter
 from fractions import Fraction
@@ -33,6 +34,7 @@ WS = ROOT.parent              # workspace
 sys.path.insert(0, str(WS / "rk-harness"))
 sys.path.insert(0, str(HERE))
 
+import demo_page as _DEMO  # noqa: E402
 import pages_text as T  # noqa: E402
 from rk_harness import archive, sitegen as sg  # noqa: E402
 from rk_harness import coeffrep, costmodel, enumeration  # noqa: E402
@@ -47,23 +49,62 @@ LIVE_URL = "https://jgoetzmann.github.io/rk-findings/"
 # `pytest --collect-only -q` in rk-harness across the twelve tier files
 # and docs/REVIEW-REPORT.md item A3+ ("55 passed ... deselected"; the gate selection
 # G1-G20 + K1 + K2 is fixed and does not grow with the suite).
-TESTS_TOTAL = 1104
 GATE_TESTS = 55
-SUITE_TIERS = [
-    ("T1", 332, "fixed point, coefficient representation, cycle counting"),
-    ("T2", 216, "order conditions, evaluator, verifier"),
-    ("T3", 234, "archive, search, directive validation"),
-    ("T4", 191, "ledger, runner, site generator, epoch panel"),
-    ("T5", 10, "operational config and the watch view"),
-    ("T6", 8, "Central-time display formatting"),
-    ("T7", 15, "the findings methodology page"),
-    ("T8", 59, "the practical validation suite, stiff subset included"),
-    ("T9", 8, "the epoch saturation orchestrator"),
-    ("T10", 19, "the library benchmark harness"),
-    ("T11", 6, "the adaptive embedded-pair prototype"),
-    ("T12", 6, "the SDIRK implicit prototype"),
-]
-assert sum(n for _t, n, _c in SUITE_TIERS) == TESTS_TOTAL
+
+# What each numbered test file covers. Counts are NOT here: they come from pytest
+# collection at build time (_collect_suite), because a hand-kept table goes stale the
+# first time anyone adds a test and the site then publishes a number that is not true.
+# A new tests/test_tN_*.py with no entry here fails the build rather than appearing blank.
+_SUITE_DESC = {
+    "T1": "fixed point, coefficient representation, cycle counting",
+    "T2": "order conditions, evaluator, verifier",
+    "T3": "archive, search, directive validation",
+    "T4": "ledger, runner, site generator, epoch panel",
+    "T5": "operational config and the watch view",
+    "T6": "Central-time display formatting",
+    "T7": "the findings methodology page",
+    "T8": "the practical validation suite, stiff subset included",
+    "T9": "the epoch saturation orchestrator",
+    "T10": "the library benchmark harness",
+    "T11": "the adaptive embedded-pair prototype",
+    "T12": "the SDIRK implicit prototype",
+    "T13": "the side-track executor and its ledger",
+}
+
+# Filled by _collect_suite() at the top of build(); read by the diagrams and the
+# methodology page.
+TESTS_TOTAL = 0
+SUITE_TIERS: list[tuple[str, int, str]] = []
+
+
+def _collect_suite() -> tuple[list[tuple[str, int, str]], int]:
+    """Test counts straight from `pytest --collect-only` in rk-harness (about 2 seconds).
+
+    Returns the tiers in numeric order and their total."""
+    harness = WS / "rk-harness"
+    python = harness / ".venv" / "Scripts" / "python.exe"
+    if not python.exists():
+        python = Path(sys.executable)
+    proc = subprocess.run(
+        [str(python), "-m", "pytest", "tests", "--collect-only", "-q"],
+        cwd=str(harness), capture_output=True, text=True,
+        encoding="utf-8", errors="replace", timeout=300)
+    rows: list[tuple[str, int]] = []
+    for line in proc.stdout.splitlines():
+        m = re.match(r"tests[/\\]test_(t\d+)_\w+\.py:\s*(\d+)\s*$", line.strip())
+        if m:
+            rows.append((m.group(1).upper(), int(m.group(2))))
+    if not rows:
+        tail = (proc.stdout[-800:] + proc.stderr[-800:]).strip()
+        raise SystemExit("could not collect the test suite; run pytest in rk-harness "
+                         f"first\n{tail}")
+    rows.sort(key=lambda r: int(r[0][1:]))
+    undescribed = [t for t, _n in rows if t not in _SUITE_DESC]
+    if undescribed:
+        raise SystemExit(f"add {undescribed} to _SUITE_DESC in generate.py: the site says "
+                         "what every test tier covers, so a new tier needs a description")
+    tiers = [(t, n, _SUITE_DESC[t]) for t, n in rows]
+    return tiers, sum(n for _t, n, _d in tiers)
 
 # Pre-flight report figures, from rk-harness docs/REVIEW-REPORT.md (2026-08-30 run):
 # 91 PASS, 0 FAIL, 8 MANUAL, 1 INFO, 0 SKIP; all twelve sections green.
@@ -162,38 +203,81 @@ details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
 details.p0[open] summary::before{content:"\\2212"}
 details.p0[open] summary{border-bottom:1px solid var(--line)}
 .p0body{padding:10px 16px 12px 40px}
+nav.tabs.sub2{margin-top:0;padding-bottom:2px}
+nav.tabs.sub2 a{font-size:12.5px;padding:4px 12px;border-radius:7px;color:var(--text-3)}
+nav.tabs.sub2 a:hover{color:var(--text-1)}
+nav.tabs.sub2 a.on{background:var(--surface-0);border:1px solid var(--line);
+  color:var(--text-1);font-weight:600;box-shadow:none}
+p.herosub{font-size:14.5px;color:var(--text-2);margin:10px 0 0;max-width:74ch}
+ol.findex{list-style:none;counter-reset:fx;margin:20px 0 8px;padding:0;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px 20px;
+  max-width:none}
+ol.findex li{counter-increment:fx;position:relative;padding:8px 0 8px 34px;
+  border-top:1px solid var(--line)}
+ol.findex li::before{content:counter(fx);position:absolute;left:0;top:9px;
+  display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;
+  background:var(--grid);color:var(--text-2);font-size:12px;font-weight:700}
+ol.findex a{font-weight:650;font-size:14.5px;text-decoration:none}
+ol.findex a:hover{text-decoration:underline}
+ol.findex .d{display:block;font-size:13px;color:var(--text-2);margin-top:2px;
+  line-height:1.45}
+
+/* Landing page: a bigger opening, then a four-beat spine. The rest of the site keeps
+   the compact scale; only the front door is allowed to be loud. */
+body.home header.site h1{font-size:34px;line-height:1.15;max-width:22ch}
+@media (max-width:640px){body.home header.site h1{font-size:26px}}
+body.home .herolead{font-size:18.5px;line-height:1.55;max-width:66ch;margin:14px 0 0}
+.spine{display:grid;gap:0;margin:34px 0 8px;border-top:1px solid var(--line)}
+.spine section{padding:20px 0 18px;border-bottom:1px solid var(--line);
+  display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 28px;align-items:start}
+@media (max-width:760px){.spine section{grid-template-columns:1fr;gap:6px}}
+.spine .k{grid-row:1 / span 3;font-size:11px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--s1);padding-top:5px}
+@media (max-width:760px){.spine .k{grid-row:auto}}
+.spine h2{margin:0;font-size:19px;line-height:1.3;letter-spacing:-.012em;max-width:34ch}
+.spine p{margin:8px 0 0;font-size:14.5px;color:var(--text-2);max-width:70ch}
+.spine .more{font-size:13px;font-weight:600;text-decoration:none;margin-top:10px;
+  display:inline-block}
+.spine .more:hover{text-decoration:underline}
 """
 
+# Two tiers. The first four are the path a reader who has ninety seconds should take:
+# what it is, run it, what it found, what it cost. The rest is the record behind them.
 _NAV = (
-    ("index.html", "overview"),
-    ("results.html", "key findings"),
-    ("tradeoffs.html", "trade-offs"),
-    ("tracks.html", "research tracks"),
-    ("literature.html", "literature"),
-    ("methodology.html", "methodology"),
-    ("architecture.html", "architecture"),
-    ("design-decisions.html", "design decisions"),
-    ("findings/index.html", f"findings snapshot ({SNAPSHOT_DATE})"),
+    ("index.html", "overview", 1),
+    ("demo.html", "run it", 1),
+    ("results.html", "key findings", 1),
+    ("tradeoffs.html", "trade-offs", 1),
+    ("architecture.html", "architecture", 2),
+    ("methodology.html", "methodology", 2),
+    ("design-decisions.html", "design decisions", 2),
+    ("tracks.html", "research tracks", 2),
+    ("literature.html", "literature", 2),
 )
 
 
 def _nav(active: str) -> str:
-    links = "".join(
-        f'<a href="{href}"{" class=" + chr(34) + "on" + chr(34) if href == active else ""}>{sg._esc(label)}</a>'
-        for href, label in _NAV)
-    links += f'<a href="{LIVE_URL}">live findings ↗</a>'
-    return f'<nav class="tabs">{links}</nav>'
+    def row(tier: int) -> str:
+        return "".join(
+            f'<a href="{href}"{" class=" + chr(34) + "on" + chr(34) if href == active else ""}>{sg._esc(label)}</a>'
+            for href, label, t in _NAV if t == tier)
+    live = f'<a href="{LIVE_URL}">live findings &#8599;</a>'
+    return (f'<nav class="tabs">{row(1)}</nav>'
+            f'<nav class="tabs sub2">{row(2)}{live}</nav>')
 
 
-def _page(title: str, body: str, active: str, subtitle: str = "") -> str:
+def _page(title: str, body: str, active: str, subtitle: str = "",
+          head_extra: str = "", body_end: str = "") -> str:
     sub = f'<p class="sub">{sg._esc(subtitle)}</p>' if subtitle else ""
     footer = T.FOOTER.format(date=SNAPSHOT_DATE)
+    # Only the landing page opens loud; every other page keeps the compact scale.
+    cls = ' class="home"' if active == "index.html" else ""
     return (
         "<!doctype html>\n"
         '<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         f"<title>{sg._esc(title)}</title>\n"
-        f"<style>{sg._STYLE}{_EXTRA_STYLE}</style>\n</head>\n<body>\n"
+        f"<style>{sg._STYLE}{_EXTRA_STYLE}</style>\n{head_extra}</head>\n<body{cls}>\n"
         '<header class="site"><div class="wrap">\n'
         f"<h1>{sg._esc(title)}</h1>\n{sub}\n"
         f"{_nav(active)}\n"
@@ -201,7 +285,9 @@ def _page(title: str, body: str, active: str, subtitle: str = "") -> str:
         '<div class="wrap">\n'
         f"{body}\n"
         f"<footer>{sg._esc(footer)}</footer>\n"
-        "</div>\n</body>\n</html>\n"
+        "</div>\n"
+        f"{body_end}"
+        "</body>\n</html>\n"
     )
 
 
@@ -1266,6 +1352,100 @@ def records_time_chart(events) -> str:
 
 # ----------------------------------------------------------------------------- tracks page
 
+def _check_scripts() -> None:
+    """Run the headless checks over the two pages that ship JavaScript.
+
+    Both load the published page, drive every control, and compare what the page computes
+    against data derived independently: demo.html against the pinned Python evaluator,
+    index.html against the ranking its own data implies. A page that throws, renders an
+    empty region or mis-sorts fails the build instead of shipping. Skipped with a warning
+    when node is missing."""
+    node = shutil.which("node")
+    if node is None:
+        print("WARN: node not found; skipped the demo and landing-widget checks "
+              "(run `node tools/check_demo.js` and `node tools/check_hero.js`)")
+        return
+    for script, page in (("check_demo.js", "demo.html"), ("check_hero.js", "index.html")):
+        proc = subprocess.run([node, str(HERE / script), str(DOCS / page)],
+                              capture_output=True, text=True,
+                              encoding="utf-8", errors="replace")
+        for line in (proc.stdout + proc.stderr).splitlines():
+            if line.strip():
+                print(line)
+        if proc.returncode != 0:
+            raise SystemExit(f"{page} failed its self-check")
+
+
+REPOS = (
+    ("rk-harness", "https://github.com/jgoetzmann/rk-harness",
+     "The package the container runs: verifier, cost model, evaluator, search, site "
+     "generator, and the test suite that gates all of it."),
+    ("rk-findings", "https://github.com/jgoetzmann/rk-findings",
+     "The machine-generated numbers site. Written by the container once per cycle, with "
+     "no human in the loop."),
+    ("rk-overview", "https://github.com/jgoetzmann/rk-overview",
+     "This site, and the tools that build it from the run archive."),
+)
+
+
+def _hero_data(demo: dict) -> dict:
+    """The landing widget's data: one error per (problem, mode, method).
+
+    Reduced from demo_data.json so the index ships about 3 KB instead of the demo page's
+    120 KB, and so both pages rank the same numbers."""
+    methods = [{"key": m["key"], "label": m["label"], "origin": m["origin"]}
+               for m in demo["methods"]]
+    order = {m["key"]: i for i, m in enumerate(methods)}
+    err: dict[str, dict[str, list]] = {}
+    for row in demo["expected"]:
+        slot = err.setdefault(row["p"], {})
+        vals = slot.setdefault(row["mode"], [None] * len(methods))
+        if row.get("status") == "ok":
+            vals[order[row["m"]]] = row.get("error")
+    return {"methods": methods,
+            "problems": [p["name"] for p in demo["problems"]],
+            "default_problem": "damped_osc",
+            "err": err}
+
+
+def _classical_hashes() -> set[str]:
+    """Content hashes of the eight seeded classical tableaus."""
+    return {tableau_mod.content_hash(t) for t in tableau_mod.classical().values()}
+
+
+def _eff_ctx(kf: dict, records, orders) -> dict:
+    """Counts that appear in prose on more than one page.
+
+    They used to be typed into pages_text.py by hand and drifted a cycle behind
+    key_findings.json, so the index said 14 of 15 cells while the results page said 13 of
+    14. Every one of them is now derived here and formatted into the text."""
+    n = kf["efficiency"]["numbers"]
+    grids = archive._grids_from(records, orders)
+    elites = [rec for g in grids.values() for rec in g.values()]
+    seeded = _classical_hashes()
+    hv = sum(1 for rec in elites
+             if rec.tier == "heldout_verified" and rec.tableau_hash not in seeded)
+    return {
+        "cells_total": n["grid_cells_total"],
+        "cells_disc": n["cells_held_by_discovered"],
+        "cells_class": n["cells_held_by_classical"],
+        "cells_won": n["cells_where_discovered_beats_all_cheaper_or_equal_anchors"],
+        "cells_hv": hv,
+        "median_ratio": f"{n['median_error_ratio_discovered_over_anchor']:.2f}",
+        "best_ratio": f"{n['best_error_ratio']:.2f}",
+        "best_x": f"{1 / n['best_error_ratio']:.2f}",
+        "archive_n": f"{n['archive_records']:,}",
+    }
+
+
+def _demo_load() -> dict:
+    """tools/demo_data.json, written by tools/demo_data.py. Inlined into demo.html."""
+    path = HERE / "demo_data.json"
+    if not path.exists():
+        raise SystemExit("tools/demo_data.json is missing; run tools/demo_data.py first")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def _json_file(path: Path, label: str) -> dict:
     if not path.exists():
         print(f"WARN: {label} missing; section skipped")
@@ -1879,8 +2059,7 @@ def literature_body() -> str:
     body.append(
         '<p class="note">Summaries above are human-written from the stored digests; the '
         "digests themselves, verbatim as the prompts received them, are on the "
-        '<a href="findings/literature.html">findings literature page</a> (or the '
-        f'<a href="{LIVE_URL}literature.html">live copy</a>).</p>')
+        f'<a href="{LIVE_URL}literature.html">findings literature page</a>.</p>')
     return "\n".join(body)
 
 
@@ -1954,10 +2133,13 @@ _BALANCED_TAGS = ("div", "section", "figure", "svg", "details", "table", "ul", "
 
 
 def _check_balance(name: str, html_text: str) -> bool:
+    # Script bodies hold markup as string fragments; counting those as page tags would
+    # make the demo's chart builders look unbalanced. check_demo.js covers what they emit.
+    markup = re.sub(r"<script>.*?</script>", "", html_text, flags=re.S)
     ok = True
     for tag in _BALANCED_TAGS:
-        opens = len(re.findall(f"<{tag}[ >]", html_text))
-        closes = html_text.count(f"</{tag}>")
+        opens = len(re.findall(f"<{tag}[ >]", markup))
+        closes = markup.count(f"</{tag}>")
         if opens != closes:
             print(f"WARN: {name}: <{tag}> open/close mismatch ({opens} vs {closes})")
             ok = False
@@ -1965,6 +2147,9 @@ def _check_balance(name: str, html_text: str) -> bool:
 
 
 def build() -> None:
+    global TESTS_TOTAL, SUITE_TIERS
+    SUITE_TIERS, TESTS_TOTAL = _collect_suite()
+    print(f"suite: {TESTS_TOTAL:,} tests collected across {len(SUITE_TIERS)} tiers")
     records = archive.read_all()
     events = []
     ev_path = WS / "rk-work" / "events.jsonl"
@@ -1991,7 +2176,7 @@ def build() -> None:
     n_cells = sum(len(g) for g in archive._grids_from(records, orders).values())
 
     # ---------------- index
-    body = [T.HERO_LEAD]
+    body = [T.HERO_LEAD, _DEMO.hero_body()]
     try:
         sp = bench["speedup"]
         effn = kf["efficiency"]["numbers"]
@@ -2015,50 +2200,63 @@ def build() -> None:
             err_n=sp["error_comparisons"],
             tests=TESTS_TOTAL,
         )
-        body.append(bullets)
     except (KeyError, IndexError, TypeError) as exc:
         raise SystemExit(f"resume bullets need speedup/validation/key-findings data: {exc!r}")
+    # Scale of the run only. The result numbers (speedup, test count) are in the bullets
+    # above with the context that makes them mean something; repeating them here as bare
+    # chips said the same thing twice.
     chips = [
         (f"{len(records):,}", "verified tableaus archived"),
         (f"{n_cycles:,}", "search cycles completed"),
         (f"{n_rejected:,}", "candidates rejected by the verifier"),
         (f"{n_cells}", "MAP-Elites grid cells occupied"),
-        (f"{TESTS_TOTAL:,}", "tests in the harness suite"),
-        (f"{sp['geomean_measured_speedup_rk4_over_champion']:.2f}×",
-         "measured per-step speedup over rk4"),
     ]
+    # Problem -> Approach -> Result -> Verify. Each block is one claim and one link; the
+    # detail lives on the page it links to, so the landing page never re-explains it.
+    body.append('<div class="spine">' + "".join(
+        f'<section><span class="k">{sg._esc(k)}</span>'
+        f'<h2>{sg._esc(h)}</h2>{t}'
+        f'<a class="more" href="{href}">{sg._esc(link)} &rarr;</a></section>'
+        for k, h, t, href, link in T.SPINE) + "</div>")
+    body.append(bullets)
+    body.append('<h2 id="scale">What it took</h2>')
     body.append(_chips(chips))
-    body.append("<h2>Where everything lives</h2>")
+    body.append('<h2 id="source">The source</h2>')
+    body.append('<p class="lead">Three repositories, so every number above can be traced '
+                "to the code that produced it.</p>")
+    body.append('<div class="grid-cards">' + "".join(
+        f'<a class="gcard" href="{url}"><div class="t">{sg._esc(name)} &#8599;</div>'
+        f'<div class="d">{sg._esc(desc)}</div></a>' for name, url, desc in REPOS) + "</div>")
+    body.append("<h2>Everything else</h2>")
     body.append('<div class="teasers">' + "".join(
         f'<a class="tease" href="{href}"><span class="tn">{i + 1}</span>'
         f'<span><span class="tt">{sg._esc(title)}.</span> '
         f'<span class="td">{sg._esc(desc)}</span></span></a>'
         for i, (href, title, desc) in enumerate(T.PAGE_TEASERS)) + "</div>")
-    cards = [
-        ("design-decisions.html", "Design decisions",
-         "Fourteen choices and what the build did to them."),
-        ("findings/index.html", f"Findings snapshot ({SNAPSHOT_DATE})",
-         "The machine-generated numbers site, frozen at the snapshot date."),
-        (LIVE_URL, "Live findings ↗",
-         "The same machine-generated site, still updating with the run."),
-    ]
-    body.append('<div class="grid-cards">' + "".join(
-        f'<a class="gcard" href="{href}"><div class="t">{sg._esc(t)}</div>'
-        f'<div class="d">{sg._esc(d)}</div></a>' for href, t, d in cards) + "</div>")
-    pages = {"index.html": _page(T.HERO_TITLE, "\n".join(body), "index.html",
-                                 "An unattended search, a hash-pinned scorer, and what the "
-                                 "numbers say so far.")}
+    hero = _hero_data(_demo_load())
+    pages = {"index.html": _page(
+        T.HERO_TITLE, "\n".join(body), "index.html",
+        "An unattended search, a hash-pinned scorer, and what the numbers say so far.",
+        head_extra="<style>" + _DEMO.HERO_CSS + "</style>\n",
+        body_end=("<script>window.__RKFLIP__="
+                  + json.dumps(hero, separators=(",", ":"))
+                  + ";</script>\n<script>" + _DEMO.HERO_JS + "</script>\n"))}
 
     # ---------------- results (key findings)
+    eff = _eff_ctx(kf, records, orders)
     body = [T.HEADLINE_VERDICT]
     body.append(f'<p class="note">{sg._esc(T.RESULTS_SCOPE)}</p>')
-    body.append('<ul class="toc">' + "".join(
-        f'<li><a href="#{slug}">{i + 1} · {sg._esc(title)}</a></li>'
-        for i, (slug, title, _d) in enumerate(T.TEASERS)) + "</ul>")
+    body.append('<ol class="findex">' + "".join(
+        f'<li><a href="#{slug}">{sg._esc(title.format(**eff))}</a>'
+        f'<span class="d">{sg._esc(desc.format(**eff))}</span></li>'
+        for slug, title, desc in T.TEASERS) + "</ol>")
     body.append(_finding(
-        "efficiency", 1, "The efficiency frontier: discovered methods lead in 13 of 14 cells",
-        T.F_EFFICIENCY_INTRO, [frontier_chart(kf), grid_coverage_chart(records, orders)],
-        T.F_EFFICIENCY_INTERP))
+        "efficiency", 1,
+        "The efficiency frontier: discovered methods lead in "
+        f"{eff['cells_won']} of {eff['cells_disc']} cells",
+        T.F_EFFICIENCY_INTRO.format(**eff),
+        [frontier_chart(kf), grid_coverage_chart(records, orders)],
+        T.F_EFFICIENCY_INTERP.format(**eff)))
     body.append(_finding(
         "floor-flip", 2, "Floor rounding reorders the classical field",
         T.F_FLIP_INTRO, [flip_slope_chart(kf), flip_problem_chart(kf)], T.F_FLIP_INTERP))
@@ -2101,7 +2299,7 @@ def build() -> None:
     body.append(T.TRACKS_ORCH_NOTE)
     body.append("<h2>Current focus: the scored fixed-step search (epoch 1, live)</h2>")
     body.append(T.TRACK_A_MILESTONES.format(records=len(records), cycles=n_cycles,
-                                            cells=n_cells))
+                                            cells=n_cells, **eff))
     body.append(T.TRACKS_PRELIM_NOTE)
     body.append("<h2>Side effort: adaptive embedded pairs (epoch 2 candidate)</h2>")
     body.append(T.TRACK_B_INTRO)
@@ -2133,7 +2331,7 @@ def build() -> None:
     body.append('<div class="two">')
     body.append("<div>" + T.ANCHOR_TEXT + "</div>")
     body.append('<div class="panel">' + sg._anchor_bars().replace(
-        'href="glossary.html#', 'href="findings/glossary.html#') + "</div>")
+        'href="glossary.html#', f'href="{LIVE_URL}glossary.html#') + "</div>")
     body.append("</div>")
     body.append("<h2>The matrix</h2>")
     body.append(tradeoffs_error_chart(kf, vd))
@@ -2161,7 +2359,7 @@ def build() -> None:
     body.append("<h2>Reading it</h2>")
     body.append(T.TRADEOFFS_VERDICT)
     body.append('<p>The stiff column\'s failure pattern is measured in detail on the '
-                '<a href="findings/validation.html">findings validation page</a> '
+                f'<a href="{LIVE_URL}validation.html">findings validation page</a> '
                 "(stiff subset) and motivates the "
                 '<a href="tracks.html">implicit SDIRK side effort</a>.</p>')
     pages["tradeoffs.html"] = _page("trade-offs", "\n".join(body), "tradeoffs.html",
@@ -2187,7 +2385,7 @@ def build() -> None:
     body.append("<h3>What the container cannot reach</h3>")
     body.append(T.METH_REACH)
     body.append('<h2 id="tests">Testing</h2>')
-    body.append(T.METH_SUITE.format(tests=TESTS_TOTAL))
+    body.append(T.METH_SUITE.format(tests=TESTS_TOTAL, tiers=len(SUITE_TIERS)))
     body.append('<h3 id="preflight">The pre-flight, executed as a program</h3>')
     body.append(T.METH_PREFLIGHT)
     body.append('<h2 id="repro">Reproducibility</h2>')
@@ -2240,8 +2438,10 @@ def build() -> None:
         body.append(f'<div class="decision" id="{slug}">'
                     f'<h3><a href="#{slug}" style="color:inherit;text-decoration:none">'
                     f"{sg._esc(title)}</a>{tag}</h3>"
-                    f'<div class="orig"><strong>Original:</strong> {orig}</div>'
-                    f'<div class="asbuilt"><strong>As built:</strong> {asbuilt}</div>'
+                    f'<div class="orig"><strong>Context, and what it ruled out:</strong> '
+                    f"{orig}</div>"
+                    f'<div class="asbuilt"><strong>Decision, and its consequences:</strong> '
+                    f"{asbuilt}</div>"
                     "</div>")
     body.append("<h2>What was deliberately cut</h2>")
     body.append(T.CUTS)
@@ -2252,12 +2452,24 @@ def build() -> None:
                                            "Every deliberate choice, annotated with what "
                                            "the build did to it.")
 
+    # ---------------- demo (the only page with JavaScript)
+    demo = _demo_load()
+    pages["demo.html"] = _page(
+        "Run the arithmetic yourself", _DEMO.body(LIVE_URL), "demo.html",
+        "The Q15 integrator, in your browser, checked against the evaluator that scored "
+        "the archive.",
+        head_extra="<style>" + _DEMO.DEMO_CSS + "</style>\n",
+        body_end=("<script>window.__RKDEMO__="
+                  + json.dumps(demo, separators=(",", ":"))
+                  + ";</script>\n<script>" + _DEMO.DEMO_JS + "</script>\n"))
+
     all_ok = True
     audit_issues: list[str] = []
     for name, text in pages.items():
         if not _check_balance(name, text):
             all_ok = False
-        audit_issues += _audit_svg_text(name, text)
+        if name != "demo.html":          # the demo's charts are built at view time
+            audit_issues += _audit_svg_text(name, text)
         n_svg = len(_SVG_RE.findall(text))
         (DOCS / name).write_text(text, encoding="utf-8")
         print("wrote", name,
@@ -2269,13 +2481,15 @@ def build() -> None:
     if not all_ok:
         raise SystemExit("page checks failed; see WARN/SVG-AUDIT lines above")
 
-    # ---------------- findings snapshot (verbatim copy of the machine-generated site)
-    src = WS / "rk-findings" / "docs"
-    dst = DOCS / "findings"
-    if dst.exists():
-        shutil.rmtree(dst)
-    shutil.copytree(src, dst)
-    print(f"snapshot: {len(list(dst.glob('*.html')))} findings pages copied")
+    _check_scripts()
+
+    # The findings site used to be copied under docs/findings/ as a frozen snapshot. It
+    # drifted from the live site within days and gave the nav two entries pointing at the
+    # same thing, so the nav links to the live site only and the copy is removed.
+    stale = DOCS / "findings"
+    if stale.exists():
+        shutil.rmtree(stale)
+        print("removed the stale docs/findings snapshot; the nav links to the live site")
 
 
 if __name__ == "__main__":

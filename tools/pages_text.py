@@ -30,16 +30,48 @@ FOOTER = (
 HERO_TITLE = "Searching for Runge–Kutta methods that survive fixed-point arithmetic"
 
 HERO_LEAD = """
-<p class="herolead">An unattended search for explicit Runge&ndash;Kutta tableaus that
-minimise <strong>end-to-end error in Q15 fixed point at a fixed cycle budget on
-Cortex-M0+</strong>, not the textbook criterion of truncation error in exact arithmetic.
-Classical tableaus assume exact arithmetic; on an FPU-less microcontroller every multiply
-rounds, the rounding is biased, and nobody had searched the gap between classically
-optimal and practically optimal coefficients. The scored search covers explicit
-fixed-step methods; adaptive embedded pairs and implicit SDIRK methods exist as working
-prototypes with measured curves on the <a href="tracks.html">research tracks page</a>.
-The whole thing runs inside a container that cannot edit its own scorer.</p>
+<p class="herolead">Textbook Runge&ndash;Kutta coefficients are optimal in exact
+arithmetic. Microcontrollers without an FPU do not have exact arithmetic: every multiply
+floors, and the bias always points the same way. This is an unattended search for the
+coefficients that are optimal <em>after</em> that rounding &mdash; scored on end-to-end
+error in Q15 at a fixed cycle budget on Cortex-M0+, inside a container that cannot edit
+its own scorer.</p>
 """
+
+# The case-study spine: what was wrong, what I did, what came out, how you can check.
+# One claim and one link per block. Anything that needs a second paragraph belongs on the
+# page the block links to.
+SPINE = [
+    ("problem", "Textbook coefficients are tuned for arithmetic the chip does not have",
+     "<p>Runge&ndash;Kutta tableaus are derived by cancelling truncation error in exact "
+     "arithmetic. A Cortex-M0+ has no FPU, so state lives in Q15 and every multiply is a "
+     "right shift that floors, biasing each product by half an LSB in the same direction. "
+     "Nobody had searched the gap between the coefficients that are optimal on paper and "
+     "the ones that are optimal after that rounding.</p>",
+     "results.html#crossover", "the premise, tested before the search"),
+    ("approach", "Score end-to-end error at a fixed cycle budget, and pin the scorer",
+     "<p>Fitness is the error a method actually delivers inside 65,536 cycles, so a cheap "
+     "method is allowed to take more and smaller steps. Cost is analytic cycles from the "
+     "tableau under two Cortex-M0+ multiplier models. Candidates come from a MAP-Elites "
+     "grid driven by a classical optimiser, with a language model in the outer loop "
+     "choosing direction but never touching the scorer: ten files are hashed and the "
+     "container refuses to start if the hash moves.</p>",
+     "architecture.html", "how the system is built"),
+    ("result", "The rounding is a force to exploit, not noise to average away",
+     "<p>A floored product is wrong in the same direction every time, so the bias "
+     "accumulates instead of cancelling. On one problem it lands the cheapest method "
+     "exactly on the reference value while the textbook favourite drifts two decades "
+     "away. Search against that bias rather than around it and the coefficients that "
+     "come back are not the textbook ones:</p>",
+     "results.html", "six findings, with the caveats"),
+    ("verify", "Every number traces to a file, and the demo checks itself",
+     "<p>Charts are built from a single analysis file recomputed from the run archive. "
+     "The interactive page re-implements the Q15 integrator in the browser and compares "
+     "all 154 of its runs against the pinned Python evaluator on load, matching the final "
+     "int16 state bit for bit; the build fails if they diverge.</p>",
+     "methodology.html", "what was tested, and the limits"),
+]
+
 
 # The three headline results, filled with live numbers by generate.build(). Each value
 # in the format() call traces to a data source of record; nothing here is hand-typed.
@@ -65,26 +97,20 @@ bias</strong> that reorders classical methods in 16-bit arithmetic.
 """
 
 # Index page teasers: one line per page, links only; the facts live on the pages.
+# The index's card row carries only the pages the spine above it does not already link.
 PAGE_TEASERS = [
-    ("results.html", "Key findings",
-     "Six findings with charts: the efficiency frontier, the floor-bias flip, the "
-     "quantization crossover, the rc_thermal floor, one space closed by enumeration, "
-     "practical validation."),
     ("tradeoffs.html", "Trade-offs and measured speed",
      "Discovered, classical and library methods in one matrix, every cell traced to a "
      "data file, plus the wall-clock head-to-head against rk4."),
+    ("design-decisions.html", "Design decisions",
+     "Fourteen choices made before the build, each annotated with what the build did to "
+     "it and which two were revised."),
     ("tracks.html", "Research tracks",
-     "The live fixed-step scored search, and two side efforts (adaptive pairs, implicit "
-     "SDIRK) with design docs, prototypes and measured curves."),
+     "The live fixed-step search, plus adaptive embedded pairs and implicit SDIRK as "
+     "working prototypes with measured curves."),
     ("literature.html", "Literature",
-     "What the model-driven reading loop searched, what it found, and how it fed the "
-     "search."),
-    ("methodology.html", "Methodology",
-     "The start gate, the pinned verifier hash, the test suite, the executed pre-flight, "
-     "and the limits."),
-    ("architecture.html", "Architecture",
-     "The container boundary, the cycle loop, exact arithmetic, the cost model, and the "
-     "search machinery."),
+     "What the model-driven reading loop searched, what it found, and where it touched "
+     "the search."),
 ]
 
 # The anchor result: the thesis in two textbook methods. Lives on the trade-offs page.
@@ -100,9 +126,10 @@ project's thesis demonstrated in two methods everyone already knows; the
 
 # One-line teasers for the index; slugs must match generate.FINDINGS slugs.
 TEASERS = [
-    ("efficiency", "Discovered methods lead in 13 of 14 archive cells",
-     "13 of 14 discovered grid cells beat all classical anchors of equal or lower cost on "
-     "held-out error; the best cuts error 2.95× at the same 65,536-cycle budget."),
+    ("efficiency", "Discovered methods lead in {cells_won} of {cells_disc} archive cells",
+     "{cells_won} of {cells_disc} discovered grid cells beat all classical anchors of "
+     "equal or lower cost on held-out error; the best cuts error {best_x}× at the same "
+     "65,536-cycle budget."),
     ("floor-flip", "Floor rounding reorders the classical field",
      "Under the hardware's floor rounding, Euler's search-set error undercuts rk4's; "
      "swap in round-to-nearest and the textbook order returns."),
@@ -133,19 +160,15 @@ RESULTS_SCOPE = (
     "Charts are built from tools/key_findings.json, recomputed from the archive; finding 6 "
     "reads rk-work/validation/results.json and uses its own practical problems.")
 
+# The six findings are listed once, by the contents index that generate.build() renders
+# from TEASERS. This paragraph states the result and the mechanism and stops.
 HEADLINE_VERDICT = """
 <p class="verdict">At a fixed budget of 65,536 cycles on a Cortex-M0+ cost model, the
 search found Runge&ndash;Kutta methods that cut held-out error by up to
 <strong>2.95&times;</strong> against the best classical method, and the data says why:
 Q15's floor rounding injects a &minus;&frac12;-LSB bias per multiply that reorders the
-classical field before any search begins. The evidence below: an efficiency frontier
-where 13 of 14 discovered cells beat every classical anchor of equal or lower cost; a
-rounding-mode experiment in which Euler outranks rk4; the measured step size where
-quantization noise overtakes truncation error; a stiff problem where every classical
-method reports the reference norm as its error; one search space small enough to
-close with an exhaustive proof; and a validation suite of five practical problems from
-embedded applications, unseen by any search, where the discovered methods carry the
-lower error on four.</p>
+classical field before any search begins. You can watch that reordering happen on the
+<a href="demo.html">demo page</a>; the six findings below are the evidence.</p>
 """
 
 # Each finding: slug (also the section anchor), title, intro paragraphs (before the
@@ -153,12 +176,13 @@ lower error on four.</p>
 # builders in generate.py so caption and geometry stay in one place.
 F_EFFICIENCY_INTRO = """
 <p>The archive keeps one elite per MAP-Elites cell (order &times; stage count &times;
-cycle-cost bucket). At this snapshot the grid has 16 occupied cells: 14 held by discovered
-methods, 2 by classicals &mdash; euler owns the only order-1 cell, and rk38 still owns the
-4-stage order-4 cell, where no discovered method displaced it. The fair comparison is
-against every classical anchor of equal or lower per-step cost, since a cheaper method
-could always be substituted; 13 of the 14 discovered cells win that comparison, with a
-median error ratio of 0.72 across the 14 discovered cells and a best of 0.34.</p>
+cycle-cost bucket). At this snapshot the grid has {cells_total} occupied cells:
+{cells_disc} held by discovered methods, {cells_class} by classicals &mdash; euler owns
+the only order-1 cell, and rk38 still owns the 4-stage order-4 cell, where no discovered
+method displaced it. The fair comparison is against every classical anchor of equal or
+lower per-step cost, since a cheaper method could always be substituted; {cells_won} of
+the {cells_disc} discovered cells win that comparison, with a median error ratio of
+{median_ratio} across the {cells_disc} discovered cells and a best of {best_ratio}.</p>
 """
 
 F_EFFICIENCY_INTERP = """
@@ -170,10 +194,11 @@ is an exact dyadic, so the method costs only shifts and adds; measured order 2.0
 Per-problem it holds up across all four held-out problems: pendulum 0.0047, dc_motor
 0.0277, rc_thermal 0.0461, quaternion 0.0191.</p>
 <p>Three honest caveats. Cell elites are selected by held-out error among the
-archive's 45,000+ candidates, so champion values carry selection bias (the optimizer itself only ever sees
-the search-set error). The best cell's tier is "unreplicated"; tiers are mechanical
-insertion-time labels against the then-incumbent, not a validation grade, and 5 of the 14
-discovered elites are heldout_verified. And classical held-out RMS is floored near 0.078
+archive's {archive_n} candidates, so champion values carry selection bias (the optimizer
+itself only ever sees the search-set error). The best cell's tier is "unreplicated"; tiers
+are mechanical insertion-time labels against the then-incumbent, not a validation grade,
+and {cells_hv} of the {cells_disc} discovered elites are heldout_verified. And classical
+held-out RMS is floored near 0.078
 by the rc_thermal saturation (finding 4), which the discovered winners break; that floor
 flatters no one, but it is part of why the classical anchors bunch together.</p>
 """
@@ -580,10 +605,9 @@ METH_LEAD = """
 the method behind them. This page is that method: what the experiment fixes in advance,
 what gets measured, how a claim earns a verdict, what stands between the model and the
 scorer, and what was tested. The formal version, always current on constants and
-thresholds, is the findings methodology page
-(<a href="findings/methodology.html">snapshot</a>,
-<a href="https://jgoetzmann.github.io/rk-findings/methodology.html">live</a>); the
-system internals live on the <a href="architecture.html">architecture page</a>.</p>
+thresholds, is the
+<a href="https://jgoetzmann.github.io/rk-findings/methodology.html">findings methodology page</a>; the system internals live on
+the <a href="architecture.html">architecture page</a>.</p>
 """
 
 METH_SETUP = """
@@ -661,7 +685,7 @@ held-out set alone, and shadow for 10 cycles; the check list is on the
 """
 
 METH_SUITE = """
-<p>The suite collects <strong>{tests:,} tests</strong> in twelve numbered tiers that
+<p>The suite collects <strong>{tests:,} tests</strong> in {tiers} numbered tiers that
 mirror the dependency stack. Golden tests (G-numbered) pin behaviour to fixture values written
 before the build existed, down to exact measured orders and cycle counts. Canary tests
 (K-numbered) are anti-gaming: K1 plants a candidate tuned on the search set and asserts
@@ -697,15 +721,19 @@ in float64; error is judged at the final time, not along the trajectory; and flo
 one hardware convention among several. Optimality claims from the enumerated phases
 hold only within their lattices, and four held-out problems make a strong filter, not
 a statistical guarantee. The full list, with reasoning, is on the
-<a href="findings/methodology.html">findings methodology page</a>.</p>
+<a href="https://jgoetzmann.github.io/rk-findings/methodology.html">findings methodology page</a>.</p>
 """
 
 # ---------------------------------------------------------------------- design decisions
 
 DECISIONS_LEAD = (
-    "Each entry: the original decision from DESIGN.md (written before the build), and "
-    "what the working system actually does. Tags mark whether contact with reality kept "
-    "or changed it.")
+    "Fourteen decisions in the shape of an architecture decision record. The first half "
+    "of each is the context as written in DESIGN.md before any code existed, including "
+    "the alternatives it ruled out and why. The second half is what the working system "
+    "does now and what the choice cost. The tag says whether contact with reality kept "
+    "the decision or changed it; two of the fourteen changed. Nothing here was written "
+    "after the fact: the originals are condensed from DESIGN.md, which is kept verbatim "
+    "in the repository.")
 
 # (anchor_slug, title, original_summary, as_built) — original_summary condensed from
 # DESIGN.md; as_built annotates what the code actually does today. Rendered as trusted
@@ -898,8 +926,8 @@ owner reopened the run and demoted the automatic freeze to advisory, and the pan
 above reads whatever the state files say now. The scientific yield is on the
 <a href="results.html">key findings page</a>: the floor-bias
 mechanism, the anchor reversal, the rc_thermal quantization floor, the closed phase-0
-result, and 13 of 14 discovered cells ahead of every cheaper-or-equal classical
-anchor.</p>
+result, and {cells_won} of {cells_disc} discovered cells ahead of every
+cheaper-or-equal classical anchor.</p>
 <p>The paper-facing analysis that gates the epoch-2 handover has landed. The practical
 validation suite grew to <strong>8 problems</strong> by adding three moderately stiff
 real-application systems (a servo motor under a load-torque step, stiffness ratio 546; a
@@ -1054,9 +1082,8 @@ LIT_LEAD = """
 topic, writes a digest with citations, and from then on that digest is injected into
 the directive and hypothesis prompts. This page is the human summary of what the loop
 has read so far: what was searched, what came back, and where it touched the search.
-The raw digests, as stored, are on the findings literature page
-(<a href="findings/literature.html">snapshot</a>,
-<a href="https://jgoetzmann.github.io/rk-findings/literature.html">live</a>).</p>
+The raw digests, as stored, are on the
+<a href="https://jgoetzmann.github.io/rk-findings/literature.html">findings literature page</a>.</p>
 <p class="note">The digests are model-written text and their sources are
 model-collected citations; verify both before relying on them. Nothing on this page is
 a measurement from this project, and no measured page depends on anything written
