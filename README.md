@@ -1,11 +1,32 @@
 # rk-overview
 
 The human-maintained explainer for the rk project (quantization-aware Runge-Kutta search).
-The companion repo rk-findings carries the authoritative, machine-generated numbers; this site
-carries the narrative: what the project is, how the system is built, every design decision and
-what the build did to it, run-level charts, and an interactive demo of the Q15 integrator.
+The companion repo [rk-findings](https://github.com/jgoetzmann/rk-findings) carries the
+authoritative, machine-generated numbers; this site carries the narrative: what the project
+is, how the system is built, every design decision and what the build did to it, run-level
+charts, and an interactive demo of the Q15 integrator.
 
 Site: https://jgoetzmann.github.io/rk-overview/
+
+## The repositories
+
+Five repositories, four of them public. Every number on this site traces through them in one
+direction: the harness computes it, the run data records it, the findings site publishes it,
+and this repo explains it.
+
+| Repo | What it holds | Written by |
+| --- | --- | --- |
+| [rk-harness](https://github.com/jgoetzmann/rk-harness) | The package the container runs: the hash-pinned verifier, cost model and evaluator, the search, the site generator, and the test suite that gates all of it. | people |
+| [rk-work](https://github.com/jgoetzmann/rk-work) | Run data: the append-only archive, the event stream, the hypothesis ledger, run state, and the validation, benchmark and literature outputs. | the container, per cycle |
+| [rk-findings](https://github.com/jgoetzmann/rk-findings) &middot; [site](https://jgoetzmann.github.io/rk-findings/) | The machine-generated numbers site, rebuilt every cycle with no human in the loop. Deterministic and JavaScript-free. | the container, per cycle |
+| [rk-overview](https://github.com/jgoetzmann/rk-overview) | This repo: the narrative, the interactive demo, and the tools that build both from the run archive. | people, on demand |
+
+A fifth repo holds the operational scripts, configuration and development docs that run all
+of this on one machine. It is private, so there is no link for it here.
+
+The split is deliberate. rk-findings is written by a container that cannot edit its own
+scorer, which is what makes its numbers worth anything; this repo is written by hand and
+says so. Where the two disagree, the machine-generated one is right and this one is stale.
 
 ## Pages
 
