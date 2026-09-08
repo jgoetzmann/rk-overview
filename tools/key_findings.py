@@ -5,7 +5,7 @@ fresh numbers out. Deterministic given the data files (no wall-clock timestamps
 in the output).
 
 Inputs
-    rk-work/archive/*.jsonl      via rk_harness.archive.replay()
+    rk-work/archive/*.jsonl      via rk_harness.archive.cached_view()
     rk-work/falsification.json   (contains literal Infinity tokens; parsed with
                                   Python's json, which accepts them, then every
                                   non-finite float is written out as null)
@@ -87,8 +87,7 @@ def _ranks(scores: dict[str, float]) -> dict[str, int]:
 # --------------------------------------------------------------------- loading
 
 def load_inputs():
-    state = archive.replay()
-    records = archive.read_all()
+    state, records = archive.cached_view()
     fals = json.loads((WS / "rk-work" / "falsification.json").read_text(encoding="utf-8"))
     fr = json.loads((HERE / "floor_round.json").read_text(encoding="utf-8"))
     return state, records, fals, fr
@@ -643,7 +642,7 @@ def build() -> dict:
     out = {
         "_meta": {
             "script": "rk-overview/tools/key_findings.py",
-            "sources": ["rk-work/archive/*.jsonl (via rk_harness.archive.replay)",
+            "sources": ["rk-work/archive/*.jsonl (via rk_harness.archive.cached_view)",
                         "rk-work/falsification.json",
                         "rk-overview/tools/floor_round.json",
                         "rk-work/sidetrack/ledger.jsonl (absent until the executor fires)"],

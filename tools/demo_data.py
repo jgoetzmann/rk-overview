@@ -88,7 +88,7 @@ def _methods() -> list[dict]:
         out.append(_tableau_json(name, name, "classical", classical[name],
                                  {"tag": "", "note": "classical anchor"}))
     seen: set[str] = set()
-    arch = archive.replay()
+    arch = archive.cached_state()
     elites = [rec for grid in arch.grids.values() for rec in grid.values()]
     # Without RK_WORK_DIR the replay finds no archive, every discovered method drops out,
     # and this script still writes a file that looks fine. The demo page then defaults to a
@@ -215,7 +215,7 @@ def _expected(methods: list[dict]) -> list[dict]:
     The floor entries come from rk_harness.simulate.solve_q15 itself, so the demo is
     checked against the code that scored the archive, not against a copy of it."""
     classical = tableau_mod.classical()
-    arch = archive.replay()
+    arch = archive.cached_state()
     by_hash = {rec.tableau_hash[:8]: rec.tableau
                for grid in arch.grids.values() for rec in grid.values()}
     out = []

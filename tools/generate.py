@@ -73,6 +73,8 @@ _SUITE_DESC = {
     "T11": "the adaptive embedded-pair prototype",
     "T12": "the SDIRK implicit prototype",
     "T13": "the side-track executor and its ledger",
+    "T14": "second-pass metrics over the archive: cycles to tolerance, the stability frontier",
+    "T15": "the stiff-problem screen, admissions and rejections alike",
 }
 
 # Filled by _collect_suite() at the top of build(); read by the diagrams and the
