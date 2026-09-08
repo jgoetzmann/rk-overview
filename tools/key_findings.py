@@ -523,6 +523,110 @@ def phase0_exhaustive(records, anchors: dict):
 
 # --------------------------------------------------------------------- driver
 
+def side_tracks() -> dict:
+    """Off-archive adaptive and implicit measurements, read from the ledger the container
+    writes under rk-work/sidetrack/.
+
+    Absent until the executor has fired, which is a normal state rather than an error, so
+    this degrades to an "absent" note instead of failing the build. Everything here is
+    outside the scored path and carries no Q15 quantization, so it is not comparable with
+    any archive number. Arithmetic differs per job and is carried in job_meta rather than
+    asserted once: the solver jobs are float64, the stability scan is exact over Fractions.
+    """
+    base = Path(os.environ["RK_WORK_DIR"]) / "sidetrack"
+    led = base / "ledger.jsonl"
+    absent = {
+        "verdict": ("The side-track executor has not written a ledger yet, so there is no "
+                    "off-archive adaptive or implicit measurement to report."),
+        "numbers": {"points_measured": 0, "jobs": 0, "failed": 0, "tracks": 0},
+        "series": {"absent": "rk-work/sidetrack/ledger.jsonl does not exist"},
+    }
+    if not led.is_file():
+        return absent
+
+    rows = []
+    for line in led.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            e = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(e, dict):
+            rows.append(e)
+    ok = [e for e in rows if e.get("status") == "ok"]
+    failed = [e for e in rows if e.get("status") == "failed"]
+    if not ok:
+        return absent
+
+    codes = sorted({str(e.get("code_hash", "")) for e in ok if e.get("code_hash")})
+    tracks = sorted({str(e.get("track", "")) for e in ok if e.get("track")})
+    per_job: dict[str, int] = {}
+    for e in ok:
+        per_job[str(e.get("job", ""))] = per_job.get(str(e.get("job", "")), 0) + 1
+
+    # Each job states its own arithmetic and its own design question. A blanket "float64"
+    # would be wrong: the solver jobs run in float64, while the stability scan is exact over
+    # Fractions with only the measured order in float. Read them off the artifacts so the
+    # page cannot claim something the measurement does not.
+    job_meta: dict[str, dict] = {}
+    for e in ok:
+        job = str(e.get("job", ""))
+        if job in job_meta:
+            continue
+        rel = str(e.get("artifact", ""))
+        if not rel:
+            continue
+        try:
+            doc = json.loads((base.parent / rel).read_text(encoding="utf-8", errors="replace"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(doc, dict):
+            job_meta[job] = {"arithmetic": str(doc.get("arithmetic", "")),
+                             "closes": str(doc.get("closes", "")),
+                             "schema": str(doc.get("schema", ""))}
+
+    # One row per measured point, sorted, so the page is a function of the ledger and
+    # nothing else. Summary values are whatever the job recorded; they are not normalised
+    # here, because normalising would put this file in the business of knowing each job.
+    points = []
+    for e in sorted(ok, key=lambda e: (str(e.get("track")), str(e.get("job")), str(e.get("key")))):
+        summary = e.get("summary") if isinstance(e.get("summary"), dict) else {}
+        points.append({
+            "track": str(e.get("track", "")),
+            "job": str(e.get("job", "")),
+            "key": str(e.get("key", "")),
+            "cycle": e.get("cycle"),
+            "summary": {k: _num(v) if isinstance(v, float) else v
+                        for k, v in sorted(summary.items())},
+        })
+
+    return {
+        "verdict": (f"{len(ok)} off-archive points measured across {len(per_job)} jobs on "
+                    f"{len(tracks)} tracks, each stating its own arithmetic. All are "
+                    f"outside the scored path and none carries Q15 quantization, so none "
+                    f"is comparable with an archive error."),
+        "numbers": {
+            "points_measured": len(ok),
+            "points_planned": 40,
+            "jobs": len(per_job),
+            "tracks": len(tracks),
+            "failed": len(failed),
+            "code_hash": codes[-1][:12] if codes else None,
+            "last_cycle": max((e.get("cycle") for e in ok
+                               if isinstance(e.get("cycle"), int)), default=None),
+            "last_ts": max((str(e.get("ts", "")) for e in ok), default=None),
+        },
+        "series": {
+            "points_per_job": dict(sorted(per_job.items())),
+            "job_meta": dict(sorted(job_meta.items())),
+            "points": points,
+            "chart_hint": "table per job; there is no shared axis across jobs",
+        },
+    }
+
+
 def build() -> dict:
     state, records, fals, fr = load_inputs()
     anchors, anchor_problems = classical_index(records)
@@ -541,7 +645,8 @@ def build() -> dict:
             "script": "rk-overview/tools/key_findings.py",
             "sources": ["rk-work/archive/*.jsonl (via rk_harness.archive.replay)",
                         "rk-work/falsification.json",
-                        "rk-overview/tools/floor_round.json"],
+                        "rk-overview/tools/floor_round.json",
+                        "rk-work/sidetrack/ledger.jsonl (absent until the executor fires)"],
             "budget_cycles": BUDGET,
             "cost_model": MODEL,
             "rounding_mode": "floor (ASRS), per HANDOFF 4.2",
@@ -562,6 +667,7 @@ def build() -> dict:
         "crossover": crossover(fals, fr),
         "rc_thermal_collapse": rc_thermal_collapse(state, anchors, fr),
         "phase0_exhaustive": phase0_exhaustive(records, anchors),
+        "side_tracks": side_tracks(),
     }
     out["_meta"]["nonfinite_written_as_null"] = _nonfinite_count
     return out

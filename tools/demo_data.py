@@ -90,6 +90,14 @@ def _methods() -> list[dict]:
     seen: set[str] = set()
     arch = archive.replay()
     elites = [rec for grid in arch.grids.values() for rec in grid.values()]
+    # Without RK_WORK_DIR the replay finds no archive, every discovered method drops out,
+    # and this script still writes a file that looks fine. The demo page then defaults to a
+    # method key that is not in it and fails its own self-check with a stack trace about an
+    # undefined property, which says nothing about the cause. Fail here instead.
+    if not elites:
+        raise SystemExit(
+            "no archive elites: RK_WORK_DIR is probably unset or pointing at an empty "
+            "work directory. Run from rk-harness with it set, per the module docstring.")
     for rec in sorted(elites, key=lambda r: r.tableau_hash):
         short = rec.tableau_hash[:8]
         if short not in DISCOVERED_LABELS or short in seen:

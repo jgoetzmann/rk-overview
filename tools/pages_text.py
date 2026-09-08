@@ -917,6 +917,33 @@ scored archive. The point of showing it is to make the next epochs' claims check
 early, not to claim results.</p>
 """
 
+TRACKS_ABSENT_NOTE = """
+<p>The container can now measure these two method classes itself, off-archive, on a cadence
+set in <code>config.json</code>. The executor ships disabled and writes nothing until it is
+switched on, so this section is empty until the first firing lands a ledger under
+<code>rk-work/sidetrack/</code>. That is a normal state, not a failure.</p>
+"""
+
+TRACKS_LEDGER_INTRO = """
+<p>These are the container's own off-archive measurements, one row per parameter point. Each
+job exists to close a question one of the two epoch design documents leaves open, and each
+artifact is a pure function of the code and the point's parameters, so re-measuring a point
+reproduces it byte for byte. The code hash is a digest over the executor and the prototype
+modules: a point counts as measured only under the hash that measured it, so editing a
+prototype re-opens its points rather than leaving stale numbers next to fresh ones.</p>
+"""
+
+TRACKS_LEDGER_CAVEAT = """
+<p class="note">Read each job under the arithmetic it states above, which is not the same for
+all of them: the solver jobs run in float64, while the stability scan is exact over rationals
+with only the measured order in float. What they share is that none carries Q15 quantization
+or floor bias, and none runs under a cycle budget, so the errors are not comparable with any
+number on the <a href="results.html">key findings page</a> or in the scored archive. Where an implicit method finishes a stiff problem here, that is a statement
+about step counts in double precision. Whether it also finishes in Q15, which is the property
+epoch 1 measured, has not been established. The comparison these support is between methods
+inside this table.</p>
+"""
+
 TRACK_A_MILESTONES = """
 <p>The scored search over explicit fixed-step tableaus at a 65,536-cycle budget is
 live. The archive holds <strong>{records:,} verified records</strong> across

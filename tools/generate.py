@@ -41,7 +41,11 @@ from rk_harness import coeffrep, costmodel, enumeration  # noqa: E402
 from rk_harness import tableau as tableau_mod  # noqa: E402
 from rk_harness import timefmt  # noqa: E402
 
-SNAPSHOT_DATE = "2026-09-04"   # the date the snapshot was taken, US Central
+# The date the snapshot was taken, US Central. Derived in build() from the newest archive
+# record, never hand-typed: a pinned literal here is how the footer, the two architecture
+# labels and the results subtitle came to disagree with the data on the page. The value
+# below is only the fallback for an empty archive, which fails the build anyway.
+SNAPSHOT_DATE = "unknown"
 DOCS = ROOT / "docs"
 LIVE_URL = "https://jgoetzmann.github.io/rk-findings/"
 
@@ -1221,7 +1225,13 @@ def us_step_chart(bench: dict) -> str:
 # ----------------------------------------------------------------------------- run charts (archive)
 
 def grid_coverage_chart(records, orders) -> str:
-    """The MAP-Elites lattice: which of the 160 searchable cells hold an elite."""
+    """The MAP-Elites lattice: which of the searchable cells hold an elite.
+
+    The lattice is not orders x stages x buckets: an order can only use stage counts that
+    can reach it, so the size is summed per order from encourager.stage_domain, the same
+    source the findings site uses. Hand-writing it is how the two sites came to publish
+    different totals for one grid.
+    """
     grids = archive._grids_from(records, orders)
     classical_hashes = {tableau_mod.content_hash(t): n
                         for n, t in tableau_mod.classical().items()}
@@ -1230,10 +1240,14 @@ def grid_coverage_chart(records, orders) -> str:
     rowlab_w, group_gap = 30, 34
     p = []
     x = x0
-    n_occ = n_disc = n_clas = 0
+    n_occ = n_disc = n_clas = n_out = 0
+    # The searchable lattice is summed per order, because an order can only use stage
+    # counts that can reach it. Same source as the findings site's coverage card.
+    n_cells = sum(len(sg.encourager.stage_domain(o)) * 8 for o in (1, 2, 3, 4))
     max_rows = 0
     for order in (1, 2, 3, 4):
         grid = grids.get(order, {})
+        domain = set(sg.encourager.stage_domain(order))
         stage_rows = sorted(set(range(2, 7)) | {s for (s, _b) in grid})
         max_rows = max(max_rows, len(stage_rows))
         gx = x + rowlab_w
@@ -1249,6 +1263,14 @@ def grid_coverage_chart(records, orders) -> str:
                     p.append(f'<rect x="{cx}" y="{cy}" width="{cell}" height="{cell}" rx="3" '
                              f'fill="var(--surface-1)" stroke="var(--grid)">'
                              f'<title>order {order}, {s} stages, bucket {b}: empty</title></rect>')
+                    continue
+                if s not in domain:
+                    # Occupied but outside what the search can reach: a seeded baseline.
+                    # Counted beside the fraction, never into it.
+                    n_out += 1
+                    p.append(f'<rect x="{cx}" y="{cy}" width="{cell}" height="{cell}" rx="3" '
+                             f'fill="var(--s2)" class="cellstroke"><title>order {order}, {s} stages, '
+                             f'bucket {b}: seeded baseline, outside the searched stage range</title></rect>')
                     continue
                 n_occ += 1
                 cname = classical_hashes.get(rec.tableau_hash)
@@ -1275,10 +1297,12 @@ def grid_coverage_chart(records, orders) -> str:
            'aria-label="Archive grid coverage: occupied MAP-Elites cells per order, '
            'stage count and cycle bucket">' + "".join(p) + "</svg>")
     caption = ("Where the archive actually lives. The searchable lattice is orders 1&ndash;4 "
-               "&times; stages 2&ndash;6 &times; 8 cost buckets, 160 cells; "
-               f"{n_occ} are occupied at generation time, {n_disc} by discovered methods and "
-               f"{n_clas} by seeded classical baselines (euler's single-stage order-1 cell, "
-               "drawn in the order-1 block, sits outside the searched stage range). Most of "
+               "against the stage counts each order can actually reach, times 8 cost "
+               f"buckets: {n_cells} cells. {n_occ} are occupied at generation time, "
+               f"{n_disc} by discovered methods and {n_clas} by a seeded classical "
+               f"baseline. A further {n_out} cell sits outside that range (euler, at one "
+               "stage, drawn in the order-1 block) and is counted beside the fraction "
+               "rather than into it. Most of "
                "the lattice is structurally out of reach: at 2&ndash;6 stages a step under "
                "the fast multiplier never costs enough to land in buckets 4&ndash;7, and "
                "the cheapest buckets have no room for the stage counts the higher orders "
@@ -2150,11 +2174,85 @@ def _check_balance(name: str, html_text: str) -> bool:
     return ok
 
 
+def sidetrack_section(kf: dict) -> str:
+    """The side-track ledger, rendered from key_findings.json rather than read here.
+
+    Every number on this page comes through _kf_load so it cannot disagree with the findings
+    site, and the absent case is a normal state rather than an error: the executor ships
+    disabled and writes nothing until it is switched on. No JavaScript, sorted iteration,
+    no clock: same inputs, same bytes.
+    """
+    st = (kf or {}).get("side_tracks") or {}
+    nums = st.get("numbers") or {}
+    series = st.get("series") or {}
+    if not nums.get("points_measured"):
+        return (T.TRACKS_ABSENT_NOTE + '<p class="note">' + sg._esc(str(st.get("verdict", ""))) +
+                "</p>")
+
+    out = [T.TRACKS_LEDGER_INTRO]
+    cards = [
+        ("points measured", f"{nums.get('points_measured')}/{nums.get('points_planned')}",
+         "one per parameter point in the plan"),
+        ("jobs", str(nums.get("jobs")), "each closes one open design question"),
+        ("code hash", str(nums.get("code_hash") or "n/a"),
+         "digest over the executor and the prototypes"),
+        ("failed points", str(nums.get("failed", 0)), "recorded, retried, then set aside"),
+    ]
+    out.append('<div class="cards">' + "".join(
+        f'<div class="card"><div class="k">{sg._esc(k)}</div><div class="v">{sg._esc(v)}</div>'
+        f'<div class="d">{sg._esc(d)}</div></div>' for k, v, d in cards) + "</div>")
+
+    by_job: dict[str, list[dict]] = {}
+    for p in series.get("points") or []:
+        by_job.setdefault(str(p.get("job", "")), []).append(p)
+    meta = series.get("job_meta") or {}
+    for job in sorted(by_job):
+        rows = sorted(by_job[job], key=lambda p: str(p.get("key", "")))
+        keys: list[str] = sorted({k for r in rows for k in (r.get("summary") or {})})
+        head = ("<tr><th>point</th>" + "".join(f"<th>{sg._esc(k)}</th>" for k in keys) + "</tr>")
+        trs = []
+        for r in rows:
+            summary = r.get("summary") or {}
+            cells = "".join(f"<td>{sg._esc(_cell_text(summary.get(k)))}</td>" for k in keys)
+            trs.append(f'<tr><th class="mono">{sg._esc(r.get("key"))}</th>{cells}</tr>')
+        out.append(f"<h3>{sg._esc(job)}</h3>")
+        jm = meta.get(job) or {}
+        if jm.get("closes"):
+            out.append(f'<p>Closes: {sg._esc(jm["closes"])}</p>')
+        # Each job states its own arithmetic. A page-level claim would be false for the
+        # stability scan, which is exact over Fractions rather than float64.
+        if jm.get("arithmetic"):
+            out.append(f'<p class="note">Arithmetic: {sg._esc(jm["arithmetic"])}</p>')
+        out.append('<div class="scroll"><table>' + head + "".join(trs) + "</table></div>")
+    out.append(T.TRACKS_LEDGER_CAVEAT)
+    return chr(10).join(out)
+
+
+def _cell_text(v) -> str:
+    if v is None:
+        return "n/a"
+    if isinstance(v, bool):
+        return "yes" if v else "no"
+    if isinstance(v, float):
+        return f"{v:.4g}"
+    if isinstance(v, (list, tuple)):
+        return ", ".join(_cell_text(x) for x in v) or "none"
+    if isinstance(v, dict):
+        # Without this a nested summary reaches the page as a Python repr, escaped quotes
+        # and all. Sorted so the row stays a function of the data. Mirrors sitegen._st_cell.
+        return "; ".join(f"{k} {_cell_text(v[k])}" for k in sorted(v)) or "none"
+    return str(v)
+
+
 def build() -> None:
-    global TESTS_TOTAL, SUITE_TIERS
+    global TESTS_TOTAL, SUITE_TIERS, SNAPSHOT_DATE
     SUITE_TIERS, TESTS_TOTAL = _collect_suite()
     print(f"suite: {TESTS_TOTAL:,} tests collected across {len(SUITE_TIERS)} tiers")
     records = archive.read_all()
+    if not records:
+        raise SystemExit("no archive records: refusing to build a snapshot of nothing")
+    SNAPSHOT_DATE = timefmt.fmt_ct(max(r.timestamp for r in records))[:10]
+    print(f"snapshot date derived from the newest archive record: {SNAPSHOT_DATE}")
     events = []
     ev_path = WS / "rk-work" / "events.jsonl"
     if ev_path.exists():
@@ -2313,6 +2411,8 @@ def build() -> None:
     body.append(T.TRACK_C_INTRO)
     body.append(sdirk_chart(sc))
     body.append(T.TRACK_C_INTERP)
+    body.append("<h2>What the container has measured off-archive</h2>")
+    body.append(sidetrack_section(kf))
     body.append("<h2>Where it all lands</h2>")
     body.append('<p>Every strand feeds the same destination: the '
                 '<a href="tradeoffs.html">trade-offs matrix</a>, the paper\'s central '
