@@ -124,6 +124,25 @@ nav.tabs.sub2 a{font-size:12.5px;padding:4px 12px;border-radius:7px;color:var(--
 nav.tabs.sub2 a:hover{color:var(--text-1)}
 nav.tabs.sub2 a.on{background:var(--surface-0);border:1px solid var(--line);
   color:var(--text-1);font-weight:600;box-shadow:none}
+nav.tabs.sub3{margin-top:0;padding-bottom:4px}
+nav.tabs.sub3 a{font-size:12px;padding:3px 12px;border-radius:7px;color:var(--text-3)}
+nav.tabs.sub3 a:hover{color:var(--text-1)}
+nav.tabs.sub3 a.on{background:var(--surface-0);border:1px solid var(--line);
+  color:var(--text-1);font-weight:600;box-shadow:none}
+
+/* the three method classes: one accent each, slots 1-3 of the validated palette */
+.card.klass{flex:1 1 280px;min-width:250px;max-width:380px;
+  border-left-width:3px;border-left-style:solid}
+.card.k-explicit{border-left-color:var(--s1)}
+.card.k-implicit{border-left-color:var(--s2)}
+.card.k-adaptive{border-left-color:var(--s3)}
+.card.klass .d{margin-top:0;margin-bottom:8px}
+.card.klass .n{font-size:12.5px;color:var(--text-2);margin:0 0 8px;max-width:none}
+.card.klass .go{font-size:13px;margin:auto 0 0;max-width:none}
+/* A class with nothing measured yet states that in words. Set smaller and in
+   the secondary colour so it does not read as a headline figure sitting beside
+   one, which is the comparison the hub row invites. */
+.card.unmeasured .v{font-size:17px;font-weight:550;color:var(--text-2);letter-spacing:0}
 
 /* one-line ledger rows: the summary carries the whole record, the body carries prose */
 .ledger{min-width:820px}
@@ -137,7 +156,7 @@ details.led{background:var(--surface-1);border:1px solid var(--line);border-radi
 details.led>summary{cursor:pointer;list-style:none;font-variant-numeric:tabular-nums}
 details.led>summary::-webkit-details-marker{display:none}
 details.led>summary::before{content:"+";color:var(--text-3);font-weight:600}
-details.led[open]>summary::before{content:"2"}
+details.led[open]>summary::before{content:"\2212"}
 details.led[open]>summary{border-bottom:1px solid var(--line)}
 details.led>div{padding:10px 16px 12px 40px}
 details.led .pred{font:12px ui-monospace,Consolas,monospace;color:var(--text-2);
@@ -294,7 +313,7 @@ tested, and <a href="design-decisions.html">design decisions</a> records why eac
 shaped the way it is.</p>
 
 <h2>The four repositories</h2>
-<figure class="panel"><figcaption>One writer and one trust level per repository: boxes are git repositories, the dashed enclosure is the container boundary, and the dashed arrow is the one-time snapshot copy. The live site keeps moving with the run; this site is a dated snapshot.</figcaption><div class="scroll"><svg viewBox="0 0 1148 360" width="1148" height="360" role="img" aria-label="The four repositories: rk-harness and rk-work mounted into the container, rk-findings rebuilt every cycle and published live, rk-overview a frozen snapshot"><defs><marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--text-3)"/></marker></defs><rect class="enclosure" x="10" y="20" width="668" height="141" rx="12"/><text class="alab" x="18" y="14">mounted into the run container</text><rect class="boxhl" x="20" y="46" width="261" height="101" rx="9"/><text class="bt" x="33" y="69">rk-harness</text><text class="bs" x="33" y="91">the scorer: verifier, evaluator,</text><text class="bs" x="33" y="110">cost models, 1,171 tests</text><text class="bs" x="33" y="129">read-only in the container</text><rect class="box" x="415" y="46" width="253" height="101" rx="9"/><text class="bt" x="428" y="69">rk-work</text><text class="bs" x="428" y="91">run state: append-only archive,</text><text class="bs" x="428" y="110">events, hypothesis ledger</text><text class="bs" x="428" y="129">the one writable mount</text><rect class="box" x="815" y="46" width="313" height="82" rx="9"/><text class="bt" x="828" y="69">rk-findings</text><text class="bs" x="828" y="91">machine-generated numbers site,</text><text class="bs" x="828" y="110">rebuilt by the run every cycle</text><rect x="1070" y="56" width="42" height="19" rx="9" fill="var(--good-bg)"/><text x="1091.0" y="69.5" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--good-fg)">LIVE</text><rect class="box frozen" x="815" y="216" width="313" height="82" rx="9"/><text class="bt" x="828" y="239">rk-overview  (this site)</text><text class="bs" x="828" y="261">human-written explainer pages</text><text class="bs" x="828" y="280">+ a frozen copy of the findings site</text><rect x="1052" y="226" width="56" height="19" rx="9" fill="var(--mut-bg)"/><text x="1080.0" y="239.5" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--mut-fg)">FROZEN</text><path class="arrow" d="M 281 96.5 L 415 96.5"/><text class="alab" x="348.0" y="90.5" text-anchor="middle">verifies + scores</text><path class="arrow" d="M 668 96.5 L 815 87.0"/><text class="alab" x="741.5" y="85.75" text-anchor="middle">rebuilt every cycle</text><path class="arrow arrowdash" d="M 971.5 128 L 971.5 216"/><text class="alab" x="959.5" y="176.0" text-anchor="end">frozen copy taken 2026-09-08</text><a href="https://jgoetzmann.github.io/rk-findings/"><text class="alab" x="815" y="146" style="fill:var(--s1)">jgoetzmann.github.io/rk-findings ↗ (live)</text></a><text class="alab" x="815" y="316">jgoetzmann.github.io/rk-overview</text><text class="alab" x="815" y="332">(you are here, frozen at 2026-09-08)</text></svg></div></figure>
+<figure class="panel"><figcaption>One writer and one trust level per repository: boxes are git repositories, the dashed enclosure is the container boundary, and the dashed arrow is the one-time snapshot copy. The live site keeps moving with the run; this site is a dated snapshot.</figcaption><div class="scroll"><svg viewBox="0 0 1148 360" width="1148" height="360" role="img" aria-label="The four repositories: rk-harness and rk-work mounted into the container, rk-findings rebuilt every cycle and published live, rk-overview a frozen snapshot"><defs><marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--text-3)"/></marker></defs><rect class="enclosure" x="10" y="20" width="668" height="141" rx="12"/><text class="alab" x="18" y="14">mounted into the run container</text><rect class="boxhl" x="20" y="46" width="261" height="101" rx="9"/><text class="bt" x="33" y="69">rk-harness</text><text class="bs" x="33" y="91">the scorer: verifier, evaluator,</text><text class="bs" x="33" y="110">cost models, 1,644 tests</text><text class="bs" x="33" y="129">read-only in the container</text><rect class="box" x="415" y="46" width="253" height="101" rx="9"/><text class="bt" x="428" y="69">rk-work</text><text class="bs" x="428" y="91">run state: append-only archive,</text><text class="bs" x="428" y="110">events, hypothesis ledger</text><text class="bs" x="428" y="129">the one writable mount</text><rect class="box" x="815" y="46" width="313" height="82" rx="9"/><text class="bt" x="828" y="69">rk-findings</text><text class="bs" x="828" y="91">machine-generated numbers site,</text><text class="bs" x="828" y="110">rebuilt by the run every cycle</text><rect x="1070" y="56" width="42" height="19" rx="9" fill="var(--good-bg)"/><text x="1091.0" y="69.5" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--good-fg)">LIVE</text><rect class="box frozen" x="815" y="216" width="313" height="82" rx="9"/><text class="bt" x="828" y="239">rk-overview  (this site)</text><text class="bs" x="828" y="261">human-written explainer pages</text><text class="bs" x="828" y="280">+ a frozen copy of the findings site</text><rect x="1052" y="226" width="56" height="19" rx="9" fill="var(--mut-bg)"/><text x="1080.0" y="239.5" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--mut-fg)">FROZEN</text><path class="arrow" d="M 281 96.5 L 415 96.5"/><text class="alab" x="348.0" y="90.5" text-anchor="middle">verifies + scores</text><path class="arrow" d="M 668 96.5 L 815 87.0"/><text class="alab" x="741.5" y="85.75" text-anchor="middle">rebuilt every cycle</text><path class="arrow arrowdash" d="M 971.5 128 L 971.5 216"/><text class="alab" x="959.5" y="176.0" text-anchor="end">frozen copy taken 2026-09-09</text><a href="https://jgoetzmann.github.io/rk-findings/"><text class="alab" x="815" y="146" style="fill:var(--s1)">jgoetzmann.github.io/rk-findings ↗ (live)</text></a><text class="alab" x="815" y="316">jgoetzmann.github.io/rk-overview</text><text class="alab" x="815" y="332">(you are here, frozen at 2026-09-09)</text></svg></div></figure>
 
 <p>The split exists so that each artifact has exactly one writer and one trust level.
 <code>rk-harness</code> is the scorer: verifier, evaluator, cost models, tests. It enters
@@ -545,7 +564,7 @@ archive's determinism both depend on it.</p>
 <p class="note">Three pre-flight drills changed this system before the run started; that
 story is on the <a href="methodology.html#preflight">methodology page</a>.</p>
 
-<footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-08 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
+<footer>Generated by rk-overview/tools/generate.py from the run archive; data snapshot 2026-09-09 (US Central). This site is frozen at that date; the live numbers keep moving on rk-findings. Text drafted with Claude, edited and owned by the author.</footer>
 </div>
 </body>
 </html>
