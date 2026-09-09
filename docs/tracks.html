@@ -307,23 +307,35 @@ body.home .herolead{font-size:18.5px;line-height:1.55;max-width:66ch;margin:14px
 </div></header>
 <div class="wrap">
 
-<p class="herolead">One scored search runs at a time; two side efforts move alongside
-it. The destination is a paper whose central table weighs discovered methods against
-classical anchors and real library integrators. Method-class changes (adaptive pairs,
-implicit methods) only happen at <strong>epoch boundaries</strong>, because every
-archive score is a function of the ten verifier-pinned files: changing the evaluator
-silently changes every number, so a class change means freezing the run, re-pinning the
-hash, and starting a new archive. Validation suites, benchmarks and literature reading
-proceed out of band at any time.</p>
-<p>Both side efforts revisit things the original design cut (adaptive step size,
-implicit iteration) on real-time-certificate grounds. The designs answer that objection
-directly rather than waving it off: the adaptive controller is division-free with
-worst-case cycle counts booked, and the implicit anchor fixes its Newton iteration count
-so per-step cost stays deterministic. See
+<p class="herolead">Three method classes, and the run now takes them in turn: explicit
+Runge-Kutta tableaus, which the verifier scores and the archive holds; adaptive embedded
+pairs, which choose their own step size from an error estimate; and implicit SDIRK
+methods, which solve an equation at each stage and stay stable where an explicit method
+cannot. The destination is a paper whose central table weighs discovered methods against
+classical anchors and real library integrators.</p>
+<p>Only the explicit class is <em>scored</em>, and that is a constraint rather than a
+preference. Every archive score is a function of the ten verifier-pinned files, so
+changing the evaluator silently changes every number: a scored method-class change means
+freezing the run, re-pinning the hash and starting a new archive at an
+<strong>epoch boundary</strong>. The other two classes are therefore measured
+off-archive, on their own axis, and nothing they produce is ranked against an archive
+record. Validation suites, benchmarks and literature reading proceed out of band at any
+time.</p>
+<p>The findings site gives each class its own page:
+<a href="https://jgoetzmann.github.io/rk-findings/explicit.html">explicit</a>,
+<a href="https://jgoetzmann.github.io/rk-findings/implicit.html">implicit</a> and
+<a href="https://jgoetzmann.github.io/rk-findings/adaptive.html">adaptive</a>. Each one
+states what its class is, what has been measured, and where it has not been measured
+yet.</p>
+<p>The adaptive and implicit designs revisit things the original design cut (adaptive
+step size, implicit iteration) on real-time-certificate grounds. They answer that
+objection directly rather than waving it off: the adaptive controller is division-free
+with worst-case cycle counts booked, and the implicit anchor fixes its Newton iteration
+count so per-step cost stays deterministic. See
 <a href="design-decisions.html">design decisions</a> for the original reasoning.</p>
 
 <h2>Where the loop stands</h2>
-<div class="panel"><p style="margin:0 0 6px"><strong>Epoch 1</strong> <span class="badge badge-active">active</span> <span class="when">scored method class: explicit fixed-step Runge-Kutta</span></p><dl class="meta"><dt>last progress</dt><dd>2026-09-08 22:30 CT (heldout_verified)</dd><dt>saturation counter</dt><dd>0 consecutive saturating checks; 6 trigger a freeze</dd><dt>last check</dt><dd>2026-09-09 16:18 CT, verdict CONTINUE</dd><dt>falsification file</dt><dd>present</dd></dl></div>
+<div class="panel"><p style="margin:0 0 6px"><strong>Epoch 1</strong> <span class="badge badge-active">active</span> <span class="when">scored method class: explicit fixed-step Runge-Kutta</span></p><dl class="meta"><dt>last progress</dt><dd>2026-09-08 22:30 CT (heldout_verified)</dd><dt>saturation counter</dt><dd>0 consecutive saturating checks; 6 trigger a freeze</dd><dt>last check</dt><dd>2026-09-09 17:21 CT, verdict CONTINUE</dd><dt>falsification file</dt><dd>present</dd></dl></div>
 
 <p class="note">This panel is read from the run's state files
 (<code>events.jsonl</code>, <code>saturation_state.json</code>,
@@ -334,11 +346,11 @@ its cell, or a heldout_verified acceptance; enough consecutive saturating checks
 requiring stale progress plus a concluded falsification protocol) mark the epoch
 saturated. The freeze that once fired automatically on that signal is advisory now.</p>
 
-<h2>Current focus: the scored fixed-step search (epoch 1, live)</h2>
+<h2>Explicit fixed-step tableaus: the scored search (epoch 1, live)</h2>
 
 <p>The scored search over explicit fixed-step tableaus at a 65,536-cycle budget is
-live. The archive holds <strong>132,205 verified records</strong> across
-2,969 cycles, with 18 grid cells occupied. The saturation orchestrator froze
+live. The archive holds <strong>132,448 verified records</strong> across
+2,978 cycles, with 18 grid cells occupied. The saturation orchestrator froze
 epoch 1 once, at the cycle-808 boundary, after its stale-progress checks tripped; the
 owner reopened the run and demoted the automatic freeze to advisory, and the panel
 above reads whatever the state files say now. The scientific yield is on the
@@ -367,7 +379,7 @@ prototype: no Q15 quantization, no floor bias, not verifier-pinned, nothing in t
 scored archive. The point of showing it is to make the next epochs' claims checkable
 early, not to claim results.</p>
 
-<h2>Side effort: adaptive embedded pairs (epoch 2 candidate)</h2>
+<h2>Adaptive embedded pairs (epoch 2 candidate)</h2>
 
 <p>Epoch 2 will search embedded pairs (b and b-hat sharing one A matrix) with a Q15
 step-size controller, scored on work-precision: cycles consumed to reach a tolerance,
@@ -397,7 +409,7 @@ scored slot &mdash; is what survives Q15: the error estimate sits on a ~2 LSB
 measurement floor, so tolerances below about 1e-4 in Q15 units are not reachable, and
 the controller's factor table quantizes the step-size response.</p>
 
-<h2>Side effort: implicit SDIRK for stiff problems (epoch 3 candidate)</h2>
+<h2>Implicit SDIRK for stiff problems (epoch 3 candidate)</h2>
 
 <p>Epoch 3 goes implicit for the stiff regime where every explicit method is
 stability-limited at any budget. The design document
@@ -438,6 +450,9 @@ artifact is a pure function of the code and the point's parameters, so re-measur
 reproduces it byte for byte. The code hash is a digest over the executor and the prototype
 modules: a point counts as measured only under the hash that measured it, so editing a
 prototype re-opens its points rather than leaving stale numbers next to fresh ones.</p>
+<p>The findings site breaks the same ledger out by class, with each class stating what its
+numbers mean: <a href="https://jgoetzmann.github.io/rk-findings/implicit.html">implicit</a>
+and <a href="https://jgoetzmann.github.io/rk-findings/adaptive.html">adaptive</a>.</p>
 
 <div class="cards"><div class="card"><div class="k">points measured</div><div class="v">103/103</div><div class="d">one per parameter point in the plan; 40 were measured again after the executor changed</div></div><div class="card"><div class="k">jobs</div><div class="v">10</div><div class="d">each closes one open design question</div></div><div class="card"><div class="k">code hash</div><div class="v">305c692a1b5c</div><div class="d">digest over the executor and the prototypes, at the latest measurement</div></div><div class="card"><div class="k">failed points</div><div class="v">0</div><div class="d">recorded, retried, then set aside</div></div></div>
 <h3>adaptive.controller_gains</h3>

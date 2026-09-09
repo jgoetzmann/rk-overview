@@ -894,19 +894,31 @@ rounding-error analysis) into the findings site's literature page as the run pro
 # ------------------------------------------------------------------------ research tracks
 
 TRACKS_LEAD = """
-<p class="herolead">One scored search runs at a time; two side efforts move alongside
-it. The destination is a paper whose central table weighs discovered methods against
-classical anchors and real library integrators. Method-class changes (adaptive pairs,
-implicit methods) only happen at <strong>epoch boundaries</strong>, because every
-archive score is a function of the ten verifier-pinned files: changing the evaluator
-silently changes every number, so a class change means freezing the run, re-pinning the
-hash, and starting a new archive. Validation suites, benchmarks and literature reading
-proceed out of band at any time.</p>
-<p>Both side efforts revisit things the original design cut (adaptive step size,
-implicit iteration) on real-time-certificate grounds. The designs answer that objection
-directly rather than waving it off: the adaptive controller is division-free with
-worst-case cycle counts booked, and the implicit anchor fixes its Newton iteration count
-so per-step cost stays deterministic. See
+<p class="herolead">Three method classes, and the run now takes them in turn: explicit
+Runge-Kutta tableaus, which the verifier scores and the archive holds; adaptive embedded
+pairs, which choose their own step size from an error estimate; and implicit SDIRK
+methods, which solve an equation at each stage and stay stable where an explicit method
+cannot. The destination is a paper whose central table weighs discovered methods against
+classical anchors and real library integrators.</p>
+<p>Only the explicit class is <em>scored</em>, and that is a constraint rather than a
+preference. Every archive score is a function of the ten verifier-pinned files, so
+changing the evaluator silently changes every number: a scored method-class change means
+freezing the run, re-pinning the hash and starting a new archive at an
+<strong>epoch boundary</strong>. The other two classes are therefore measured
+off-archive, on their own axis, and nothing they produce is ranked against an archive
+record. Validation suites, benchmarks and literature reading proceed out of band at any
+time.</p>
+<p>The findings site gives each class its own page:
+<a href="https://jgoetzmann.github.io/rk-findings/explicit.html">explicit</a>,
+<a href="https://jgoetzmann.github.io/rk-findings/implicit.html">implicit</a> and
+<a href="https://jgoetzmann.github.io/rk-findings/adaptive.html">adaptive</a>. Each one
+states what its class is, what has been measured, and where it has not been measured
+yet.</p>
+<p>The adaptive and implicit designs revisit things the original design cut (adaptive
+step size, implicit iteration) on real-time-certificate grounds. They answer that
+objection directly rather than waving it off: the adaptive controller is division-free
+with worst-case cycle counts booked, and the implicit anchor fixes its Newton iteration
+count so per-step cost stays deterministic. See
 <a href="design-decisions.html">design decisions</a> for the original reasoning.</p>
 """
 
@@ -931,6 +943,9 @@ artifact is a pure function of the code and the point's parameters, so re-measur
 reproduces it byte for byte. The code hash is a digest over the executor and the prototype
 modules: a point counts as measured only under the hash that measured it, so editing a
 prototype re-opens its points rather than leaving stale numbers next to fresh ones.</p>
+<p>The findings site breaks the same ledger out by class, with each class stating what its
+numbers mean: <a href="https://jgoetzmann.github.io/rk-findings/implicit.html">implicit</a>
+and <a href="https://jgoetzmann.github.io/rk-findings/adaptive.html">adaptive</a>.</p>
 """
 
 TRACKS_LEDGER_CAVEAT = """
