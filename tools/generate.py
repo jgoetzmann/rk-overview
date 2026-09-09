@@ -75,6 +75,9 @@ _SUITE_DESC = {
     "T13": "the side-track executor and its ledger",
     "T14": "second-pass metrics over the archive: cycles to tolerance, the stability frontier",
     "T15": "the stiff-problem screen, admissions and rejections alike",
+    "T16": "the lane scheduler and the time shares it publishes from evidence",
+    "T17": "the two-axis validation document across the three method classes",
+    "T18": "the per-class findings pages: explicit, implicit, adaptive",
 }
 
 # Filled by _collect_suite() at the top of build(); read by the diagrams and the
@@ -2192,12 +2195,20 @@ def sidetrack_section(kf: dict) -> str:
                 "</p>")
 
     out = [T.TRACKS_LEDGER_INTRO]
+    # measured/planned only when the plan size is known. It used to be a hand-typed 40
+    # against a line count of 143, which read as "143 of 40 done"; the plan total now
+    # comes from the catalogue and is None if the catalogue could not be read.
+    measured, planned = nums.get("points_measured"), nums.get("points_planned")
+    counted = f"{measured}/{planned}" if planned else str(measured)
+    again = nums.get("points_remeasured") or 0
+    caption = "one per parameter point in the plan"
+    if again:
+        caption += f"; {again} were measured again after the executor changed"
     cards = [
-        ("points measured", f"{nums.get('points_measured')}/{nums.get('points_planned')}",
-         "one per parameter point in the plan"),
+        ("points measured", counted, caption),
         ("jobs", str(nums.get("jobs")), "each closes one open design question"),
         ("code hash", str(nums.get("code_hash") or "n/a"),
-         "digest over the executor and the prototypes"),
+         "digest over the executor and the prototypes, at the latest measurement"),
         ("failed points", str(nums.get("failed", 0)), "recorded, retried, then set aside"),
     ]
     out.append('<div class="cards">' + "".join(

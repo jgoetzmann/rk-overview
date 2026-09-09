@@ -48,6 +48,7 @@ sys.path.insert(0, str(WS / "rk-harness"))
 from rk_harness import archive, enumeration                       # noqa: E402
 from rk_harness.costmodel import M0PLUS_FAST                      # noqa: E402
 from rk_harness.problems import PROBLEMS                          # noqa: E402
+from rk_harness import sidetrack                                  # noqa: E402
 from rk_harness.simulate import solve_q15, steps_for_budget       # noqa: E402
 from rk_harness.tableau import classical, content_hash, to_json   # noqa: E402
 
@@ -561,9 +562,29 @@ def side_tracks() -> dict:
 
     codes = sorted({str(e.get("code_hash", "")) for e in ok if e.get("code_hash")})
     tracks = sorted({str(e.get("track", "")) for e in ok if e.get("track")})
+
+    # POINTS, NOT LINES. A point re-measured after the executor changed leaves a second
+    # line under a second code hash, and the two are one point measured twice. Counting
+    # lines said 143 measured against a plan of 103, which reads as more work than the
+    # plan holds. rk_harness.sidetrack.status() already draws this distinction, so take
+    # the totals from there rather than keeping a second, differently-wrong copy here.
     per_job: dict[str, int] = {}
-    for e in ok:
-        per_job[str(e.get("job", ""))] = per_job.get(str(e.get("job", "")), 0) + 1
+    for job, key in {(str(e.get("job", "")), str(e.get("key", ""))) for e in ok}:
+        per_job[job] = per_job.get(job, 0) + 1
+    n_points = sum(per_job.values())
+    try:
+        st = sidetrack.status()
+        planned = int(st.get("planned_total") or 0) or None
+    except Exception:  # noqa: BLE001 - the analysis must not fail on an optional total
+        planned = None
+
+    # By timestamp, not alphabetically: these are digests, so their lexicographic order
+    # carries no information, and the last one sorted was advertising a98acb39fb4f as
+    # the code the readings ran under after the executor had moved on.
+    stamped = [e for e in ok if e.get("code_hash")]
+    newest = (max(stamped, key=lambda e: (str(e.get("ts", "")), str(e.get("code_hash", ""))))
+              if stamped else None)
+    newest_code = str(newest.get("code_hash", "")) if newest else ""
 
     # Each job states its own arithmetic and its own design question. A blanket "float64"
     # would be wrong: the solver jobs run in float64, while the stability scan is exact over
@@ -601,18 +622,23 @@ def side_tracks() -> dict:
                         for k, v in sorted(summary.items())},
         })
 
+    remeasured = len(ok) - n_points
+    again = (f" {remeasured} of them were measured again after the executor changed."
+             if remeasured > 0 else "")
     return {
-        "verdict": (f"{len(ok)} off-archive points measured across {len(per_job)} jobs on "
+        "verdict": (f"{n_points} off-archive points measured across {len(per_job)} jobs on "
                     f"{len(tracks)} tracks, each stating its own arithmetic. All are "
                     f"outside the scored path and none carries Q15 quantization, so none "
-                    f"is comparable with an archive error."),
+                    f"is comparable with an archive error.{again}"),
         "numbers": {
-            "points_measured": len(ok),
-            "points_planned": 40,
+            "points_measured": n_points,
+            "points_planned": planned,
+            "ledger_lines": len(ok),
+            "points_remeasured": remeasured,
             "jobs": len(per_job),
             "tracks": len(tracks),
             "failed": len(failed),
-            "code_hash": codes[-1][:12] if codes else None,
+            "code_hash": newest_code[:12] if newest_code else None,
             "last_cycle": max((e.get("cycle") for e in ok
                                if isinstance(e.get("cycle"), int)), default=None),
             "last_ts": max((str(e.get("ts", "")) for e in ok), default=None),
