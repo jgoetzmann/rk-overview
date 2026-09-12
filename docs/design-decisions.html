@@ -415,10 +415,9 @@ conditions and holds a stage-count record at order 10, so numerical tableau sear
 the contribution. That line of work optimizes order, stage count and error constants in
 exact arithmetic. It does not price coefficients against a hardware cost model or measure
 end-to-end error in fixed point, and that gap is narrow enough to finish.</p>
-<p>The closer line is the work on low-precision and reduced-precision time integration,
-and it is worth stating plainly rather than leaving to a reader to find. Croci and Giles
-analyze Runge-Kutta discretizations of the heat equation under round-to-nearest and
-stochastic rounding, and show that the round-to-nearest solution stagnates once the
+<p>The closer line is the work on low-precision and reduced-precision time integration.
+Croci and Giles analyze Runge-Kutta discretizations of the heat equation under
+round-to-nearest and stochastic rounding, and show that the round-to-nearest solution stagnates once the
 timestep is small enough, with the global rounding error growing like the unit roundoff
 over the timestep until it does
 (<a href="https://academic.oup.com/imajna/article-abstract/43/3/1358/6570843">Effects of
@@ -442,7 +441,7 @@ should do. The run's literature loop keeps collecting adjacent work, and its dig
 the findings site's <a href="https://jgoetzmann.github.io/rk-findings/hypotheses.html#literature">research log</a>, labeled as
 model-written.</p>
 
-<footer>Built by rk-overview/tools/generate.py from the run archive, data as of 2026-09-10 (US Central). This site is a snapshot; rk-findings carries the live numbers. Built from rk-harness df5794c637d7, rk-work 12d49784a442, rk-findings cf4f6c7f54a7 and rk-overview a46b45eb201b, the commit each repository was at when this page was written. Text drafted with Claude, edited and owned by the author.</footer>
+<footer>Built by rk-overview/tools/generate.py from the run archive, data as of 2026-09-10 (US Central). This site is a snapshot; rk-findings carries the live numbers. Built from rk-harness 0adcfc72e417, rk-work b5fc8b515845, rk-findings d1805779e800 and rk-overview ddf426b97dd9, the commit each repository was at when this page was written. Text drafted with Claude, edited and owned by the author.</footer>
 </div>
 </body>
 </html>

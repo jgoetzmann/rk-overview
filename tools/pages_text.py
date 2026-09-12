@@ -552,10 +552,9 @@ conditions and holds a stage-count record at order 10, so numerical tableau sear
 the contribution. That line of work optimizes order, stage count and error constants in
 exact arithmetic. It does not price coefficients against a hardware cost model or measure
 end-to-end error in fixed point, and that gap is narrow enough to finish.</p>
-<p>The closer line is the work on low-precision and reduced-precision time integration,
-and it is worth stating plainly rather than leaving to a reader to find. Croci and Giles
-analyze Runge-Kutta discretizations of the heat equation under round-to-nearest and
-stochastic rounding, and show that the round-to-nearest solution stagnates once the
+<p>The closer line is the work on low-precision and reduced-precision time integration.
+Croci and Giles analyze Runge-Kutta discretizations of the heat equation under
+round-to-nearest and stochastic rounding, and show that the round-to-nearest solution stagnates once the
 timestep is small enough, with the global rounding error growing like the unit roundoff
 over the timestep until it does
 (<a href="https://academic.oup.com/imajna/article-abstract/43/3/1358/6570843">Effects of
@@ -599,10 +598,9 @@ watch it happen.</p>
 RESULTS_SCOPE = (
     "Unless a figure says otherwise: a {budget}-cycle budget per problem, the m0plus_fast "
     "cost model, Q15 with floor rounding, the four held-out problems. Charts come from "
-    "tools/key_findings.json; finding 6 reads rk-work/validation/results.json. The two "
-    "documents stand at different states of the run: findings 1 to 5 were computed at "
-    "{kf_records} archive records, finding 6 and the method matrix at {vd_records}. Each "
-    "figure carries the state it was computed at.")
+    "tools/key_findings.json; finding 6 reads rk-work/validation/results.json. Findings 1 "
+    "to 5 were computed at {kf_records} archive records, finding 6 and the method matrix "
+    "at {vd_records}, and each figure carries the state it was computed at.")
 
 ANCHOR_TITLE = "The anchor result"
 
@@ -649,8 +647,8 @@ problem: {bd_per_problem}.</p>
 ratio above. rc_thermal is the problem where every classical method lands on the same
 quantization floor (<a href="#rc-thermal">finding 4</a>), and it is what makes the
 full-set ratio the widest. Dropping it leaves {loo_min}&times;, the lowest ratio in the
-table below; across the whole table the lead runs from {loo_min}&times; to
-{loo_max}&times;, and the best classical method changes identity when quaternion goes.</p>
+table below; the highest is {loo_max}&times;, and the best classical method changes
+identity when quaternion goes.</p>
 {loo_table}
 <p>Two caveats. Elites are chosen by held-out error from {archive_n} archived candidates,
 so the best values carry selection bias, although the optimizer itself only sees
@@ -731,9 +729,9 @@ F_PHASE0_INTRO = """
 methods with a21 on a dyadic lattice, {lattice} candidates, of which {valid} have
 exactly representable b weights. All {valid} were enumerated, verified and archived, so
 the result holds over the whole space rather than a sample. It is an exhaustive
-evaluation and not a theorem, and it is contingent on three things: these four held-out
-problems, this {budget}-cycle budget, and Q15 with floor rounding. The top two members
-finish {gap}% apart, which is a tie at this resolution rather than an ordering.</p>
+evaluation and not a theorem, and it holds only for these four held-out problems, this
+{budget}-cycle budget, and Q15 with floor rounding. The top two members finish {gap}%
+apart, which is a tie at this resolution rather than an ordering.</p>
 """
 
 F_PHASE0_INTERP = """
