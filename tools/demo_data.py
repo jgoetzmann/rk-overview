@@ -9,7 +9,8 @@ also writes an `expected` block: the final Q15 state, step count and error that
 offers. The page runs all of them on load and prints how many matched exactly. A
 disagreement shows up as a failed check on the page rather than as a quietly wrong chart.
 
-Run from rk-harness with RK_WORK_DIR set:
+It runs from any directory. RK_WORK_DIR defaults to the workspace's rk-work, as it does
+for key_findings.py and generate.py. From rk-harness:
 
     .venv/Scripts/python.exe ../rk-overview/tools/demo_data.py
 """
@@ -17,6 +18,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import sys
 from fractions import Fraction
 from pathlib import Path
@@ -25,6 +27,8 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 WS = ROOT.parent
 sys.path.insert(0, str(WS / "rk-harness"))
+# Set before rk_harness is imported, so every path it resolves points at the real run.
+os.environ.setdefault("RK_WORK_DIR", str(WS / "rk-work"))
 
 from rk_harness import archive, problems, simulate, tableau as tableau_mod  # noqa: E402
 from rk_harness.coeffrep import to_rep  # noqa: E402
@@ -90,14 +94,16 @@ def _methods() -> list[dict]:
     seen: set[str] = set()
     arch = archive.cached_state()
     elites = [rec for grid in arch.grids.values() for rec in grid.values()]
-    # Without RK_WORK_DIR the replay finds no archive, every discovered method drops out,
-    # and this script still writes a file that looks fine. The demo page then defaults to a
-    # method key that is not in it and fails its own self-check with a stack trace about an
-    # undefined property, which says nothing about the cause. Fail here instead.
+    # With RK_WORK_DIR pointing at an empty directory the replay finds no archive, every
+    # discovered method drops out, and this script would still write a file that looks
+    # fine. The demo page then defaults to a method key that is not in it and fails its
+    # own self-check with a stack trace about an undefined property, which says nothing
+    # about the cause. Fail here instead.
     if not elites:
         raise SystemExit(
-            "no archive elites: RK_WORK_DIR is probably unset or pointing at an empty "
-            "work directory. Run from rk-harness with it set, per the module docstring.")
+            f"no archive elites under RK_WORK_DIR={os.environ.get('RK_WORK_DIR')!r}; unset "
+            "it to use the workspace's rk-work, or point it at a work directory that holds "
+            "an archive.")
     for rec in sorted(elites, key=lambda r: r.tableau_hash):
         short = rec.tableau_hash[:8]
         if short not in DISCOVERED_LABELS or short in seen:

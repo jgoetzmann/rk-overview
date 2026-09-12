@@ -1,19 +1,30 @@
 """Build the rk-overview site into docs/.
 
-Snapshot semantics: run by hand, reads the live rk-work archive plus
-tools/key_findings.json (written by tools/key_findings.py), copies the current
-rk-findings pages under docs/findings/, and writes eight authored pages. Reuses the
-findings site's style tokens and a few chart primitives so the two sites read as one
-system. Timezone policy: stored data is UTC; anything rendered for humans goes through
-rk_harness.timefmt (US Central), and SNAPSHOT_DATE is a Central-time date.
+Snapshot semantics: run by hand. Reads the live rk-work archive, tools/key_findings.json
+(written by tools/key_findings.py), rk-work/validation/results.json,
+rk-work/benchmark/results.json, tools/demo_data.json and the rk-harness test collection,
+and writes five pages: index, architecture, design-decisions, results (key findings) and
+demo. It deletes the retired pages and any old docs/findings copy so GitHub Pages stops
+serving them. It reuses the findings site's style tokens and chart primitives so the two
+sites read as one system. Timezone policy: stored data is UTC; anything rendered for
+humans goes through rk_harness.timefmt (US Central), and SNAPSHOT_DATE is a Central date.
 
-Every build runs two self-checks over the authored pages and fails loudly on either:
-a tag-balance check, and an SVG text audit (_audit_svg_text) that walks every text
-node in every produced chart and flags any whose estimated extent (~7 px/char at the
-13px base size, class- and font-size-aware) leaves the viewBox.
+The prose lives in pages_text.py as str.format templates; every number in it is filled
+here from the files above, and every pattern sentence is checked against the data
+(_claim) so a stale sentence fails the build instead of shipping.
 
-    set PYTHONPATH=..\\rk-harness  (and RK_WORK_DIR to ..\\rk-work)
-    python tools/generate.py
+Before writing anything, every build checks the pages and fails loudly on unbalanced
+tags, SVG text that leaves its viewBox (_audit_svg_text estimates each text node's
+extent), and a bad link (_check_links: an internal href must name a page and an id on
+it; a link into rk-findings must name a current page, and any fragment must be an id
+that page is known to carry) or a dropped id (_check_incoming: every architecture id the
+findings methodology page deep-links still exists here). After writing, it runs the two
+headless node checks over
+the pages that ship JavaScript (_check_scripts). Without node on the PATH it prints a
+WARN, skips them and keeps the pages it wrote.
+
+    cd rk-overview
+    ..\\rk-harness\\.venv\\Scripts\\python.exe tools\\generate.py
 """
 from __future__ import annotations
 
@@ -24,7 +35,6 @@ import shutil
 import statistics
 import subprocess
 import sys
-from collections import Counter
 from fractions import Fraction
 from pathlib import Path
 
@@ -36,35 +46,54 @@ sys.path.insert(0, str(HERE))
 
 import demo_page as _DEMO  # noqa: E402
 import pages_text as T  # noqa: E402
-from rk_harness import archive, sitegen as sg  # noqa: E402
-from rk_harness import coeffrep, costmodel, enumeration  # noqa: E402
+from rk_harness import archive, methodology as meth, sitegen as sg  # noqa: E402
+from rk_harness import coeffrep, costmodel  # noqa: E402
 from rk_harness import tableau as tableau_mod  # noqa: E402
 from rk_harness import timefmt  # noqa: E402
 
 # The date the snapshot was taken, US Central. Derived in build() from the newest archive
-# record, never hand-typed: a pinned literal here is how the footer, the two architecture
-# labels and the results subtitle came to disagree with the data on the page. The value
-# below is only the fallback for an empty archive, which fails the build anyway.
+# record, never hand-typed. The value below is only the fallback for an empty archive,
+# which fails the build anyway.
 SNAPSHOT_DATE = "unknown"
 DOCS = ROOT / "docs"
-LIVE_URL = "https://jgoetzmann.github.io/rk-findings/"
+LIVE_URL = T.LIVE_URL
 
-# Test-suite figures, stated on the methodology page. Verified 2026-09-02 against
-# `pytest --collect-only -q` in rk-harness across the twelve tier files
-# and docs/REVIEW-REPORT.md item A3+ ("55 passed ... deselected"; the gate selection
-# G1-G20 + K1 + K2 is fixed and does not grow with the suite).
-GATE_TESTS = 55
+# The five pages, in nav order, then the retired names the build deletes from docs/.
+_NAV = (
+    ("index.html", "overview"),
+    ("architecture.html", "architecture"),
+    ("design-decisions.html", "design decisions"),
+    ("results.html", "key findings"),
+    ("demo.html", "demo"),
+)
+_RETIRED = ("tradeoffs.html", "methodology.html", "tracks.html", "literature.html")
+
+# The findings site's current pages. A link into rk-findings must name one of these.
+_FINDINGS_PAGES = frozenset({"", "index.html", "explicit.html", "implicit.html",
+                             "adaptive.html", "validation.html", "hypotheses.html",
+                             "methodology.html"})
+# The fragments a link into rk-findings may carry, per page: the section ids the findings
+# generator publishes for linking, and on methodology.html every glossary term, read from
+# sitegen._GLOSSARY so a renamed term fails this build rather than leaving a dead link. A
+# page not listed here takes no fragment.
+_FINDINGS_FRAGMENTS = {
+    "validation.html": frozenset({"speed", "falsification"}),
+    "hypotheses.html": frozenset({"interpretation", "literature"}),
+    "methodology.html": frozenset({"costmodel", "ledger", "glossary"}
+                                  | {anchor for anchor, _term, _paras in sg._GLOSSARY}),
+}
 
 # What each numbered test file covers. Counts are NOT here: they come from pytest
 # collection at build time (_collect_suite), because a hand-kept table goes stale the
-# first time anyone adds a test and the site then publishes a number that is not true.
-# A new tests/test_tN_*.py with no entry here fails the build rather than appearing blank.
+# first time anyone adds a test. A new tests/test_tN_*.py with no entry here fails the
+# build rather than appearing blank. rk-harness hygiene C36 parses this literal, so keep
+# its name and the closing brace in column 0.
 _SUITE_DESC = {
     "T1": "fixed point, coefficient representation, cycle counting",
     "T2": "order conditions, evaluator, verifier",
     "T3": "archive, search, directive validation",
     "T4": "ledger, runner, site generator, epoch panel",
-    "T5": "operational config and the watch view",
+    "T5": "operational config, the watch view, status, checkout hygiene",
     "T6": "Central-time display formatting",
     "T7": "the findings methodology page",
     "T8": "the practical validation suite, stiff subset included",
@@ -75,15 +104,16 @@ _SUITE_DESC = {
     "T13": "the side-track executor and its ledger",
     "T14": "second-pass metrics over the archive: cycles to tolerance, the stability frontier",
     "T15": "the stiff-problem screen, admissions and rejections alike",
-    "T16": "the lane scheduler and the time shares it publishes from evidence",
+    "T16": "the lane scheduler, the lane cycle and the lane search",
     "T17": "the two-axis validation document across the three method classes",
     "T18": "the per-class findings pages: explicit, implicit, adaptive",
 }
 
 # Filled by _collect_suite() at the top of build(); read by the diagrams and the
-# methodology page.
+# architecture page's testing section.
 TESTS_TOTAL = 0
 SUITE_TIERS: list[tuple[str, int, str]] = []
+GATE_TESTS = 0
 
 
 def _collect_suite() -> tuple[list[tuple[str, int, str]], int]:
@@ -119,29 +149,35 @@ def _collect_suite() -> tuple[list[tuple[str, int, str]], int]:
     tiers = [(t, totals[t], _SUITE_DESC[t]) for t in sorted(totals, key=lambda k: int(k[1:]))]
     return tiers, sum(n for _t, n, _d in tiers)
 
-# Pre-flight report figures, from rk-harness docs/REVIEW-REPORT.md (2026-08-30 run):
-# 91 PASS, 0 FAIL, 8 MANUAL, 1 INFO, 0 SKIP; all twelve sections green.
+
+def _gate_count() -> int:
+    """Size of the container's start gate: the node ids in tests/golden_gate.txt."""
+    path = WS / "rk-harness" / "tests" / "golden_gate.txt"
+    lines = [ln.strip() for ln in path.read_text(encoding="utf-8").splitlines()]
+    n = sum(1 for ln in lines if ln and not ln.startswith("#"))
+    if not n:
+        raise SystemExit(f"{path} lists no tests")
+    return n
+
 
 # Decisions whose plan changed on contact with the build (tagged on the page).
-REVISED_DECISIONS = {"credentials", "numbers-not-claims"}
+REVISED_DECISIONS = {"credentials", "numbers-not-claims", "q15-overflow"}
 
 # Page-specific components only. All shared chrome (font stack, heading scale, nav,
-# footer, tables, figures, details/summary, palette tokens) comes from sitegen._STYLE
-# unchanged, so the two sites read as siblings; never re-style what the base defines.
+# footer, tables, figures, cards, details/summary, palette tokens) comes from
+# sitegen._STYLE unchanged, so the two sites read as siblings.
 _EXTRA_STYLE = """
 .herolead{font-size:17.5px;line-height:1.6;max-width:74ch}
-ul.rbul{list-style:none;margin:20px 0 8px;padding:0;max-width:104ch}
-.rbul li{background:var(--surface-1);border:1px solid var(--line);
-  border-left:4px solid var(--s1);border-radius:10px;padding:13px 18px;margin:10px 0;
-  font-size:15.5px;line-height:1.6;max-width:none}
-.rbul li strong{font-variant-numeric:tabular-nums}
-.rbul .rlab{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;
-  text-transform:uppercase;color:var(--s1);margin-right:10px}
-.rbul .golink{font-size:12.5px;white-space:nowrap;margin-left:6px}
-.lit-topic{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
-  padding:16px 20px;margin:14px 0}
-.lit-topic h2{margin-top:0;font-size:16px}
-.lit-topic .meta-line{font-size:12px;color:var(--text-3);margin:0 0 10px}
+nav.tabs a.ext{margin-left:auto;color:var(--s1);font-weight:600}
+nav.tabs a.ext:hover{color:var(--text-1)}
+/* On a phone the nav wraps rather than scrolling sideways: a scrolling row put the
+   active tab off-screen on the two right-most pages. Each tab becomes its own rounded
+   box, so a second row reads as part of the nav instead of a strip cut loose from the
+   rule under the header. */
+@media (max-width:560px){nav.tabs{flex-wrap:wrap;gap:4px}
+  nav.tabs a{padding:7px 10px;border-radius:8px;border:1px solid transparent}
+  nav.tabs a.on{border-color:var(--line);box-shadow:none}
+  nav.tabs a.ext{margin-left:0}}
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 8px}
 .chip{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
   padding:10px 16px;min-width:120px}
@@ -155,24 +191,34 @@ a.gcard{display:block;background:var(--surface-1);border:1px solid var(--line);
 a.gcard:hover{border-color:var(--s1)}
 a.gcard .t{font-weight:650;color:var(--s1);margin:0 0 4px;font-size:15px}
 a.gcard .d{font-size:13px;color:var(--text-2)}
-.teasers{margin:12px 0}
-a.tease{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:baseline;
-  padding:10px 14px;margin:8px 0;background:var(--surface-1);border:1px solid var(--line);
-  border-radius:10px;text-decoration:none;color:inherit}
-a.tease:hover{border-color:var(--s1)}
-a.tease .tn{display:inline-grid;place-items:center;width:26px;height:26px;
-  border-radius:8px;background:var(--s1);color:#fff;font-weight:700;font-size:14px}
-a.tease .tt{font-weight:650}
-a.tease .td{font-size:13px;color:var(--text-2)}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
-@media (max-width:900px){.two{grid-template-columns:1fr}}
-p.verdict{font-size:17px;line-height:1.65;max-width:82ch}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;
+  align-items:start}
+@media (max-width:900px){.two{grid-template-columns:minmax(0,1fr)}}
+.two>.panel{overflow-x:auto}
+/* On a phone every chart and diagram keeps its drawn size and scrolls inside its panel,
+   rather than shrinking until its labels cannot be read. The gradients are a scroll cue:
+   the inner pair fades the panel background over the cut edge and the outer pair is a
+   shadow that only shows while there is more to scroll to, so a diagram that runs past
+   the screen does not read as one box in an empty panel. */
+@media (max-width:700px){figure .scroll svg,.two>.panel svg{max-width:none}
+  figure .scroll,.two>.panel{background:
+    linear-gradient(90deg,var(--surface-1) 30%,transparent),
+    linear-gradient(270deg,var(--surface-1) 30%,transparent) 100% 0,
+    radial-gradient(farthest-side at 0 50%,rgba(0,0,0,.18),transparent),
+    radial-gradient(farthest-side at 100% 50%,rgba(0,0,0,.18),transparent) 100% 0;
+    background-repeat:no-repeat;
+    background-size:28px 100%,28px 100%,14px 100%,14px 100%;
+    background-attachment:local,local,scroll,scroll}}
+.wrap>ul li{max-width:82ch}
+p.verdict{font-size:16px;line-height:1.65;max-width:82ch}
 section.finding{margin:44px 0;scroll-margin-top:16px}
 section.finding h2{font-size:20px;margin-bottom:8px}
 .findnum{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;
   background:var(--s1);color:#fff;font-size:16px;font-weight:700;margin-right:12px;
   vertical-align:-7px}
 figure .src{display:block;margin-top:6px;font-size:12px;color:var(--text-3)}
+pre.grammar{font:12.5px ui-monospace,Consolas,monospace;background:var(--surface-1);
+  border:1px solid var(--line);border-radius:8px;padding:10px 14px;overflow-x:auto}
 svg text{font-size:13px}
 svg .lbl{font-size:13px}
 svg .dlab{font-weight:600;fill:var(--text-1);paint-order:stroke;stroke:var(--surface-1);
@@ -183,12 +229,13 @@ svg .alab{font-size:12.5px;fill:var(--text-3);paint-order:stroke;stroke:var(--su
 svg .box{fill:var(--surface-1);stroke:var(--line)}
 svg .boxhl{fill:var(--surface-0);stroke:var(--s1);stroke-width:1.5}
 svg .boxbad{fill:var(--bad-bg);stroke:var(--bad-fg)}
-svg .frozen{stroke-dasharray:6 4}
+svg .dashedbox{stroke-dasharray:6 4}
 svg .arrow{stroke:var(--text-3);fill:none;marker-end:url(#ah);stroke-width:1.5}
 svg .arrowdash{stroke-dasharray:6 4}
 svg .enclosure{fill:none;stroke:var(--text-3);stroke-dasharray:4 4;opacity:.7}
 svg a text{fill:var(--s1)}
 ol.checks li{margin:6px 0;max-width:82ch}
+ol.checks.foot{font-size:13.5px;list-style:none;padding-left:0}
 ul.toc{columns:2;column-gap:32px;font-size:13.5px;margin:8px 0 4px;padding-left:20px}
 ul.toc li{margin:3px 0}
 @media (max-width:700px){ul.toc{columns:1}}
@@ -203,39 +250,8 @@ ul.toc li{margin:3px 0}
   font-weight:600;margin-left:8px;vertical-align:2px}
 .tag-kept{background:var(--good-bg);color:var(--good-fg)}
 .tag-changed{background:var(--warn-bg);color:var(--warn-fg)}
-.p0wrap{min-width:780px}
-.p0head,details.p0 summary{display:grid;
-  grid-template-columns:18px 80px 130px 88px 118px 148px 1fr;
-  gap:10px;align-items:center;padding:7px 12px}
-.p0head{font-size:12px;color:var(--text-2);font-weight:600;letter-spacing:.02em}
-details.p0{background:var(--surface-1);border:1px solid var(--line);border-radius:8px;
-  margin:6px 0;font-size:13px}
-details.p0 summary{cursor:pointer;list-style:none;font-variant-numeric:tabular-nums}
-details.p0 summary::-webkit-details-marker{display:none}
-details.p0 summary::before{content:"+";color:var(--text-3);font-weight:600}
-details.p0[open] summary::before{content:"\\2212"}
-details.p0[open] summary{border-bottom:1px solid var(--line)}
-.p0body{padding:10px 16px 12px 40px}
-nav.tabs.sub2{margin-top:0;padding-bottom:2px}
-nav.tabs.sub2 a{font-size:12.5px;padding:4px 12px;border-radius:7px;color:var(--text-3)}
-nav.tabs.sub2 a:hover{color:var(--text-1)}
-nav.tabs.sub2 a.on{background:var(--surface-0);border:1px solid var(--line);
-  color:var(--text-1);font-weight:600;box-shadow:none}
-p.herosub{font-size:14.5px;color:var(--text-2);margin:10px 0 0;max-width:74ch}
-ol.findex{list-style:none;counter-reset:fx;margin:20px 0 8px;padding:0;
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px 20px;
-  max-width:none}
-ol.findex li{counter-increment:fx;position:relative;padding:8px 0 8px 34px;
-  border-top:1px solid var(--line)}
-ol.findex li::before{content:counter(fx);position:absolute;left:0;top:9px;
-  display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;
-  background:var(--grid);color:var(--text-2);font-size:12px;font-weight:700}
-ol.findex a{font-weight:650;font-size:14.5px;text-decoration:none}
-ol.findex a:hover{text-decoration:underline}
-ol.findex .d{display:block;font-size:13px;color:var(--text-2);margin-top:2px;
-  line-height:1.45}
 
-/* Landing page: a bigger opening, then a four-beat spine. The rest of the site keeps
+/* Landing page: a bigger opening, then a four-step spine. The rest of the site keeps
    the compact scale; only the front door is allowed to be loud. */
 body.home header.site h1{font-size:34px;line-height:1.15;max-width:22ch}
 @media (max-width:640px){body.home header.site h1{font-size:26px}}
@@ -254,29 +270,14 @@ body.home .herolead{font-size:18.5px;line-height:1.55;max-width:66ch;margin:14px
 .spine .more:hover{text-decoration:underline}
 """
 
-# Two tiers. The first four are the path a reader who has ninety seconds should take:
-# what it is, run it, what it found, what it cost. The rest is the record behind them.
-_NAV = (
-    ("index.html", "overview", 1),
-    ("demo.html", "run it", 1),
-    ("results.html", "key findings", 1),
-    ("tradeoffs.html", "trade-offs", 1),
-    ("architecture.html", "architecture", 2),
-    ("methodology.html", "methodology", 2),
-    ("design-decisions.html", "design decisions", 2),
-    ("tracks.html", "research tracks", 2),
-    ("literature.html", "literature", 2),
-)
-
 
 def _nav(active: str) -> str:
-    def row(tier: int) -> str:
-        return "".join(
-            f'<a href="{href}"{" class=" + chr(34) + "on" + chr(34) if href == active else ""}>{sg._esc(label)}</a>'
-            for href, label, t in _NAV if t == tier)
-    live = f'<a href="{LIVE_URL}">live findings &#8599;</a>'
-    return (f'<nav class="tabs">{row(1)}</nav>'
-            f'<nav class="tabs sub2">{row(2)}{live}</nav>')
+    """One row: the five pages, then the live findings site, styled apart as a link."""
+    tabs = "".join(
+        f'<a href="{href}"{" class=" + chr(34) + "on" + chr(34) if href == active else ""}>'
+        f"{sg._esc(label)}</a>" for href, label in _NAV)
+    return (f'<nav class="tabs">{tabs}'
+            f'<a class="ext" href="{LIVE_URL}">live findings &#8599;</a></nav>')
 
 
 def _page(title: str, body: str, active: str, subtitle: str = "",
@@ -304,10 +305,16 @@ def _page(title: str, body: str, active: str, subtitle: str = "",
     )
 
 
-def _panel(inner: str) -> str:
-    if not inner:
-        return ""
-    return '<div class="panel">' + inner + "</div>"
+def _t(template: str, **ctx) -> str:
+    """Fill a pages_text template. {live} is always the findings site root."""
+    return template.format(live=LIVE_URL, **ctx)
+
+
+def _claim(ok: bool, what: str) -> None:
+    """A pattern sentence in pages_text must still match the data, or the build stops."""
+    if not ok:
+        raise SystemExit(f"pages_text no longer matches the data: {what}. Rewrite the "
+                         "sentence rather than publishing a stale claim.")
 
 
 def _fig(svg: str, caption_html: str, legend: str = "", source: str = "") -> str:
@@ -319,8 +326,26 @@ def _fig(svg: str, caption_html: str, legend: str = "", source: str = "") -> str
             + legend + f'<div class="scroll">{svg}</div></figure>')
 
 
+def _fold(summary: str, inner: str) -> str:
+    """A secondary figure behind a <details>, or nothing when the figure is absent."""
+    if not inner:
+        return ""
+    return (f'<details class="fold"><summary>{sg._esc(summary)}</summary><div>{inner}'
+            "</div></details>")
+
+
 def _short(v: float) -> str:
     return f"{v:.3g}"
+
+
+def _fr(x) -> str:
+    """An exact fraction for prose: '13/16', '0', '-4'; minus signs typeset."""
+    return str(Fraction(str(x))).replace("-", "&minus;")
+
+
+def _pct(x: float, nd: int = 1) -> str:
+    s = f"{100 * x:.{nd}f}"
+    return s.rstrip("0").rstrip(".") if "." in s else s
 
 
 # ----------------------------------------------------------------------------- diagrams
@@ -339,9 +364,15 @@ def _nath(lines: list[str]) -> int:
     return 40 if not lines else 44 + 19 * len(lines)
 
 
-def _defs() -> str:
-    return ('<defs><marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" '
-            'orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--text-3)"/></marker></defs>')
+def _marker_sprite() -> str:
+    """The arrowhead the architecture diagrams share, defined once at the top of the page.
+
+    One zero-size svg holds the definition, so the page has a single id="ah" however many
+    diagrams it draws. display:none would stop Chrome drawing the markers."""
+    return ('<svg width="0" height="0" aria-hidden="true" style="position:absolute">'
+            '<defs><marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" '
+            'orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--text-3)"/></marker>'
+            '</defs></svg>')
 
 
 def _box(x, y, w, title, lines, cls="box", extra_cls="") -> str:
@@ -354,13 +385,14 @@ def _box(x, y, w, title, lines, cls="box", extra_cls="") -> str:
     return "".join(out)
 
 
-def _arrow(x1, y1, x2, y2, label="", lx=None, ly=None, dashed=False) -> str:
+def _arrow(x1, y1, x2, y2, label="", lx=None, ly=None, dashed=False,
+           anchor="middle") -> str:
     cls = "arrow arrowdash" if dashed else "arrow"
     out = [f'<path class="{cls}" d="M {x1} {y1} L {x2} {y2}"/>']
     if label:
         out.append(f'<text class="alab" x="{lx if lx is not None else (x1 + x2) / 2}" '
                    f'y="{ly if ly is not None else (y1 + y2) / 2 - 6}" '
-                   f'text-anchor="middle">{sg._esc(label)}</text>')
+                   f'text-anchor="{anchor}">{sg._esc(label)}</text>')
     return "".join(out)
 
 
@@ -372,31 +404,33 @@ def _badge(x, y, text, bg, fg) -> str:
 
 
 def repo_diagram() -> str:
-    """The four-repository split, with the live/frozen cue for the two sites."""
+    """The four public repositories, with the live/snapshot cue for the two sites."""
     b1t, b1l = "rk-harness", ["the scorer: verifier, evaluator,",
                               f"cost models, {TESTS_TOTAL:,} tests",
                               "read-only in the container"]
-    b2t, b2l = "rk-work", ["run state: append-only archive,",
-                           "events, hypothesis ledger",
+    b2t, b2l = "rk-work", ["run data: append-only archive,",
+                           "hypothesis ledger, results",
                            "the one writable mount"]
     b3t, b3l = "rk-findings", ["machine-generated numbers site,",
                                "rebuilt by the run every cycle"]
-    b4t, b4l = "rk-overview  (this site)", ["human-written explainer pages",
-                                            "+ a frozen copy of the findings site"]
+    b4t, b4l = "rk-overview  (this site)", ["hand-written explainer pages,",
+                                            "built from the archive by hand"]
     lab_a, lab_b = "verifies + scores", "rebuilt every cycle"
     w1, w2 = _natw(b1t, b1l), _natw(b2t, b2l)
-    # widest of the two right boxes, with room for the corner badge beside the title
-    w3 = max(_natw(b3t, b3l), _natw(b4t, b4l), int(len(b4t) * _TCH) + 13 + 76 + 18)
+    w3 = max(_natw(b3t, b3l), int(len(b3t) * _TCH) + 13 + 58 + 18)
+    # room for the corner badge beside the title
+    w4 = max(_natw(b4t, b4l), int(len(b4t) * _TCH) + 13 + 84 + 18)
     gap_a = int(len(lab_a) * 6.4) + 26   # arrow gaps sized to their labels
     gap_b = int(len(lab_b) * 6.4) + 26
     x1, y1 = 20, 46
     x2 = x1 + w1 + gap_a
     x3 = x2 + w2 + gap_b
     h1, h2, h3, h4 = _nath(b1l), _nath(b2l), _nath(b3l), _nath(b4l)
-    y4 = y1 + h3 + 88
-    W = x3 + w3 + 20
-    H = y4 + h4 + 62
-    p = [_defs()]
+    y4 = y1 + max(h1, h2) + 96
+    live_lab = "jgoetzmann.github.io/rk-findings ↗ (live)"
+    W = int(max(x3 + w3, x3 + len(live_lab) * 6.9, x2 + w4)) + 20
+    H = y4 + h4 + 46
+    p = []
     # container enclosure around the two mounted repos
     p.append(f'<rect class="enclosure" x="{x1 - 10}" y="{y1 - 26}" '
              f'width="{x2 + w2 - x1 + 20}" height="{max(h1, h2) + 40}" rx="12"/>')
@@ -405,25 +439,26 @@ def repo_diagram() -> str:
     p.append(_box(x2, y1, w2, b2t, b2l))
     p.append(_box(x3, y1, w3, b3t, b3l))
     p.append(_badge(x3 + w3 - 58, y1 + 10, "LIVE", "var(--good-bg)", "var(--good-fg)"))
-    p.append(_box(x3, y4, w3, b4t, b4l, extra_cls="frozen"))
-    p.append(_badge(x3 + w3 - 76, y4 + 10, "FROZEN", "var(--mut-bg)", "var(--mut-fg)"))
+    p.append(_box(x2, y4, w4, b4t, b4l, extra_cls="dashedbox"))
+    p.append(_badge(x2 + w4 - 84, y4 + 10, "SNAPSHOT", "var(--mut-bg)", "var(--mut-fg)"))
     p.append(_arrow(x1 + w1, y1 + h1 / 2, x2, y1 + h2 / 2, lab_a))
     p.append(_arrow(x2 + w2, y1 + h2 / 2, x3, y1 + h3 / 2, lab_b))
-    p.append(f'<path class="arrow arrowdash" d="M {x3 + w3 / 2} {y1 + h3} L {x3 + w3 / 2} {y4}"/>')
-    p.append(f'<text class="alab" x="{x3 + w3 / 2 - 12}" y="{(y1 + h3 + y4) / 2 + 4}" '
-             f'text-anchor="end">frozen copy taken {SNAPSHOT_DATE}</text>')
+    ax = x2 + 40
+    p.append(f'<path class="arrow arrowdash" d="M {ax} {y1 + h2} L {ax} {y4 - 2}"/>')
+    p.append(f'<text class="alab" x="{ax + 10}" y="{y1 + max(h1, h2) + 38}">'
+             f"read by a hand-run build, {SNAPSHOT_DATE}</text>")
     p.append(f'<a href="{LIVE_URL}"><text class="alab" x="{x3}" y="{y1 + h3 + 18}" '
-             f'style="fill:var(--s1)">jgoetzmann.github.io/rk-findings ↗ (live)</text></a>')
-    p.append(f'<text class="alab" x="{x3}" y="{y4 + h4 + 18}">jgoetzmann.github.io/rk-overview</text>')
-    p.append(f'<text class="alab" x="{x3}" y="{y4 + h4 + 34}">(you are here, frozen at {SNAPSHOT_DATE})</text>')
+             f'style="fill:var(--s1)">{live_lab}</text></a>')
+    p.append(f'<text class="alab" x="{x2}" y="{y4 + h4 + 18}">'
+             "jgoetzmann.github.io/rk-overview (you are here)</text>")
     svg = (f'<svg viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" '
            'aria-label="The four repositories: rk-harness and rk-work mounted into the '
            'container, rk-findings rebuilt every cycle and published live, rk-overview a '
-           'frozen snapshot">' + "".join(p) + "</svg>")
+           'snapshot built from rk-work by hand">' + "".join(p) + "</svg>")
     return ('<figure class="panel"><figcaption>One writer and one trust level per '
-            "repository: boxes are git repositories, the dashed enclosure is the container "
-            "boundary, and the dashed arrow is the one-time snapshot copy. The live site "
-            "keeps moving with the run; this site is a dated snapshot.</figcaption>"
+            "repository. Boxes are git repositories and the dashed enclosure is the "
+            "container boundary. The findings site moves with the run; this site is a "
+            "snapshot.</figcaption>"
             f'<div class="scroll">{svg}</div></figure>')
 
 
@@ -458,7 +493,7 @@ def system_diagram() -> str:
     x3 = x2 + c2w + gap2
     W = x3 + c3w + 16
 
-    p = [_defs()]
+    p = []
     y = 16
     p.append(_box(x1, y, c1w, hostt, hostl))
     hosth = _nath(hostl)
@@ -486,21 +521,25 @@ def system_diagram() -> str:
     p.append(_box(x3, y_pg, c3w, pgt, pgl))
     # arrows
     p.append(_arrow(x1 + c1w, y + 44, x2, y + 44, lab_run))
+    # Diagonal labels sit beside their arrows, never on them. The push label rides above
+    # the start of its falling line. The two rising lines into the right column run nearly
+    # parallel, so the LLM label goes above its line near the arrowhead and the commit
+    # label below its line near the start, each where the other line is far away.
     p.append(_arrow(x1 + c1w, y + hosth + 60, x2, wy + 20, lab_push,
-                    lx=x1 + c1w + gap1 / 2, ly=(y + hosth + 60 + wy + 20) / 2 - 10))
+                    lx=x1 + c1w + 8, ly=y + hosth + 60 - 8, anchor="start"))
     p.append(_arrow(x2 + c2w, ry + ih_run / 2, x3, y_cx + cxh / 2, lab_llm,
-                    lx=x2 + c2w + gap2 / 2, ly=(ry + ih_run / 2 + y_cx + cxh / 2) / 2 - 10))
+                    lx=x3 - 10, ly=y_cx + cxh / 2 - 10, anchor="end"))
     p.append(_arrow(x2 + c2w, wy + 20, x3, y_fin + finh / 2, lab_commit,
-                    lx=x2 + c2w + gap2 / 2, ly=(wy + 20 + y_fin + finh / 2) / 2 - 10))
+                    lx=x2 + c2w + 8, ly=wy + 20 + 18, anchor="start"))
     p.append(_arrow(x3 + c3w / 2, y_fin + finh, x3 + c3w / 2, y_pg))
     H = max(y + cont_h, y_pg + _nath(pgl)) + 16
     svg = (f'<svg viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" '
            'aria-label="System diagram: host, container with read-only harness, and services">'
            + "".join(p) + "</svg>")
-    return ('<figure class="panel"><figcaption>The as-built system, three columns left to '
-            "right: the Windows host, the docker container, and the services the run talks "
-            "to. The verifier lives inside the read-only mount, and no arrow carries the "
-            "GitHub credential across the container boundary.</figcaption>"
+    return ('<figure class="panel"><figcaption>The system as built, left to right: the '
+            "Windows host, the docker container, and the services the run talks to. The "
+            "verifier sits inside the read-only mount, and no arrow carries the GitHub "
+            "credential into the container.</figcaption>"
             f'<div class="scroll">{svg}</div></figure>')
 
 
@@ -520,7 +559,7 @@ def cycle_diagram() -> str:
     bw = max(_natw(t, [s]) for t, s in steps)
     bh = _nath(["x"])
     gap, row_gap = 44, 52
-    p = [_defs()]
+    p = []
     for i, (t, s) in enumerate(steps):
         row, col = divmod(i, 5)
         x = 16 + col * (bw + gap)
@@ -537,12 +576,10 @@ def cycle_diagram() -> str:
     W = 16 * 2 + 5 * bw + 4 * gap
     H = 16 * 2 + 2 * bh + row_gap
     svg = (f'<svg viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" '
-           'aria-label="Cycle loop: replay, encourager, candidates, verify, evaluate, '
+           'aria-label="Explicit cycle: replay, encourager, candidates, verify, evaluate, '
            'tier, append, ledger, site, commit">' + "".join(p) + "</svg>")
-    return ('<figure class="panel"><figcaption>One idempotent cycle, read left to right, '
-            "top row then bottom. Replay rebuilds all state from the append-only archive "
-            "and nothing before the fsynced append has side effects, so a crash anywhere "
-            "costs at most one cycle.</figcaption>"
+    return ('<figure class="panel"><figcaption>One explicit cycle, along the top row and '
+            "then the bottom.</figcaption>"
             f'<div class="scroll">{svg}</div></figure>')
 
 
@@ -553,7 +590,7 @@ def pipeline_diagram() -> str:
         ("1 · write heartbeat", ["the first line of the entrypoint"]),
         ("2 · read-only probe", ["a write to /harness must fail"]),
         ("3 · verifier hash check", ["sha256 over ten files vs the pinned value"]),
-        ("4 · golden + canary tests", [f"{GATE_TESTS} cases with pytest, under four seconds"]),
+        ("4 · golden + canary tests", [f"{GATE_TESTS} cases with pytest"]),
         ("runner starts", ["science on a proven environment only"]),
     ]
     failt = "exit 1"
@@ -563,7 +600,7 @@ def pipeline_diagram() -> str:
     gap_y = 30
     x, y = 16, 16
     fx = x + cw + 96
-    p = [_defs()]
+    p = []
     ys = []
     for t, ls in chain:
         h = _nath(ls)
@@ -573,9 +610,11 @@ def pipeline_diagram() -> str:
         y += h + gap_y
     for (by, bh), (ny, _nh) in zip(ys, ys[1:]):
         p.append(_arrow(x + cw / 2, by + bh, x + cw / 2, ny - 2))
-    # exit-1 branch: a rail collecting the four checks
-    fail_top = ys[1][0]
-    fail_bot = ys[4][0] + ys[4][1]
+    # exit-1 branch: a rail collecting the three steps that can fail. The heartbeat write
+    # ends in `|| true` in entrypoint.sh, so it has no failure path.
+    checks = ys[2:5]
+    fail_top = checks[0][0]
+    fail_bot = checks[-1][0] + checks[-1][1]
     fh = _nath(faill)
     fy = (fail_top + fail_bot) / 2 - fh / 2
     railx = x + cw + 46
@@ -585,24 +624,27 @@ def pipeline_diagram() -> str:
     for i, ln in enumerate(faill):
         p.append(f'<text x="{fx + 13}" y="{fy + 45 + 19 * i}" style="font-size:14px;'
                  f'fill:var(--bad-fg)">{sg._esc(ln)}</text>')
-    for by, bh in ys[1:5]:
+    for by, bh in checks:
         p.append(f'<path d="M {x + cw} {by + bh / 2} L {railx} {by + bh / 2}" '
                  'stroke="var(--bad-fg)" fill="none" opacity=".55"/>')
-    p.append(f'<path d="M {railx} {ys[1][0] + ys[1][1] / 2} L {railx} {fy + fh / 2}" '
+    # The rail runs from the top stub to the bottom one, so every check reaches it.
+    top_mid = checks[0][0] + checks[0][1] / 2
+    p.append(f'<path d="M {railx} {top_mid} L {railx} {checks[-1][0] + checks[-1][1] / 2}" '
              'stroke="var(--bad-fg)" fill="none" opacity=".55"/>')
     p.append(f'<path d="M {railx} {fy + fh / 2} L {fx - 2} {fy + fh / 2}" '
              'stroke="var(--bad-fg)" fill="none" marker-end="url(#ah)"/>')
-    p.append(f'<text class="alab" x="{railx - 6}" y="{ys[1][0] + 8}" '
-             'text-anchor="end" style="fill:var(--bad-fg)">any failure</text>')
+    p.append(f'<text class="alab" x="{railx}" y="{top_mid - 10}" '
+             'text-anchor="middle" style="fill:var(--bad-fg)">any failure</text>')
     W = fx + fw + 16
     H = y - gap_y + 16
     svg = (f'<svg viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" '
            'aria-label="Start gate: heartbeat, read-only probe, hash check, golden and '
-           'canary tests, then the runner; any failure exits">' + "".join(p) + "</svg>")
-    return ('<figure class="panel"><figcaption>The start gate, run on every container '
-            "start, in execution order top to bottom. The runner is unreachable until all "
-            "four checks pass against the harness as mounted; any failure takes the exit-1 "
-            "branch, and the gate re-runs on the next start.</figcaption>"
+           'canary tests, then the runner; a failed check exits">' + "".join(p) + "</svg>")
+    return ('<figure class="panel"><figcaption>The start gate, top to bottom, on every '
+            "container start. The runner starts only after the read-only probe, the hash "
+            "check and the golden and canary tests pass against the harness as mounted. "
+            "The tests run at start rather than at image build, so every restart repeats "
+            "them.</figcaption>"
             f'<div class="scroll">{svg}</div></figure>')
 
 
@@ -611,13 +653,11 @@ def pipeline_diagram() -> str:
 def _kf_load() -> dict:
     path = HERE / "key_findings.json"
     if not path.exists():
-        print("WARN: key_findings.json missing; findings charts skipped")
-        return {}
+        raise SystemExit("tools/key_findings.json is missing; run tools/key_findings.py first")
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except ValueError:
-        print("WARN: key_findings.json unparsable; findings charts skipped")
-        return {}
+        raise SystemExit("tools/key_findings.json is unparsable; rerun tools/key_findings.py")
 
 
 def _series(kf: dict, finding: str, name: str):
@@ -643,6 +683,7 @@ def frontier_chart(kf: dict) -> str:
     rows = _series(kf, "efficiency", "frontier_cycles_vs_heldout")
     if not rows:
         return ""
+    budget = kf["efficiency"]["numbers"]["budget_cycles"]
     w, h, ml, mr, mt, mb = 880, 470, 66, 26, 18, 52
     xlo, xhi, ylo, yhi = 4, 95, 0.02, 0.45
     fx = lambda v: _logpos(v, xlo, xhi, ml, w - mr)
@@ -667,7 +708,7 @@ def frontier_chart(kf: dict) -> str:
         p.append(f'<line x1="{ml}" y1="{sg._fmt(yy)}" x2="{w - mr}" y2="{sg._fmt(yy)}" '
                  'stroke="var(--s2)" stroke-dasharray="5 4" opacity=".7"/>')
         p.append(f'<text class="dlab" x="{w - mr - 4}" y="{sg._fmt(yy - 7)}" text-anchor="end">'
-                 f'best classical anchor ({_short(best_classical)})</text>')
+                 f'best classical method ({_short(best_classical)})</text>')
     for i, r in enumerate(sorted(classical, key=lambda r: r["cycles"])):
         px, py = fx(r["cycles"]), fy(r["heldout_error"])
         p.append(f'<circle cx="{sg._fmt(px)}" cy="{sg._fmt(py)}" r="5.5" fill="var(--s2)" class="cellstroke">'
@@ -692,14 +733,11 @@ def frontier_chart(kf: dict) -> str:
     svg = (f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
            'aria-label="Efficiency frontier: per-step cycles against held-out error, '
            'discovered versus classical methods, both axes log">' + "".join(p) + "</svg>")
-    caption = ("Each dot is one method at the shared 65,536-cycle budget: x is per-step "
-               "cost in cycles, y is held-out error, both log, so down and left is "
-               "better. Orange dots are the eight classical anchors, named; blue dots "
-               "are the best archived method in each occupied grid cell. Every blue dot "
-               "below the dashed line beats every classical anchor outright. Hover any "
-               "dot for its cell and tier.")
+    caption = (f"Per-step cost against held-out error at the shared {budget:,}-cycle budget, "
+               "both on log scales, so down and left is better. Every blue dot under the "
+               "dashed line has lower error than every classical method.")
     legend = sg._legend([("var(--s1)", "discovered (best per grid cell)"),
-                         ("var(--s2)", "classical anchors")])
+                         ("var(--s2)", "classical methods")])
     return _fig(svg, caption, legend, "data: key_findings.json, series frontier_cycles_vs_heldout")
 
 
@@ -720,7 +758,7 @@ def flip_slope_chart(kf: dict) -> str:
          f'<text class="alab" x="{xr}" y="56" text-anchor="middle">(counterfactual)</text>',
          f'<text class="dlab" x="{xf}" y="40" text-anchor="middle">floor (ASRS)</text>',
          f'<text class="alab" x="{xf}" y="56" text-anchor="middle">(what the hardware does)</text>']
-    for rank in range(1, 5):
+    for rank in range(1, len(methods) + 1):
         p.append(f'<text x="40" y="{y0 + (rank - 1) * dy + 4}" text-anchor="middle">rank {rank}</text>')
     for m in methods:
         yr = y0 + (rd["rank"][m] - 1) * dy
@@ -739,12 +777,9 @@ def flip_slope_chart(kf: dict) -> str:
     svg = (f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
            'aria-label="Rank slope chart: method ranking by search-set RMS error under '
            'round-to-nearest versus floor rounding">' + "".join(p) + "</svg>")
-    caption = ("Each line is one method; its ends are the method's rank by search-set "
-               "RMS error under the two rounding modes, with the RMS value beside each "
-               "end. Blue and orange mark the extreme movers, euler and rk4; the gray "
-               "methods swap too (heun2 4th to 2nd, rk38 1st to 3rd). Floor is what the "
-               "harness measures everywhere; round-to-nearest was rerun outside the "
-               "archive as the counterfactual.")
+    caption = ("Each line is one method, ranked by search-set RMS error under each rounding "
+               "mode, with the value beside each end. Blue is euler, orange rk4. "
+               "Round-to-nearest was rerun outside the archive as the counterfactual.")
     return _fig(svg, caption, "", "data: key_findings.json, numbers aggregate.search_rms")
 
 
@@ -795,12 +830,8 @@ def flip_problem_chart(kf: dict) -> str:
     svg = (f'<svg viewBox="0 0 {w} {H}" width="{w}" height="{H}" role="img" '
            'aria-label="Per-problem error under floor and round-to-nearest for four '
            'classical methods, log scale">' + "".join(p) + "</svg>")
-    caption = ("One row per problem and method; the x axis is final-state error on a log "
-               "scale, so left is better. The blue dot is the error under floor, the "
-               "orange dot under round-to-nearest, and the connecting bar is what the "
-               "rounding mode alone changes. On dahlquist the three cheap methods' floor "
-               "dots sit at 4.5e-5, the reference value itself, two decades left of "
-               "their round-to-nearest dots. Hover a dot for exact values and ranks.")
+    caption = ("Final-state error per problem and method, log scale, left is better. The "
+               "bar between the two dots is what the rounding mode alone changes.")
     legend = sg._legend([("var(--s1)", "floor (ASRS, as measured)"),
                          ("var(--s2)", "round-to-nearest (counterfactual)")])
     return _fig(svg, caption, legend, "data: key_findings.json, series per_problem_floor_vs_round")
@@ -810,13 +841,33 @@ def crossover_chart(kf: dict) -> str:
     sweeps = _series(kf, "crossover", "sweeps")
     if not sweeps:
         return ""
-    methods = kf.get("crossover", {}).get("numbers", {}).get("methods", {})
+    nums = kf.get("crossover", {}).get("numbers", {})
+    methods = nums.get("methods", {})
     w, h, ml, mr, mt, mb = 880, 480, 70, 36, 44, 52
-    xlo, xhi, ylo, yhi = 0.008, 1.6, 1e-11, 1e2
+    xlo, ylo, yhi = 0.008, 1e-11, 1e2
+
+    # The findings site leaves out float64 points whose error is above 1
+    # (sitegen._sweep_chart): no Q15 state can hold a value that large, and plotting those
+    # runs stretches the axis over twenty decades until the Q15 curves are a few pixels
+    # tall. Applying the same rule here keeps the two sites on one point set of the same
+    # experiment, and the caption names the step sizes left out. The x domain follows the
+    # points that survive, so a run the rule keeps cannot fall off the right edge.
+    def shown(r, key: str) -> bool:
+        v = r.get(key)
+        return (isinstance(v, (int, float)) and ylo <= v <= yhi
+                and not (key == "float_error" and v > 1.0))
+
+    dropped = {m: sorted(r["h"] for r in sweeps.get(m, [])
+                         if r.get("h") and isinstance(r.get("float_error"), (int, float))
+                         and r["float_error"] > 1.0)
+               for m in ("rk4", "heun2")}
+    drawn_h = [r["h"] for m in ("rk4", "heun2") for r in sweeps.get(m, [])
+               if r.get("h") and (shown(r, "q15_error") or shown(r, "float_error"))]
+    xhi = max(1.6, 1.1 * max(drawn_h)) if drawn_h else 1.6
     fx = lambda v: _logpos(v, xlo, xhi, ml, w - mr)
     fy = lambda v: h - mb - _logpos(v, ylo, yhi, 0, h - mt - mb)
     p = []
-    for tv in (0.01, 0.05, 0.1, 0.5, 1):
+    for tv in [t for t in (0.01, 0.05, 0.1, 0.5, 1, 2) if t < xhi]:
         p.append(f'<line class="gridline" x1="{sg._fmt(fx(tv))}" y1="{mt}" x2="{sg._fmt(fx(tv))}" y2="{h - mb}"/>')
         p.append(f'<text x="{sg._fmt(fx(tv))}" y="{h - mb + 18}" text-anchor="middle">{_tickfmt(tv)}</text>')
     for e in range(-10, 3, 2):
@@ -829,7 +880,7 @@ def crossover_chart(kf: dict) -> str:
     p.append(f'<text x="14" y="{sg._fmt((mt + h - mb) / 2)}" text-anchor="middle" '
              f'transform="rotate(-90 14 {sg._fmt((mt + h - mb) / 2)})">final-state error (log)</text>')
     colors = {"rk4": "var(--s1)", "heun2": "var(--s2)"}
-    for li, (mname, cross_label_y) in enumerate((("rk4", mt + 14), ("heun2", mt + 30))):
+    for mname, cross_label_y in (("rk4", mt + 14), ("heun2", mt + 30)):
         cross = methods.get(mname, {}).get("crossover_h")
         if isinstance(cross, (int, float)) and xlo < cross < xhi:
             px = fx(cross)
@@ -838,11 +889,10 @@ def crossover_chart(kf: dict) -> str:
             p.append(f'<text class="dlab" x="{sg._fmt(px + 5)}" y="{cross_label_y}">'
                      f'{sg._esc(mname)} crossover h = {_short(cross)}</text>')
     for mname in ("rk4", "heun2"):
-        rows = [r for r in sweeps.get(mname, []) if r.get("h") and r["h"] <= 1.3]
+        rows = [r for r in sweeps.get(mname, []) if r.get("h")]
         c = colors[mname]
         for key, dash in (("q15_error", ""), ("float_error", ' stroke-dasharray="6 4"')):
-            pts = [(r["h"], r[key]) for r in rows
-                   if isinstance(r.get(key), (int, float)) and ylo <= r[key] <= yhi]
+            pts = [(r["h"], r[key]) for r in rows if shown(r, key)]
             if len(pts) < 2:
                 continue
             pts.sort()
@@ -856,19 +906,26 @@ def crossover_chart(kf: dict) -> str:
                          f'error {_short(ev)}</title></circle>')
             if key == "float_error":
                 # one direct label per method, at the left end of its float64 line,
-                # where the two methods sit five decades apart
+                # where the two methods sit decades apart
                 h0, e0 = pts[0]
                 p.append(f'<text class="dlab" x="{sg._fmt(fx(h0) + 10)}" '
                          f'y="{sg._fmt(fy(e0) - 8)}">{sg._esc(mname)}</text>')
+    problem = nums.get("problem", "the test problem")
     svg = (f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
-           'aria-label="Step-size sweep on damped_osc: Q15 and float64 error for rk4 and '
+           f'aria-label="Step-size sweep on {sg._esc(problem)}: Q15 and float64 error for rk4 and '
            'heun2, log-log, with crossover markers">' + "".join(p) + "</svg>")
-    caption = ("Final-state error on damped_osc against step size, both axes log, one "
-               "color per method: solid lines are Q15 fixed point, dashed lines are "
-               "float64 taking exactly the same steps, so the vertical gap is pure "
-               "arithmetic. Left of each dashed vertical, the Q15 line detaches and "
-               "climbs while the float line keeps falling. Q15 points at h ≥ 1.25 "
-               "overflowed (error infinite) and are omitted.")
+    def _hs(vals) -> str:
+        s = [_short(v) for v in vals]
+        return s[0] if len(s) == 1 else ", ".join(s[:-1]) + " and " + s[-1]
+
+    off = "; ".join(f"{mname} at h = {_hs(dropped[mname])}"
+                    for mname in ("rk4", "heun2") if dropped[mname])
+    caption = (f"Final-state error on {sg._esc(problem)} against step size, both axes log. "
+               "Solid lines are Q15, dashed lines float64 over the same steps. Left of each "
+               "vertical marker the Q15 line turns up while float64 keeps falling. Q15 runs "
+               "that overflowed at the largest steps are left out."
+               + (f" So are float64 errors above 1, which no Q15 state can hold: {off}."
+                  if off else ""))
     legend = sg._legend([("var(--s1)", "rk4 (solid Q15, dashed float64)"),
                          ("var(--s2)", "heun2 (solid Q15, dashed float64)")])
     return _fig(svg, caption, legend, "data: key_findings.json, series sweeps (falsification run)")
@@ -885,7 +942,7 @@ def rc_chart(kf: dict) -> str:
     ref = nums.get("reference_norm")
     best = nums.get("best_discovered_rc_thermal", {})
     by = {r["method"]: r for r in rows}
-    order = [m for m in _RC_ORDER if m in by]
+    order = [m for m in _RC_ORDER if m in by] + sorted(m for m in by if m not in _RC_ORDER)
     groups = [(m, by[m]) for m in order] + ([("best discovered", None)] if best else [])
     w, h, ml, mr, mt, mb = 880, 400, 64, 20, 24, 66
     ymax = 0.22
@@ -899,6 +956,7 @@ def rc_chart(kf: dict) -> str:
              f'transform="rotate(-90 14 {sg._fmt((mt + h - mb) / 2)})">final-state error</text>')
     gw = (w - ml - mr) / len(groups)
     bar_w, gap = 26, 4
+    n_round = 0
     for gi, (name, r) in enumerate(groups):
         cx = ml + gw * gi + gw / 2
         if r is not None:
@@ -908,6 +966,7 @@ def rc_chart(kf: dict) -> str:
                                        f"{name} floor: error {_short(fe)}; {r['steps']:,} steps; "
                                        f"final Q15 state {tuple(r['final_state_q15'])}"))
             if re_ is not None:
+                n_round += 1
                 bx2 = cx + gap / 2
                 p.append(sg._round_top_bar(bx2, fy(re_), bar_w, (h - mb) - fy(re_), "var(--s2)",
                                            f"{name} round-to-nearest: error {_short(re_)}"))
@@ -933,17 +992,21 @@ def rc_chart(kf: dict) -> str:
                  'stroke="var(--text-1)" stroke-dasharray="5 4" opacity=".6"/>')
         p.append(f'<text class="dlab" x="{w - mr - 4}" y="{sg._fmt(fy(ref) - 7)}" text-anchor="end">'
                  f'true solution norm {_short(ref)}</text>')
-    p.append(f'<text class="dlab" x="{ml + 6}" y="{sg._fmt(fy(0.156) + 22)}">'
-             'floor: 0.156–0.158 for all eight</text>')
+    lo, hi = nums.get("floor_error_min"), nums.get("floor_error_max")
+    if isinstance(lo, (int, float)) and isinstance(hi, (int, float)):
+        # Halfway between the tallest bar (or the reference line) and the top of the
+        # plot, so the note crosses no bar.
+        ann = (max(hi, ref if isinstance(ref, (int, float)) else hi) + ymax) / 2
+        p.append(f'<text class="dlab" x="{ml + 6}" y="{sg._fmt(fy(ann) + 4)}">'
+                 f'floor: {_short(lo)} to {_short(hi)} for all {len(rows)}</text>')
     svg = (f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
            'aria-label="rc_thermal error per method under floor and round-to-nearest, '
            'with the reference norm marked">' + "".join(p) + "</svg>")
-    caption = ("Final-state error on rc_thermal per method. Blue bars (floor) all reach "
-               "the dashed line: the state collapsed to near zero, so the reported error "
-               "is the size of the true solution itself. Orange bars are the "
-               "round-to-nearest counterfactual, measured for four methods. The green "
-               "bar is the best discovered method, which stays well under the line while "
-               "using the same floor arithmetic. Hover a bar for steps and final state.")
+    caption = ("Final-state error on rc_thermal. Every floor bar (blue) reaches the dashed "
+               "line, the size of the true solution, because the state collapsed to near "
+               f"zero. Orange: round-to-nearest, measured for {n_round} methods. Green: the "
+               "best discovered method on rc_thermal (not the finding 1 champion), under "
+               "the same floor arithmetic.")
     legend = sg._legend([("var(--s1)", "floor (ASRS, as measured)"),
                          ("var(--s2)", "round-to-nearest (counterfactual)"),
                          ("var(--s3)", "best discovered, still under floor")])
@@ -954,20 +1017,20 @@ def phase0_chart(kf: dict) -> str:
     rows = _series(kf, "phase0_exhaustive", "all_members")
     if not rows:
         return ""
-    def a21val(r):
-        return float(Fraction(r["a21"]))
-    rows = sorted(rows, key=a21val)
+    rows = sorted(rows, key=lambda r: Fraction(r["a21"]))
+    n = len(rows)
+    n_named = sum(1 for r in rows if r.get("name"))
     w, h, ml, mr, mt, mb = 880, 380, 64, 20, 24, 58
     ylo, yhi = 0.05, 0.145
     fy = lambda v: h - mb - (v - ylo) / (yhi - ylo) * (h - mt - mb)
-    slot = (w - ml - mr) / len(rows)
+    slot = (w - ml - mr) / n
     p = []
     for tv in (0.06, 0.08, 0.10, 0.12, 0.14):
         p.append(f'<line class="gridline" x1="{ml}" y1="{sg._fmt(fy(tv))}" x2="{w - mr}" y2="{sg._fmt(fy(tv))}"/>')
         p.append(f'<text x="{ml - 8}" y="{sg._fmt(fy(tv) + 4)}" text-anchor="end">{_tickfmt(tv)}</text>')
     p.append(f'<line class="axis" x1="{ml}" y1="{h - mb}" x2="{w - mr}" y2="{h - mb}"/>')
     p.append(f'<text x="{sg._fmt((ml + w - mr) / 2)}" y="{h - 8}" text-anchor="middle">'
-             'a21, ordered by value (each dot is one of the 16 exactly representable tableaus)</text>')
+             f'a21, ordered by value (one dot per exactly representable tableau, {n} in all)</text>')
     p.append(f'<text x="14" y="{sg._fmt((mt + h - mb) / 2)}" text-anchor="middle" '
              f'transform="rotate(-90 14 {sg._fmt((mt + h - mb) / 2)})">held-out error</text>')
     for i, r in enumerate(rows):
@@ -976,7 +1039,7 @@ def phase0_chart(kf: dict) -> str:
         named = r.get("name")
         fill = "var(--s1)" if r["rank"] == 1 else ("var(--s2)" if named else "var(--text-3)")
         title = (f"a21 = {r['a21']}, b = ({r['b'][0]}, {r['b'][1]}): held-out error "
-                 f"{_short(r['heldout_error'])}, {r['cycles']} cycles/step, rank {r['rank']} of 16"
+                 f"{_short(r['heldout_error'])}, {r['cycles']} cycles/step, rank {r['rank']} of {n}"
                  + (f" ({named})" if named else ""))
         p.append(f'<circle cx="{sg._fmt(cx)}" cy="{sg._fmt(cy)}" r="6" fill="{fill}" class="cellstroke">'
                  f'<title>{sg._esc(title)}</title></circle>')
@@ -995,32 +1058,23 @@ def phase0_chart(kf: dict) -> str:
         p.append(f'<text x="{sg._fmt(cx)}" y="{h - mb + 18}" text-anchor="middle" '
                  f'class="mono" style="font-size:12px">{sg._esc(r["a21"])}</text>')
     svg = (f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
-           'aria-label="Phase 0 exhaustive: held-out error for all sixteen 2-stage '
-           'order-2 tableaus, ordered by a21">' + "".join(p) + "</svg>")
-    caption = ("All sixteen members of the phase-0 space, ordered by a21; y is held-out "
-               "error at the shared budget (linear, lower is better). Blue is the "
-               "optimum, orange marks the two members that are textbook methods, gray is "
-               "everything else. Because the space was enumerated in full, the blue dot "
-               "is a proof, not a sample. Hover a dot for its b weights and rank.")
+           'aria-label="Phase 0 exhaustive: held-out error for every two-stage order-2 '
+           'tableau in the lattice, ordered by a21">' + "".join(p) + "</svg>")
+    caption = (f"All {n} members of the phase-0 space by a21, held-out error on a linear "
+               f"scale (lower is better). Blue is the optimum, orange the {n_named} textbook "
+               "methods, gray the rest.")
     return _fig(svg, caption, "", "data: key_findings.json, series all_members")
 
 
 def _validation_load() -> dict:
-    path = WS / "rk-work" / "validation" / "results.json"
-    if not path.exists():
-        print("WARN: validation results.json missing; validation chart skipped")
-        return {}
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except ValueError:
-        print("WARN: validation results.json unparsable; validation chart skipped")
-        return {}
+    return _json_file(WS / "rk-work" / "validation" / "results.json",
+                      "validation results.json")
 
 
 def validation_chart(vd: dict) -> str:
     """Dumbbell per practical problem: best classical vs best discovered Q15 error.
-    Scoped to the non-stiff problems; the stiff subset is a different story (overflow,
-    not accuracy) and lives on the trade-offs and tracks pages."""
+    Scoped to the non-stiff problems; the stiff subset is overflow, not accuracy, and
+    lives on the findings validation page."""
     per = (vd.get("verdicts") or {}).get("per_problem") or {}
     order = [p.get("name") for p in vd.get("problems", []) if p.get("name") in per]
     order += sorted(k for k in per if k not in set(order))
@@ -1031,6 +1085,7 @@ def validation_chart(vd: dict) -> str:
     if not rows:
         print("WARN: validation per-problem verdicts empty; chart skipped")
         return ""
+    budget = vd.get("budget_cycles")
     vals = [v for _n, d in rows for v in (d["best_classical_q15_error"],
                                           d["best_discovered_q15_error"])]
     w, ml, mr = 880, 150, 30
@@ -1047,7 +1102,7 @@ def validation_chart(vd: dict) -> str:
         p.append(f'<text x="{sg._fmt(px)}" y="{H - 32}" text-anchor="middle">{sg._pow_label(tv)}</text>')
         tv *= 10
     p.append(f'<text x="{sg._fmt((ml + w - mr) / 2)}" y="{H - 10}" text-anchor="middle">'
-             'final-state Q15 error at the 65,536-cycle budget (log)</text>')
+             f'final-state Q15 error at the {budget:,}-cycle budget (log)</text>')
     for i, (name, d) in enumerate(rows):
         cy = 16 + row_h * i + row_h / 2
         cx_c, cx_d = fx(d["best_classical_q15_error"]), fx(d["best_discovered_q15_error"])
@@ -1085,20 +1140,15 @@ def validation_chart(vd: dict) -> str:
     wins = [n for n, d in rows
             if d["best_discovered_q15_error"] < d["best_classical_q15_error"]]
     losses = [n for n, _d in rows if n not in wins]
-    tail = (f"; on {', '.join(losses)} the classical anchor keeps the win"
+    tail = (f"; on {', '.join(losses)} the classical method keeps the win"
             if losses else "")
-    caption = ("One row per practical problem; x is final-state Q15 error at the shared "
-               "65,536-cycle budget, log scale, so left is better. The orange dot is the "
-               "best classical anchor (named, with its error), the blue dot the best "
-               "discovered method, and the bar between them is the gap. Blue sits left "
-               f"(discovered wins) on {len(wins)} of the {len(rows)} rows{tail}. "
-               "Hover a row for exact values and the error ratio.")
+    caption = (f"Final-state Q15 error per practical problem at the {budget:,}-cycle budget, "
+               "log scale, left is better. Orange is the best classical method (named), blue "
+               f"the best discovered one, which is ahead on {len(wins)} of {len(rows)}{tail}.")
     legend = sg._legend([("var(--s1)", "best discovered"),
-                         ("var(--s2)", "best classical anchor")])
+                         ("var(--s2)", "best classical method")])
     return _fig(svg, caption, legend, "data: rk-work/validation/results.json, verdicts.per_problem")
 
-
-# ----------------------------------------------------------------------------- benchmark charts
 
 def speedup_chart(bench: dict) -> str:
     """Predicted vs measured per-step speedup of the champion over rk4, per problem."""
@@ -1107,6 +1157,7 @@ def speedup_chart(bench: dict) -> str:
     if not rows:
         print("WARN: speedup rows missing; speedup chart skipped")
         return ""
+    tp = bench.get("timing_protocol") or {}
     w, ml, mr = 780, 130, 96
     top, row_h, bot = 40, 40, 46
     H = top + row_h * len(rows) + bot
@@ -1140,102 +1191,33 @@ def speedup_chart(bench: dict) -> str:
         p.append(f'<text class="dlab" x="{sg._fmt(max(xm, xp) + 12)}" y="{sg._fmt(cy + 4)}">'
                  f'{meas:.2f}&times;</text>')
         if i == 0:
-            p.append(f'<text class="dlab" x="{sg._fmt(xm)}" y="{sg._fmt(cy - 13)}" '
-                     f'text-anchor="middle">measured</text>')
-            p.append(f'<text class="dlab" x="{sg._fmt(xp)}" y="{sg._fmt(cy + 24)}" '
-                     f'text-anchor="middle">cycle model</text>')
+            # Name the two markers once, on the header line with "parity", clear of every
+            # row. The left marker's name ends at it and the right one's starts at it, so
+            # the names cannot overlap whichever way round the markers fall.
+            (xa, la), (xb, lb) = sorted(((xm, "measured"), (xp, "cycle model")))
+            p.append(f'<text class="alab" x="{sg._fmt(xa + 4)}" y="{top - 12}" '
+                     f'text-anchor="end">{la}</text>')
+            p.append(f'<text class="alab" x="{sg._fmt(xb - 4)}" y="{top - 12}">{lb}</text>')
     p.append(f'<text x="{sg._fmt((ml + w - mr) / 2)}" y="{H - 8}" text-anchor="middle">'
              'per-step speedup, rk4 time over champion time (above 1 means the champion is faster)</text>')
     svg = (f'<svg viewBox="0 0 {w} {H}" width="{w}" height="{H}" role="img" '
            'aria-label="Measured and cycle-model-predicted per-step speedup of the champion '
-           'over rk4 on each of the seven problems">' + "".join(p) + "</svg>")
+           'over rk4 on each scored problem">' + "".join(p) + "</svg>")
     gm = sp.get("geomean_measured_speedup_rk4_over_champion")
     gp = sp.get("geomean_predicted_speedup_rk4_over_champion")
-    caption = ("Per-step speedup of the discovered champion over rk4 on each scored "
-               "problem: the blue dot is measured wall clock (median of 15 timed repeats "
-               "after 3 warmups, gc paused), the open orange dot is the analytic cycle "
-               f"model's prediction. The model predicts {gp:.2f}&times; everywhere; the "
-               f"measured geometric mean is {gm:.2f}&times;. Hover a row for the exact "
-               "microseconds, step counts and the error ratio at the same budget.")
+    caption = ("Per-step speedup of the champion over rk4 on each scored problem. Blue is "
+               f"measured wall clock (median of {tp.get('n_repeats')} repeats after "
+               f"{tp.get('warmup')} warmups), open orange the cycle model's prediction of "
+               f"{gp:.2f}&times;; the measured geometric mean is {gm:.2f}&times;.")
     return _fig(svg, caption, "", "data: rk-work/benchmark/results.json, speedup.rows")
 
-
-def us_step_chart(bench: dict) -> str:
-    """Measured wall-clock microseconds per Q15 step, per benchmarked method."""
-    sp = bench.get("speedup") or {}
-    pm = sp.get("per_method_us_per_step") or {}
-    champion = str(sp.get("champion") or "")
-    labels = {}
-    for key in pm:
-        if key == champion:
-            labels[key] = f"champion ({key[:8]})"
-        elif key in ("rk4", "rk38", "euler", "midpoint", "heun2"):
-            labels[key] = f"{key} (classical)"
-        else:
-            short, desc = _DISC_LABEL.get(key[:8], (key[:8], "discovered"))
-            labels[key] = f"{key[:8]} ({desc})"
-    rows = sorted(((labels[k], v) for k, v in pm.items()),
-                  key=lambda kv: kv[1].get("median_us_per_step", 0))
-    if not rows:
-        print("WARN: per_method_us_per_step missing; us/step chart skipped")
-        return ""
-    w, ml, mr = 780, 230, 76
-    row_h, top, bot = 44, 14, 46
-    H = top + row_h * len(rows) + bot
-    vmax = max(v.get("max_us_per_step", 0) for _l, v in rows)
-    xhi = vmax * 1.06
-    fx = lambda v: ml + (v / xhi) * (w - ml - mr)
-    p = []
-    tick = 50 if xhi > 120 else 25
-    tv = 0
-    while tv <= xhi:
-        p.append(f'<line class="gridline" x1="{sg._fmt(fx(tv))}" y1="{top}" '
-                 f'x2="{sg._fmt(fx(tv))}" y2="{H - bot + 4}"/>')
-        p.append(f'<text x="{sg._fmt(fx(tv))}" y="{H - bot + 20}" text-anchor="middle">{tv}</text>')
-        tv += tick
-    for i, (label, v) in enumerate(rows):
-        cy = top + row_h * i + row_h / 2
-        med = v["median_us_per_step"]
-        lo, hi = v.get("min_us_per_step", med), v.get("max_us_per_step", med)
-        fill = "var(--s2)" if "(classical)" in label else "var(--s1)"
-        p.append(f'<text x="{ml - 10}" y="{sg._fmt(cy + 4)}" text-anchor="end">{sg._esc(label)}</text>')
-        title = (f"{label}: median {med:.1f} us/step across {v.get('n_problems')} problems "
-                 f"(min {lo:.1f}, max {hi:.1f})")
-        p.append(f'<rect x="{ml}" y="{sg._fmt(cy - 10)}" width="{sg._fmt(fx(med) - ml)}" '
-                 f'height="20" rx="4" fill="{fill}" class="cellstroke">'
-                 f'<title>{sg._esc(title)}</title></rect>')
-        p.append(f'<line x1="{sg._fmt(fx(lo))}" y1="{sg._fmt(cy)}" x2="{sg._fmt(fx(hi))}" '
-                 f'y2="{sg._fmt(cy)}" stroke="var(--text-3)" stroke-width="1.5"/>')
-        for xv in (lo, hi):
-            p.append(f'<line x1="{sg._fmt(fx(xv))}" y1="{sg._fmt(cy - 5)}" x2="{sg._fmt(fx(xv))}" '
-                     f'y2="{sg._fmt(cy + 5)}" stroke="var(--text-3)" stroke-width="1.5"/>')
-        p.append(f'<text class="dlab" x="{sg._fmt(fx(hi) + 8)}" y="{sg._fmt(cy + 4)}">{med:.1f}</text>')
-    p.append(f'<text x="{sg._fmt((ml + w - mr) / 2)}" y="{H - 8}" text-anchor="middle">'
-             'measured &micro;s per Q15 step (median across the seven problems; whisker is min to max)</text>')
-    svg = (f'<svg viewBox="0 0 {w} {H}" width="{w}" height="{H}" role="img" '
-           'aria-label="Measured microseconds per Q15 step for the champion, rk4 and the '
-           'two six-stage elites">' + "".join(p) + "</svg>")
-    caption = ("Measured wall clock per Q15 step for every method in the benchmark run, "
-               "all through the identical pinned solver. Bar is the median across the "
-               "seven problems, whisker the min-to-max spread. These are Python "
-               "interpreter timings on one stated desktop: the ordering and the ratios "
-               "are the signal, not the absolute microseconds (Pearson r between analytic "
-               "cycles and these times is "
-               f"{(bench.get('correlation') or {}).get('pearson_r', float('nan')):.3f}).")
-    legend = sg._legend([("var(--s1)", "discovered"), ("var(--s2)", "classical")])
-    return _fig(svg, caption, legend,
-                "data: rk-work/benchmark/results.json, speedup.per_method_us_per_step")
-
-
-# ----------------------------------------------------------------------------- run charts (archive)
 
 def grid_coverage_chart(records, orders) -> str:
     """The MAP-Elites lattice: which of the searchable cells hold an elite.
 
     The lattice is not orders x stages x buckets: an order can only use stage counts that
     can reach it, so the size is summed per order from encourager.stage_domain, the same
-    source the findings site uses. Hand-writing it is how the two sites came to publish
-    different totals for one grid.
+    source the findings site uses.
     """
     grids = archive._grids_from(records, orders)
     classical_hashes = {tableau_mod.content_hash(t): n
@@ -1246,8 +1228,6 @@ def grid_coverage_chart(records, orders) -> str:
     p = []
     x = x0
     n_occ = n_disc = n_clas = n_out = 0
-    # The searchable lattice is summed per order, because an order can only use stage
-    # counts that can reach it. Same source as the findings site's coverage card.
     n_cells = sum(len(sg.encourager.stage_domain(o)) * 8 for o in (1, 2, 3, 4))
     max_rows = 0
     for order in (1, 2, 3, 4):
@@ -1301,182 +1281,29 @@ def grid_coverage_chart(records, orders) -> str:
     svg = (f'<svg viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" '
            'aria-label="Archive grid coverage: occupied MAP-Elites cells per order, '
            'stage count and cycle bucket">' + "".join(p) + "</svg>")
-    caption = ("Where the archive actually lives. The searchable lattice is orders 1&ndash;4 "
-               "against the stage counts each order can actually reach, times 8 cost "
-               f"buckets: {n_cells} cells. {n_occ} are occupied at generation time, "
-               f"{n_disc} by discovered methods and {n_clas} by a seeded classical "
-               f"baseline. A further {n_out} cell sits outside that range (euler, at one "
-               "stage, drawn in the order-1 block) and is counted beside the fraction "
-               "rather than into it. Most of "
-               "the lattice is structurally out of reach: at 2&ndash;6 stages a step under "
-               "the fast multiplier never costs enough to land in buckets 4&ndash;7, and "
-               "the cheapest buckets have no room for the stage counts the higher orders "
-               "need.")
+    outside = ""
+    if n_out:
+        outside = (f" {n_out} more {'cell' if n_out == 1 else 'cells'} (euler, at one "
+                   f"stage) {'sits' if n_out == 1 else 'sit'} outside the searched range.")
+    seeded = "a seeded classical method" if n_clas == 1 else "seeded classical methods"
+    caption = (f"Which of the {n_cells} searchable MAP-Elites cells hold an elite: "
+               f"{n_occ} are occupied, {n_disc} by discovered methods and {n_clas} by "
+               f"{seeded}.{outside} The upper cost buckets are empty by "
+               "construction, since no step at 2 to 6 stages costs that much under the fast "
+               "multiplier.")
     legend = sg._legend([("var(--s1)", "held by a discovered method"),
-                         ("var(--s2)", "held by a classical baseline")])
+                         ("var(--s2)", "held by a classical method")])
     return _fig(svg, caption, legend, "data: rk-work archive, MAP-Elites cells at generation time")
 
 
-def records_time_chart(events) -> str:
-    """Cumulative verified records against wall-clock time, from accepted events."""
-    times = []
-    for e in events:
-        if e.get("kind") != "accepted":
-            continue
-        ct = timefmt.to_ct(e.get("ts"))
-        if ct is not None:
-            times.append(ct)
-    if len(times) < 2:
-        print("WARN: no accepted events with timestamps; records-over-time chart skipped")
-        return ""
-    times.sort()
-    t0 = times[0]
-    pts = [((t - t0).total_seconds(), i + 1) for i, t in enumerate(times)]
-    keep = max(1, len(pts) // 600)
-    pts = pts[::keep] + [pts[-1]]
-    w, h, ml, mr, mt, mb = 880, 330, 74, 24, 16, 46
-    xmax = pts[-1][0] or 1.0
-    ymax = pts[-1][1] * 1.06
-    fx = lambda v: ml + (v / xmax) * (w - ml - mr)
-    fy = lambda v: h - mb - (v / ymax) * (h - mt - mb)
-    p = []
-    for i in range(5):
-        yv = ymax * (i + 1) / 5
-        p.append(f'<line class="gridline" x1="{ml}" y1="{sg._fmt(fy(yv))}" x2="{w - mr}" y2="{sg._fmt(fy(yv))}"/>')
-        p.append(f'<text x="{ml - 6}" y="{sg._fmt(fy(yv) + 4)}" text-anchor="end">{int(yv):,}</text>')
-    # ticks at Central-time midnights
-    import datetime as _dt
-    day = _dt.timedelta(days=1)
-    tick = _dt.datetime.combine(t0.date(), _dt.time(0), tzinfo=t0.tzinfo) + day
-    last = times[-1]
-    n_days = (last - t0).days + 1
-    step = max(1, n_days // 7)
-    di = 0
-    while tick <= last:
-        if di % step == 0:
-            xv = (tick - t0).total_seconds()
-            p.append(f'<line class="gridline" x1="{sg._fmt(fx(xv))}" y1="{mt}" x2="{sg._fmt(fx(xv))}" y2="{h - mb}"/>')
-            lbl = tick.strftime("%b %d").replace(" 0", " ")
-            p.append(f'<text x="{sg._fmt(fx(xv))}" y="{h - mb + 18}" text-anchor="middle">{lbl}</text>')
-        tick += day
-        di += 1
-    p.append(f'<line class="axis" x1="{ml}" y1="{h - mb}" x2="{w - mr}" y2="{h - mb}"/>')
-    path = " ".join(f"{'M' if i == 0 else 'L'} {sg._fmt(fx(xv))} {sg._fmt(fy(yv))}"
-                    for i, (xv, yv) in enumerate(pts))
-    p.append(f'<path d="{path}" fill="none" stroke="var(--s1)" stroke-width="2"/>')
-    xl, yl = pts[-1]
-    p.append(f'<circle cx="{sg._fmt(fx(xl))}" cy="{sg._fmt(fy(yl))}" r="4" fill="var(--s1)" '
-             f'class="cellstroke"><title>{yl:,} records by {sg._esc(timefmt.fmt_ct(times[-1]))}</title></circle>')
-    p.append(f'<text class="lbl" x="{sg._fmt(fx(xl) - 8)}" y="{sg._fmt(fy(yl) - 8)}" '
-             f'text-anchor="end">{yl:,}</text>')
-    p.append(f'<text x="{sg._fmt((ml + w - mr) / 2)}" y="{h - 6}" text-anchor="middle">date at midnight, US Central</text>')
-    p.append(f'<text x="14" y="{sg._fmt((mt + h - mb) / 2)}" text-anchor="middle" '
-             f'transform="rotate(-90 14 {sg._fmt((mt + h - mb) / 2)})">records (cumulative)</text>')
-    svg = (f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
-           'aria-label="Cumulative verified archive records against wall-clock time">'
-           + "".join(p) + "</svg>")
-    return ('<figure><figcaption>Archive growth in wall-clock time, from the timestamps '
-            "of the run's accepted events. Steep stretches are accept-heavy phases; flat "
-            "stretches are hours where the watchdog paused the run or the search produced "
-            "only rejections and non-improving candidates, including the brief epoch-1 "
-            "freeze near the end before the owner reopened the run. The endpoint sits a few records under the archive total: seeded baseline records enter the archive without an accept event, so the curve does not count them.</figcaption>"
-            f'<div class="scroll">{svg}</div></figure>')
+# ----------------------------------------------------------------------------- method matrix
 
-
-# ----------------------------------------------------------------------------- tracks page
-
-def _check_scripts() -> None:
-    """Run the headless checks over the two pages that ship JavaScript.
-
-    Both load the published page, drive every control, and compare what the page computes
-    against data derived independently: demo.html against the pinned Python evaluator,
-    index.html against the ranking its own data implies. A page that throws, renders an
-    empty region or mis-sorts fails the build instead of shipping. Skipped with a warning
-    when node is missing."""
-    node = shutil.which("node")
-    if node is None:
-        print("WARN: node not found; skipped the demo and landing-widget checks "
-              "(run `node tools/check_demo.js` and `node tools/check_hero.js`)")
-        return
-    for script, page in (("check_demo.js", "demo.html"), ("check_hero.js", "index.html")):
-        proc = subprocess.run([node, str(HERE / script), str(DOCS / page)],
-                              capture_output=True, text=True,
-                              encoding="utf-8", errors="replace")
-        for line in (proc.stdout + proc.stderr).splitlines():
-            if line.strip():
-                print(line)
-        if proc.returncode != 0:
-            raise SystemExit(f"{page} failed its self-check")
-
-
-REPOS = (
-    ("rk-harness", "https://github.com/jgoetzmann/rk-harness",
-     "The package the container runs: verifier, cost model, evaluator, search, site "
-     "generator, and the test suite that gates all of it."),
-    ("rk-findings", "https://github.com/jgoetzmann/rk-findings",
-     "The machine-generated numbers site. Written by the container once per cycle, with "
-     "no human in the loop."),
-    ("rk-overview", "https://github.com/jgoetzmann/rk-overview",
-     "This site, and the tools that build it from the run archive."),
-)
-
-
-def _hero_data(demo: dict) -> dict:
-    """The landing widget's data: one error per (problem, mode, method).
-
-    Reduced from demo_data.json so the index ships about 3 KB instead of the demo page's
-    120 KB, and so both pages rank the same numbers."""
-    methods = [{"key": m["key"], "label": m["label"], "origin": m["origin"]}
-               for m in demo["methods"]]
-    order = {m["key"]: i for i, m in enumerate(methods)}
-    err: dict[str, dict[str, list]] = {}
-    for row in demo["expected"]:
-        slot = err.setdefault(row["p"], {})
-        vals = slot.setdefault(row["mode"], [None] * len(methods))
-        if row.get("status") == "ok":
-            vals[order[row["m"]]] = row.get("error")
-    return {"methods": methods,
-            "problems": [p["name"] for p in demo["problems"]],
-            "default_problem": "damped_osc",
-            "err": err}
-
-
-def _classical_hashes() -> set[str]:
-    """Content hashes of the eight seeded classical tableaus."""
-    return {tableau_mod.content_hash(t) for t in tableau_mod.classical().values()}
-
-
-def _eff_ctx(kf: dict, records, orders) -> dict:
-    """Counts that appear in prose on more than one page.
-
-    They used to be typed into pages_text.py by hand and drifted a cycle behind
-    key_findings.json, so the index said 14 of 15 cells while the results page said 13 of
-    14. Every one of them is now derived here and formatted into the text."""
-    n = kf["efficiency"]["numbers"]
-    grids = archive._grids_from(records, orders)
-    elites = [rec for g in grids.values() for rec in g.values()]
-    seeded = _classical_hashes()
-    hv = sum(1 for rec in elites
-             if rec.tier == "heldout_verified" and rec.tableau_hash not in seeded)
-    return {
-        "cells_total": n["grid_cells_total"],
-        "cells_disc": n["cells_held_by_discovered"],
-        "cells_class": n["cells_held_by_classical"],
-        "cells_won": n["cells_where_discovered_beats_all_cheaper_or_equal_anchors"],
-        "cells_hv": hv,
-        "median_ratio": f"{n['median_error_ratio_discovered_over_anchor']:.2f}",
-        "best_ratio": f"{n['best_error_ratio']:.2f}",
-        "best_x": f"{1 / n['best_error_ratio']:.2f}",
-        "archive_n": f"{n['archive_records']:,}",
-    }
-
-
-def _demo_load() -> dict:
-    """tools/demo_data.json, written by tools/demo_data.py. Inlined into demo.html."""
-    path = HERE / "demo_data.json"
-    if not path.exists():
-        raise SystemExit("tools/demo_data.json is missing; run tools/demo_data.py first")
-    return json.loads(path.read_text(encoding="utf-8"))
+_DISC_LABEL = {"11e898cb": ("champion", "discovered champion"),
+               "42863b93": ("elite3", "best order-3 elite"),
+               "196b1d17": ("elite4", "best order-4 elite")}
+_CLASSICAL_ROW_ORDER = ("euler", "midpoint", "heun2", "rk4", "rk38")
+_LIB_ROW_ORDER = ("RK45", "Radau", "BDF", "LSODA")
+_NA = "n/a"
 
 
 def _json_file(path: Path, label: str) -> dict:
@@ -1488,182 +1315,6 @@ def _json_file(path: Path, label: str) -> dict:
     except ValueError:
         print(f"WARN: {label} unparsable; section skipped")
         return {}
-
-
-def orchestrator_panel() -> str:
-    """The same progress-loop state the findings epoch panel shows, read through
-    sitegen.epoch_status_data() so the two sites cannot disagree."""
-    d = sg.epoch_status_data()
-    state = d.get("state", "active")
-    badge = f'<span class="badge badge-{sg._esc(state)}">{sg._esc(state)}</span>'
-    rows = []
-    if state == "frozen":
-        rows.append(("frozen at", sg._esc(timefmt.fmt_ct(d.get("frozen_at")))))
-        if d.get("freeze_reason"):
-            rows.append(("reason", sg._esc(str(d.get("freeze_reason")))))
-    if d.get("last_progress_ts") and d.get("last_progress_kind"):
-        rows.append(("last progress",
-                     f"{sg._esc(timefmt.fmt_ct(d.get('last_progress_ts')))} "
-                     f"({sg._esc(str(d.get('last_progress_kind')))})"))
-    else:
-        rows.append(("last progress", "no progress events recorded yet"))
-    rows.append(("saturation counter",
-                 f"{d.get('consecutive')} consecutive saturating checks; "
-                 f"{d.get('consecutive_needed')} trigger a freeze"))
-    if d.get("last_check_ts"):
-        rows.append(("last check", sg._esc(timefmt.fmt_ct(d.get("last_check_ts")))
-                     + (f", verdict {sg._esc(str(d.get('last_verdict')))}"
-                        if d.get("last_verdict") else "")))
-    rows.append(("falsification file",
-                 "present" if d.get("falsification_present") else "not yet produced"))
-    dl = '<dl class="meta">' + "".join(
-        f"<dt>{sg._esc(k)}</dt><dd>{v}</dd>" for k, v in rows) + "</dl>"
-    head = (f'<p style="margin:0 0 6px"><strong>Epoch {d.get("epoch")}</strong> {badge} '
-            '<span class="when">scored method class: explicit fixed-step '
-            "Runge-Kutta</span></p>")
-    return '<div class="panel">' + head + dl + "</div>"
-
-
-_ADAPTIVE_COLORS = {"buck_converter": "var(--s1)", "pll_lock": "var(--s2)",
-                    "glucose_minimal": "var(--s3)"}
-
-
-def adaptive_curve_chart(ac: dict) -> str:
-    pts = [p for p in (ac.get("points") or [])
-           if isinstance(p.get("n_fevals"), int) and isinstance(p.get("achieved_error"), (int, float))
-           and p["achieved_error"] > 0]
-    if not pts:
-        print("WARN: adaptive_curve points empty; chart skipped")
-        return ""
-    xs = [p["n_fevals"] for p in pts]
-    ys = [p["achieved_error"] for p in pts]
-    xlo = 10 ** math.floor(math.log10(min(xs)))
-    xhi = 10 ** math.ceil(math.log10(max(xs)))
-    ylo = 10 ** math.floor(math.log10(min(ys)))
-    yhi = 10 ** math.ceil(math.log10(max(ys)))
-    pl = sg._LogLog(680, 400, xlo, xhi, ylo, yhi,
-                    "function evaluations (log)", "achieved error (log)", ml=64)
-    pl.frame()
-    problems = [pr for pr in _ADAPTIVE_COLORS if any(p["problem"] == pr for p in pts)]
-    problems += sorted({p["problem"] for p in pts} - set(problems))
-    for pr in problems:
-        rows = sorted((p for p in pts if p["problem"] == pr), key=lambda p: p["n_fevals"])
-        c = _ADAPTIVE_COLORS.get(pr, "var(--text-3)")
-        path = " ".join(f"{'M' if i == 0 else 'L'} {sg._fmt(pl.x(p['n_fevals']))} "
-                        f"{sg._fmt(pl.y(p['achieved_error']))}" for i, p in enumerate(rows))
-        pl.parts.append(f'<path d="{path}" fill="none" stroke="{c}" stroke-width="2"/>')
-        for p in rows:
-            title = (f"{pr} at tol {p.get('tol')}: {p['n_fevals']} fevals, achieved error "
-                     f"{_short(p['achieved_error'])}, {p.get('n_rejected')} rejected steps")
-            pl.parts.append(f'<circle cx="{sg._fmt(pl.x(p["n_fevals"]))}" '
-                            f'cy="{sg._fmt(pl.y(p["achieved_error"]))}" r="4" fill="{c}" '
-                            f'class="cellstroke"><title>{sg._esc(title)}</title></circle>')
-        last = rows[-1]
-        pl.parts.append(f'<text class="dlab" x="{sg._fmt(pl.x(last["n_fevals"]) - 8)}" '
-                        f'y="{sg._fmt(pl.y(last["achieved_error"]) - 10)}" '
-                        f'text-anchor="end">{sg._esc(pr)}</text>')
-    svg = pl.svg("Work-precision curve of the Bogacki-Shampine 3(2) prototype: achieved "
-                 "error against function evaluations on three validation problems")
-    caption = ("Measured work-precision behavior of the float64 Bogacki–Shampine 3(2) "
-               "prototype with the dyadic PI controller: each line is one validation "
-               "problem, each dot one run at a requested tolerance from 1e-3 down to 1e-8, "
-               "x is right-hand-side evaluations and y is the error actually achieved, "
-               "both log. Error falling in lockstep with tolerance at single-digit "
-               "rejection counts is the behavior the epoch-2 controller needs. "
-               "Preliminary and float-only: no Q15 effects are modeled.")
-    legend = sg._legend([(v, k) for k, v in _ADAPTIVE_COLORS.items()])
-    return _fig(svg, caption, legend, "data: rk-work/prototypes/adaptive_curve.json, points")
-
-
-_SDIRK_COLORS = {"sdirk2": "var(--s1)", "rk4": "var(--s2)", "euler": "var(--text-3)"}
-
-
-def sdirk_chart(sc: dict) -> str:
-    prob = (sc.get("problems") or {}).get("stiff_two_rate") or {}
-    methods = prob.get("methods") or {}
-    if not methods:
-        print("WARN: sdirk_curve stiff_two_rate missing; chart skipped")
-        return ""
-    series: dict[str, list[tuple[float, float]]] = {}
-    for name, m in methods.items():
-        cyc = m.get("est_cycles_per_step")
-        pts = [(p["n"] * cyc, p["error"]) for p in (m.get("points") or [])
-               if p.get("status") == "ok" and isinstance(p.get("error"), (int, float))
-               and p["error"] > 0]
-        if pts:
-            series[name] = sorted(pts)
-    if not series:
-        return ""
-    w, h, ml, mr, mt, mb = 680, 420, 74, 20, 26, 52
-    xlo, xhi = 1e3, 4e6
-    ylo, yhi = 1e-16, 1e1
-    fx = lambda v: _logpos(v, xlo, xhi, ml, w - mr)
-    fy = lambda v: h - mb - _logpos(v, ylo, yhi, 0, h - mt - mb)
-    p = []
-    for e in (3, 4, 5, 6):
-        tv = 10.0 ** e
-        p.append(f'<line class="gridline" x1="{sg._fmt(fx(tv))}" y1="{mt}" x2="{sg._fmt(fx(tv))}" y2="{h - mb}"/>')
-        p.append(f'<text x="{sg._fmt(fx(tv))}" y="{h - mb + 18}" text-anchor="middle">1e{e}</text>')
-    for e in range(-16, 2, 4):
-        tv = 10.0 ** e
-        p.append(f'<line class="gridline" x1="{ml}" y1="{sg._fmt(fy(tv))}" x2="{w - mr}" y2="{sg._fmt(fy(tv))}"/>')
-        p.append(f'<text x="{ml - 8}" y="{sg._fmt(fy(tv) + 4)}" text-anchor="end">1e{e}</text>')
-    p.append(f'<line class="axis" x1="{ml}" y1="{h - mb}" x2="{w - mr}" y2="{h - mb}"/>')
-    p.append(f'<line class="axis" x1="{ml}" y1="{mt}" x2="{ml}" y2="{h - mb}"/>')
-    p.append(f'<text x="{sg._fmt((ml + w - mr) / 2)}" y="{h - 8}" text-anchor="middle">'
-             'total cycles for the run, n steps x estimated cycles/step (log)</text>')
-    p.append(f'<text x="14" y="{sg._fmt((mt + h - mb) / 2)}" text-anchor="middle" '
-             f'transform="rotate(-90 14 {sg._fmt((mt + h - mb) / 2)})">final-state error (log)</text>')
-    # the epoch-1 budget, for scale
-    bx = fx(65536)
-    p.append(f'<line x1="{sg._fmt(bx)}" y1="{mt}" x2="{sg._fmt(bx)}" y2="{h - mb}" '
-             'stroke="var(--text-3)" stroke-dasharray="4 3"/>')
-    p.append(f'<text class="dlab" x="{sg._fmt(bx + 5)}" y="{mt + 14}">65,536-cycle budget</text>')
-    for name in ("euler", "rk4", "sdirk2"):
-        pts = series.get(name)
-        if not pts:
-            continue
-        c = _SDIRK_COLORS.get(name, "var(--text-3)")
-        path = " ".join(f"{'M' if i == 0 else 'L'} {sg._fmt(fx(x))} {sg._fmt(fy(y))}"
-                        for i, (x, y) in enumerate(pts))
-        p.append(f'<path d="{path}" fill="none" stroke="{c}" stroke-width="2"/>')
-        m = methods[name]
-        for (x, y) in pts:
-            n = round(x / m["est_cycles_per_step"])
-            p.append(f'<circle cx="{sg._fmt(fx(x))}" cy="{sg._fmt(fy(y))}" r="4" fill="{c}" '
-                     f'class="cellstroke"><title>{sg._esc(name)} at n = {n} steps '
-                     f'({int(x):,} cycles): error {_short(y)}</title></circle>')
-        x0, y0 = pts[0]
-        n0 = round(x0 / m["est_cycles_per_step"])
-        dy = -10 if name != "euler" else 20
-        p.append(f'<text class="dlab" x="{sg._fmt(fx(x0))}" y="{sg._fmt(fy(y0) + dy)}" '
-                 f'text-anchor="middle">{sg._esc(name)}: stable from n = {n0}</text>')
-    svg = (f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
-           'aria-label="SDIRK prototype stability curve on a ratio-1000 two-rate system: '
-           'error against total cycles for euler, rk4 and sdirk2">' + "".join(p) + "</svg>")
-    caption = ("Final-state error against total compute (n steps times estimated "
-               "m0plus_fast cycles per step, both log) on a two-rate linear system with "
-               "stiffness ratio 1000, float64 only. Each line starts at its method's "
-               "cheapest <em>stable</em> run: everything to the left of a line's start "
-               "diverged. sdirk2 is stable from 5 steps; rk4's line cannot begin until "
-               "about 47,500 cycles, most of the epoch-1 budget (dashed vertical), and "
-               "euler's until 10,000. Below the stability floor rk4's float64 accuracy "
-               "is irrelevant because there is no stable run to have. Preliminary, "
-               "off-archive prototype data.")
-    legend = sg._legend([("var(--s1)", "sdirk2 (2-stage L-stable, 3 Newton iterations)"),
-                         ("var(--s2)", "rk4"), ("var(--text-3)", "euler")])
-    return _fig(svg, caption, legend,
-                "data: rk-work/prototypes/sdirk_curve.json, problems.stiff_two_rate")
-
-
-# ----------------------------------------------------------------------------- trade-offs
-
-_DISC_LABEL = {"11e898cb": ("champion", "discovered champion"),
-               "42863b93": ("elite3", "best order-3 elite"),
-               "196b1d17": ("elite4", "best order-4 elite")}
-_CLASSICAL_ROW_ORDER = ("euler", "midpoint", "heun2", "rk4", "rk38")
-_LIB_ROW_ORDER = ("RK45", "Radau", "BDF", "LSODA")
-_DASH = "&mdash;"
 
 
 def _bench_load() -> dict:
@@ -1678,13 +1329,13 @@ def _tab_from_json(t: dict):
     return tableau_mod.make_tableau(A, b, c)
 
 
-def tradeoffs_matrix(vd: dict, bench: dict, kf: dict) -> str:
+def method_matrix(vd: dict, bench: dict, kf: dict, foot: str) -> str:
     methods = vd.get("methods") or []
     per = (vd.get("verdicts") or {}).get("per_problem") or {}
     results = vd.get("results") or []
     stiff_probs = {p["name"] for p in vd.get("problems", []) if p.get("stiff")}
     if not methods or not stiff_probs:
-        print("WARN: validation methods/stiff subset missing; trade-offs matrix skipped")
+        print("WARN: validation methods/stiff subset missing; method matrix skipped")
         return ""
     # held-out error at budget, from the key-findings frontier (hash-matched)
     kf_rows = (kf.get("efficiency", {}).get("series", {})
@@ -1695,9 +1346,8 @@ def tradeoffs_matrix(vd: dict, bench: dict, kf: dict) -> str:
                        for r in kf_rows if r.get("kind") == "discovered"}
     # outright validation wins per method, split practical / stiff
     wins: dict[str, list[int]] = {}
-    for prob, v in per.items():
-        w = str(v.get("winner"))
-        wins.setdefault(w, [0, 0])[1 if v.get("stiff") else 0] += 1
+    for _prob, v in per.items():
+        wins.setdefault(str(v.get("winner")), [0, 0])[1 if v.get("stiff") else 0] += 1
     # measured Q15 seconds/step from the benchmark fixed-step table
     t_fixed: dict[str, list[float]] = {}
     for r in bench.get("fixed_step_results") or []:
@@ -1716,7 +1366,7 @@ def tradeoffs_matrix(vd: dict, bench: dict, kf: dict) -> str:
                if isinstance(r.get("q15_error"), (int, float))]
         over = [str(r["problem"]) for r in rows if r.get("note")]
         if not rows:
-            return _DASH + '<sup>e</sup>'
+            return _NA + "<sup>e</sup>"
         if not over:
             return f"finishes all {len(fin)}"
         if not fin:
@@ -1725,7 +1375,7 @@ def tradeoffs_matrix(vd: dict, bench: dict, kf: dict) -> str:
 
     def us(vals: list[float] | None) -> str:
         if not vals:
-            return _DASH + '<sup>d</sup>'
+            return _NA + "<sup>d</sup>"
         return f"{statistics.median(vals) * 1e6:,.0f}"
 
     header = ('<tr><th>method</th><th>kind</th><th class="num">order</th>'
@@ -1755,23 +1405,20 @@ def tradeoffs_matrix(vd: dict, bench: dict, kf: dict) -> str:
         fast = costmodel.cycle_count(tb, costmodel.M0PLUS_FAST, 1)
         slow = costmodel.cycle_count(tb, costmodel.M0PLUS_SLOW, 1)
         csd = coeffrep.tableau_csd_total(tb)
-        if kind == "classical":
-            heldout = heldout_by_name.get(name)
-        else:
-            heldout = heldout_by_hash.get(name)
+        heldout = heldout_by_name.get(name) if kind == "classical" else heldout_by_hash.get(name)
         w = wins.get(name, [0, 0])
         cell = label if kind == "classical" else f'<span class="hash">{label}</span>'
         rows_html.append(
             "<tr>"
             f"<td>{cell}</td><td>{kind}</td>"
             f'<td class="num">{m.get("order")}</td><td class="num">{m.get("stages")}</td>'
-            f'<td class="num">{_short(heldout) if isinstance(heldout, (int, float)) else _DASH + "<sup>a</sup>"}</td>'
+            f'<td class="num">{_short(heldout) if isinstance(heldout, (int, float)) else _NA + "<sup>a</sup>"}</td>'
             f'<td class="num">{w[0]} / {w[1]}</td>'
             f'<td class="num">{fast}</td><td class="num">{slow}</td>'
             f'<td class="num">{csd}</td>'
             f'<td class="num">{us(t_fixed.get(name))}</td>'
             f"<td>{stiff_text(name)}</td>"
-            f"<td>{T.TRADEOFFS_NOTES.get(notes_key, '')}</td>"
+            f"<td>{T.MATRIX_NOTES.get(notes_key, '')}</td>"
             "</tr>")
     for lib in _LIB_ROW_ORDER:
         if lib not in t_lib:
@@ -1779,54 +1426,26 @@ def tradeoffs_matrix(vd: dict, bench: dict, kf: dict) -> str:
         rows_html.append(
             "<tr>"
             f"<td>{lib}</td><td>library (SciPy, float64, adaptive)</td>"
-            f'<td class="num">{_DASH}</td><td class="num">{_DASH}</td>'
-            f'<td class="num">{_DASH}<sup>a</sup></td>'
-            f'<td class="num">{_DASH}<sup>b</sup></td>'
-            f'<td class="num">{_DASH}<sup>c</sup></td><td class="num">{_DASH}<sup>c</sup></td>'
-            f'<td class="num">{_DASH}<sup>c</sup></td>'
+            f'<td class="num">{_NA}</td><td class="num">{_NA}</td>'
+            f'<td class="num">{_NA}<sup>a</sup></td>'
+            f'<td class="num">{_NA}<sup>b</sup></td>'
+            f'<td class="num">{_NA}<sup>c</sup></td><td class="num">{_NA}<sup>c</sup></td>'
+            f'<td class="num">{_NA}<sup>c</sup></td>'
             f'<td class="num">{us(t_lib.get(lib))}</td>'
-            f"<td>{_DASH}<sup>e</sup></td>"
-            f"<td>{T.TRADEOFFS_NOTES.get(lib, '')}</td>"
+            f"<td>{_NA}<sup>e</sup></td>"
+            f"<td>{T.MATRIX_NOTES.get(lib, '')}</td>"
             "</tr>")
-    foot = """
-<h3>Where each column comes from</h3>
-<ol class="checks" style="font-size:13.5px">
-<li><strong>a</strong> &mdash; held-out RMS error at the 65,536-cycle budget, m0plus_fast,
-Q15 floor rounding: <code>tools/key_findings.json</code>,
-series <code>frontier_cycles_vs_heldout</code>, matched by tableau hash. The library
-integrators never ran this protocol (they are adaptive and float64), so those cells
-hold no number.</li>
-<li><strong>b</strong> &mdash; problems where this exact method has the lowest Q15 error of
-all eight tested, from <code>rk-work/validation/results.json</code>,
-<code>verdicts.per_problem.winner</code>; split as practical (5 non-stiff) / stiff (3).
-Libraries are not part of the validation suite.</li>
-<li><strong>c</strong> &mdash; analytic cycles per step (one state) and total CSD weight,
-recomputed from each method's tableau in <code>rk-work/validation/results.json</code>
-with the pinned <code>costmodel</code> and <code>coeffrep</code> modules. CSD weight is
-the shift-add length of the coefficient multiplies, a code-size proxy. Adaptive
-libraries have no fixed cycles per step.</li>
-<li><strong>d</strong> &mdash; measured Python-level wall clock per step, the median across
-the seven scored problems of per-problem medians (15 repeats, 3 warmups, gc paused),
-from <code>rk-work/benchmark/results.json</code>. Q15 rows execute the pinned solver in
-the Python interpreter; library rows run compiled internals, so times compare like
-against like only within a regime. euler, midpoint, heun2 and rk38 were not part of the
-benchmark run.</li>
-<li><strong>e</strong> &mdash; behavior on the three stiff validation problems (stiffness
-ratios 292 to 1030), from <code>rk-work/validation/results.json</code>; an overflow is a
-<code>Q15OverflowError</code> raised by the pinned solver. The libraries were not run on
-the stiff validation problems.</li>
-</ol>
-"""
     return ('<div class="scroll"><table>' + "".join(rows_html) + "</table></div>" + foot)
 
 
-def tradeoffs_error_chart(kf: dict, vd: dict) -> str:
+def heldout_chart(kf: dict, vd: dict) -> str:
     """The matrix's held-out-error column drawn as a dot chart, one row per method."""
     eff = kf.get("efficiency", {})
+    budget = (eff.get("numbers") or {}).get("budget_cycles")
     anchors = (eff.get("numbers") or {}).get("classical_anchors") or []
     kf_rows = (eff.get("series") or {}).get("frontier_cycles_vs_heldout") or []
     heldout_by_hash = {r.get("tableau_hash"): r.get("heldout_error")
-                      for r in kf_rows if r.get("kind") == "discovered"}
+                       for r in kf_rows if r.get("kind") == "discovered"}
     entries = [(a["name"], float(a["heldout_error"]), "classical") for a in anchors
                if isinstance(a.get("heldout_error"), (int, float))]
     for m in vd.get("methods") or []:
@@ -1835,19 +1454,17 @@ def tradeoffs_error_chart(kf: dict, vd: dict) -> str:
         hsh = str(m.get("name_or_hash"))
         he = heldout_by_hash.get(hsh)
         if isinstance(he, (int, float)):
-            _short_key, desc = _DISC_LABEL.get(hsh[:8], (hsh[:8], "discovered"))
+            _key, desc = _DISC_LABEL.get(hsh[:8], (hsh[:8], "discovered"))
             entries.append((f"{hsh[:8]} ({desc})", float(he), "discovered"))
     if len(entries) < 4:
-        print("WARN: too few methods with held-out error; tradeoffs dot chart skipped")
+        print("WARN: too few methods with held-out error; held-out chart skipped")
         return ""
     entries.sort(key=lambda e: e[1])
     w, ml, mr = 780, 224, 88
     row_h, top, bot = 27, 14, 46
     H = top + row_h * len(entries) + bot
-    lo = min(e[1] for e in entries)
-    hi = max(e[1] for e in entries)
-    xlo = 10 ** math.floor(math.log10(lo))
-    xhi = 10 ** math.ceil(math.log10(hi))
+    xlo = 10 ** math.floor(math.log10(min(e[1] for e in entries)))
+    xhi = 10 ** math.ceil(math.log10(max(e[1] for e in entries)))
     fx = lambda v: _logpos(v, xlo, xhi, ml, w - mr)
     p = []
     tv = xlo
@@ -1864,242 +1481,351 @@ def tradeoffs_error_chart(kf: dict, vd: dict) -> str:
                  'stroke="var(--grid)" stroke-width="1.5"/>')
         p.append(f'<circle cx="{sg._fmt(fx(err))}" cy="{sg._fmt(cy)}" r="5.5" fill="{c}" '
                  f'class="cellstroke"><title>{sg._esc(name)}: held-out error {_short(err)} '
-                 'at the 65,536-cycle budget</title></circle>')
+                 f'at the {budget:,}-cycle budget</title></circle>')
         p.append(f'<text class="dlab" x="{sg._fmt(fx(err) + 10)}" y="{sg._fmt(cy + 4)}">{_short(err)}</text>')
     p.append(f'<text x="{sg._fmt((ml + w - mr) / 2)}" y="{H - 8}" text-anchor="middle">'
-             'held-out RMS error at the 65,536-cycle budget (log; left is better)</text>')
+             f'held-out RMS error at the {budget:,}-cycle budget (log; left is better)</text>')
     svg = (f'<svg viewBox="0 0 {w} {H}" width="{w}" height="{H}" role="img" '
            'aria-label="Held-out error at the shared budget for every scored method, '
            'discovered and classical, log scale">' + "".join(p) + "</svg>")
-    caption = ("The matrix's held-out-error column, drawn. One dot per scored method, "
-               "sorted best-first: x is held-out RMS error at the shared 65,536-cycle "
-               "budget under Q15 floor arithmetic, log scale. The three discovered rows "
-               "hold the top three places; euler sits a decade right of the field. "
-               "Library rows have no dot because they never ran this protocol.")
-    legend = sg._legend([("var(--s1)", "discovered"), ("var(--s2)", "classical anchor")])
+    caption = (f"Held-out RMS error at the {budget:,}-cycle budget for every scored method, "
+               "best at the top, log scale. The libraries never ran this protocol, so they "
+               "have no dot.")
+    legend = sg._legend([("var(--s1)", "discovered"), ("var(--s2)", "classical")])
     return _fig(svg, caption, legend,
-                "data: tools/key_findings.json, frontier series + classical anchors")
+                "data: tools/key_findings.json, frontier series and classical anchors")
 
 
-def tradeoffs_chips(vd: dict, bench: dict) -> str:
-    bv = bench.get("verdicts") or {}
-    per = (vd.get("verdicts") or {}).get("per_problem") or {}
-    disc_wins = sum(1 for v in per.values() if v.get("winner_kind") == "discovered")
-    items = []
-    r = bv.get("median_ratio_q15_over_library_at_matched_tolerance")
-    if isinstance(r, (int, float)):
-        items.append((f"{r:,.0f}", "median best-Q15 / best-library error at matched tolerance"))
-    compared = bv.get("fixed_step_cells_compared")
-    lower = bv.get("fixed_step_cells_where_q15_error_lower")
-    if isinstance(compared, int) and isinstance(lower, int):
-        items.append((f"{compared - lower} of {compared}",
-                      "matched-step cells where float64 rk4 is more accurate"))
-    pr = (bench.get("correlation") or {}).get("pearson_r")
-    if isinstance(pr, (int, float)):
-        items.append((f"{pr:.3f}", "Pearson r, analytic cycles vs measured time/step"))
-    if per:
-        items.append((f"{disc_wins} of {len(per)}",
-                      "validation problems won outright by a discovered method"))
-    return _chips(items)
+_COST_ROLES = {"m0plus_fast": "M0+ with a single-cycle multiplier; primary",
+               "m0plus_slow": "M0+ with an iterative multiplier; primary",
+               "avr_approx": "8-bit AVR approximation; advisory only"}
 
 
-# ----------------------------------------------------------------------------- run charts
-
-def _count_bars(counts, w, aria, sw="var(--s1)") -> str:
-    if not counts:
-        return ""
-    vmax = max(v for _k, v in counts)
-    row_h, ml = 28, 190
-    h = 12 + row_h * len(counts) + 8
-    p = []
-    for i, (k, v) in enumerate(counts):
-        y = 8 + row_h * i
-        bw = (v / vmax) * (w - ml - 76) if vmax else 0
-        p.append(f'<text x="{ml - 6}" y="{sg._fmt(y + 14)}" text-anchor="end">{sg._esc(k)}</text>')
-        p.append(f'<rect x="{ml}" y="{y}" width="{sg._fmt(max(bw, 2))}" height="19" rx="4" fill="{sw}" class="cellstroke">'
-                 f'<title>{sg._esc(k)}: {v:,}</title></rect>')
-        p.append(f'<text class="lbl" x="{sg._fmt(ml + max(bw, 2) + 6)}" y="{sg._fmt(y + 14)}">{v:,}</text>')
-    return (f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" aria-label="{sg._esc(aria)}">'
-            + "".join(p) + "</svg>")
+def _cost_table() -> str:
+    """The three cost models, read from the pinned costmodel module."""
+    ops = ("mul", "add", "shift", "load", "store")
+    head = "".join(f'<th class="num">{o}</th>' for o in ops)
+    rows = "".join(
+        f"<tr><td>{sg._esc(name)}</td>"
+        + "".join(f'<td class="num">{m.cycles[o]}</td>' for o in ops)
+        + f"<td>{sg._esc(_COST_ROLES.get(name, ''))}</td></tr>"
+        for name, m in costmodel.COST_MODELS.items())
+    return (f'<div class="scroll"><table><thead><tr><th>model</th>{head}<th>role</th></tr>'
+            f"</thead><tbody>{rows}</tbody></table></div>")
 
 
-def tier_chart(records) -> str:
-    c = Counter(r.tier for r in records)
-    rows = [(k, c.get(k, 0)) for k in ("heldout_verified", "search_only", "unreplicated")]
-    return ('<figure><figcaption>Tier distribution over every archived record (bar length '
-            "is the count; the printed number is exact), assigned by "
-            "code against each cell's incumbent: heldout_verified improved on both the "
-            "search and held-out aggregates, search_only on search alone (the overfitting "
-            "signature), unreplicated is everything else, including every record landing in "
-            "an empty cell.</figcaption>"
-            '<div class="scroll">'
-            + _count_bars(rows, 560, "Records per confidence tier") + "</div></figure>")
-
-
-def reject_chart(events) -> str:
-    c = Counter(e.get("code") for e in events if e.get("kind") == "rejected")
-    rows = sorted(((str(k), v) for k, v in c.items()), key=lambda kv: -kv[1])
-    if not rows:
-        return ""
-    return ('<figure><figcaption>Verifier rejections by code, whole run (bar length is '
-            "the count); each candidate "
-            "counts once, under the earliest of the nine ordered checks to fail. The cheap "
-            "structural codes barely occur because enumeration and the exact-b projection "
-            "emit only valid points.</figcaption>"
-            '<div class="scroll">'
-            + _count_bars(rows, 560, "Rejections per verifier code", sw="var(--s2)") + "</div></figure>")
-
-
-# ----------------------------------------------------------------------------- phase-0 table
-
-_TIER_MEANING = {
-    "heldout_verified": "better than the cell incumbent on the search and held-out aggregates, "
-                        "improving at least two problem families",
-    "search_only": "better than the cell incumbent on the search aggregate but not on held-out",
-    "unreplicated": "no incumbent to compare against, or no improvement on either aggregate",
-}
-
-
-def _phase0_body(t, rec, cyc: int) -> str:
-    """The full archived score vector for one phase-0 point, shown when its row is expanded."""
-    a21 = sg._frac(t.A[1][0])
-    if rec is None:
-        return (f'<p class="note">a21 = {a21}; enumerated at {cyc} slow cycles/step, but no '
-                "archived record for this point at snapshot time.</p>")
-    sv = rec.score
-    # Unprefixed keys are the primary model's per-problem errors; "slow:" and "avr_approx:"
-    # prefixes mark the advisory columns.
-    per = [(k, v) for k, v in sorted(sv.per_problem.items()) if ":" not in k]
-    per_txt = "; ".join(f"{sg._esc(n)} {sg._num(v)}" for n, v in per)
-    cyc_txt = ", ".join(f"{m} {sg._num(sv.cycles.get(m))}"
-                        for m in ("m0plus_fast", "m0plus_slow", "avr_approx"))
-    pairs = [
-        ("tableau", f"a21 = {a21}; b = ({sg._frac(t.b[0])}, {sg._frac(t.b[1])}); "
-                    f"c = (0, {a21})"),
-        ("cycles per step", cyc_txt),
-        ("CSD weight total", sg._num(sv.csd_weight_total)),
-        ("coefficient quantisation error", sg._num(sv.coeff_quant_error)),
-        ("measured order", f"{sg._num(sv.measured_order)} from {sv.order_fit_points} fit points"),
-        ("error constant", sg._num(sv.error_constant)),
-        ("stability interval", f"real {sg._num(sv.stability_real)}, "
-                               f"imaginary {sg._num(sv.stability_imag)}"),
-        ("overflow margin", sg._num(sv.overflow_margin)),
-        ("search error", sg._num(sv.search_error)),
-        ("held-out error", sg._num(sv.heldout_error)),
-        ("per-problem error (primary model)", per_txt or "n/a"),
-        ("tier", f"{sg._tier_badge(rec.tier)} {sg._esc(_TIER_MEANING.get(rec.tier, ''))}"),
-        ("archived", f"cycle {rec.cycle_id}, appended {sg._esc(timefmt.fmt_ct(rec.timestamp))}"),
-        ("tableau hash", f'<span class="hash">{sg._esc(rec.tableau_hash)}</span>'),
-    ]
-    dl = "".join(f"<dt>{sg._esc(k)}</dt><dd>{v}</dd>" for k, v in pairs)
-    return f'<dl class="meta">{dl}</dl>'
-
-
-def phase0_rows(records) -> str:
-    """The 16 phase-0 points as expandable rows: summary = the table columns, body = depth."""
-    by_hash = {r.tableau_hash: r for r in records}
-    names = {tableau_mod.content_hash(t): n for n, t in tableau_mod.classical().items()}
-    parts = ['<div class="p0head"><span></span><span>a21</span><span>b</span>'
-             "<span>slow cycles</span><span>held-out error</span><span>tier</span>"
-             "<span></span></div>"]
-    for cyc, t in enumeration.cheapest(enumeration.enumerate_phase0(), costmodel.M0PLUS_SLOW):
-        h = tableau_mod.content_hash(t)
-        rec = by_hash.get(h)
-        parts.append(
-            '<details class="p0"><summary>'
-            f'<span class="mono">{sg._frac(t.A[1][0])}</span>'
-            f'<span class="mono">({sg._frac(t.b[0])}, {sg._frac(t.b[1])})</span>'
-            f"<span>{cyc}</span>"
-            f"<span>{sg._num(rec.score.heldout_error) if rec else 'n/a'}</span>"
-            f"<span>{sg._tier_badge(rec.tier) if rec else ''}</span>"
-            f"<span>{sg._esc(names.get(h, ''))}</span></summary>"
-            f'<div class="p0body">{_phase0_body(t, rec, cyc)}</div></details>')
-    return '<div class="scroll"><div class="p0wrap">' + "".join(parts) + "</div></div>"
-
-
-# ----------------------------------------------------------------------------- literature
-
-def _lit_load() -> list[dict]:
-    path = WS / "rk-work" / "literature" / "digests.jsonl"
-    if not path.exists():
-        print("WARN: literature digests.jsonl missing; literature page will be thin")
-        return []
-    out = []
-    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        try:
-            d = json.loads(line)
-            if isinstance(d, dict):
-                out.append(d)
-        except ValueError:
-            pass
+def _anchor_costs() -> dict:
+    """rk4 and rk38 cycles per step, one state, under the two M0+ models."""
+    cl = tableau_mod.classical()
+    out = {}
+    for name in ("rk4", "rk38"):
+        out[f"{name}_fast"] = costmodel.cycle_count(cl[name], costmodel.M0PLUS_FAST, 1)
+        out[f"{name}_slow"] = costmodel.cycle_count(cl[name], costmodel.M0PLUS_SLOW, 1)
+    _claim(out["rk4_fast"] < out["rk38_fast"] and out["rk38_slow"] < out["rk4_slow"],
+           "the anchor result says rk4 is cheaper fast and rk38 cheaper slow")
     return out
 
 
-def _lit_group(topic: str) -> str:
-    """Assign a stored digest to one of the page's topic groups by its topic string."""
-    t = topic.lower()
-    if "multiplication costs" in t or "constant-multiply" in t:
-        return "The target hardware"
-    if "optimization" in t:
-        return "Prior art in tableau search"
-    if "real-time" in t:
-        return "Precision under real-time budgets"
-    if ("embedded runge" in t or "pairs" in t or "step control" in t or "implicit" in t
-            or "sdirk" in t or "radau" in t or "rosenbrock" in t or "stability region" in t):
-        return "Adaptive pairs and implicit methods"
-    return "Rounding bias and roundoff accumulation"
+# ----------------------------------------------------------------------------- page data
+
+def _check_scripts() -> None:
+    """Run the headless checks over the two pages that ship JavaScript.
+
+    Both load the published page, drive every control, and compare what the page computes
+    against data derived independently: demo.html against the pinned Python evaluator,
+    index.html against the ranking its own data implies. Skipped with a warning when node
+    is missing."""
+    node = shutil.which("node")
+    if node is None:
+        print("WARN: node not found; skipped the demo and landing-widget checks "
+              "(run `node tools/check_demo.js` and `node tools/check_hero.js`)")
+        return
+    for script, page in (("check_demo.js", "demo.html"), ("check_hero.js", "index.html")):
+        proc = subprocess.run([node, str(HERE / script), str(DOCS / page)],
+                              capture_output=True, text=True,
+                              encoding="utf-8", errors="replace")
+        for line in (proc.stdout + proc.stderr).splitlines():
+            if line.strip():
+                print(line)
+        if proc.returncode != 0:
+            raise SystemExit(f"{page} failed its self-check")
 
 
-def literature_body() -> str:
-    digests = _lit_load()
-    groups: dict[str, list[dict]] = {}
-    for d in digests:
-        groups.setdefault(_lit_group(str(d.get("topic", ""))), []).append(d)
-    n_src = sum(len(d.get("sources") or []) for d in digests)
-    body = [T.LIT_LEAD]
-    body.append(_chips([
-        (f"{len(digests)}", "digests collected by the loop"),
-        (f"{len(T.LIT_TOPICS)}", "topic groups summarized below"),
-        (f"{n_src}", "sources cited across the digests"),
-    ]))
-    for title, cycles, paras in T.LIT_TOPICS:
-        ds = sorted(groups.get(title, []), key=lambda d: int(d.get("cycle", 0)))
-        got = tuple(int(d.get("cycle", 0)) for d in ds)
-        if got != tuple(cycles):
-            print(f"WARN: literature group '{title}': summaries written for cycles "
-                  f"{cycles}, digests on disk have {got}; re-read before trusting")
-        dates = [timefmt.fmt_ct(d.get("ts")).split(" ")[0] for d in ds if d.get("ts")]
-        span = dates[0] if len(set(dates)) == 1 else f"{dates[0]} to {dates[-1]}" if dates else "n/a"
-        g_src = sum(len(d.get("sources") or []) for d in ds)
-        meta = (f"{len(ds)} digest{'s' if len(ds) != 1 else ''} "
-                f"(cycle{'s' if len(got) != 1 else ''} {', '.join(map(str, got))}), "
-                f"collected {span}; {g_src} sources cited")
-        parts = [f'<section class="lit-topic"><h2>{sg._esc(title)}</h2>',
-                 f'<p class="meta-line">{sg._esc(meta)}</p>']
-        parts += [f"<p>{para}</p>" for para in paras]
-        items = []
-        for d in ds:
-            for s in d.get("sources") or []:
-                url = str(s.get("url") or "")
-                t_ = str(s.get("title") or url)
-                items.append(f'<li><a href="{sg._esc(url)}">{sg._esc(t_)}</a></li>')
-        if items:
-            parts.append('<details class="fold"><summary>sources these digests cite '
-                         "(model-collected; verify before relying on them)</summary>"
-                         f"<div><ul>{''.join(items)}</ul></div></details>")
-        parts.append("</section>")
-        body.append("".join(parts))
-    body.append(
-        '<p class="note">Summaries above are human-written from the stored digests; the '
-        "digests themselves, verbatim as the prompts received them, are on the "
-        f'<a href="{LIVE_URL}literature.html">findings literature page</a>.</p>')
-    return "\n".join(body)
+def _hero_data(demo: dict) -> dict:
+    """The landing widget's data: one error per (problem, mode, method).
+
+    Reduced from demo_data.json so the index ships about 3 KB instead of the demo page's
+    120 KB, and so both pages rank the same numbers."""
+    methods = [{"key": m["key"], "label": m["label"], "origin": m["origin"]}
+               for m in demo["methods"]]
+    order = {m["key"]: i for i, m in enumerate(methods)}
+    err: dict[str, dict[str, list]] = {}
+    for row in demo["expected"]:
+        slot = err.setdefault(row["p"], {})
+        vals = slot.setdefault(row["mode"], [None] * len(methods))
+        if row.get("status") == "ok":
+            vals[order[row["m"]]] = row.get("error")
+    return {"methods": methods,
+            "problems": [p["name"] for p in demo["problems"]],
+            "default_problem": "damped_osc",
+            "err": err}
 
 
-# ----------------------------------------------------------------------------- svg audit
+def _demo_load() -> dict:
+    """tools/demo_data.json, written by tools/demo_data.py. Inlined into demo.html."""
+    path = HERE / "demo_data.json"
+    if not path.exists():
+        raise SystemExit("tools/demo_data.json is missing; run tools/demo_data.py first")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _join(items: list[str]) -> str:
+    items = list(items)
+    if len(items) <= 1:
+        return "".join(items)
+    return ", ".join(items[:-1]) + " and " + items[-1]
+
+
+def _eff_ctx(kf: dict, records, orders) -> dict:
+    """Counts that appear in prose on more than one page.
+
+    They used to be typed into pages_text.py by hand and drifted a cycle behind
+    key_findings.json, so the index said 14 of 15 cells while the results page said 13 of
+    14. Every one of them is now derived here and formatted into the text."""
+    n = kf["efficiency"]["numbers"]
+    grids = archive._grids_from(records, orders)
+    seeded = {tableau_mod.content_hash(t): name for name, t in tableau_mod.classical().items()}
+    cells = sorted(((order, s, b), rec) for order, g in grids.items()
+                   for (s, b), rec in g.items())
+    hv = sum(1 for _k, rec in cells
+             if rec.tier == "heldout_verified" and rec.tableau_hash not in seeded)
+    class_cells = [seeded[rec.tableau_hash] for _k, rec in cells if rec.tableau_hash in seeded]
+    won, disc = (n["cells_where_discovered_beats_all_cheaper_or_equal_anchors"],
+                 n["cells_held_by_discovered"])
+    ctx = {
+        "cells_total": n["grid_cells_total"],
+        "cells_disc": disc,
+        "cells_class": n["cells_held_by_classical"],
+        "class_cells": _join(class_cells),
+        "cells_won": won,
+        "cells_hv": hv,
+        "median_ratio": f"{n['median_error_ratio_discovered_over_anchor']:.2f}",
+        "best_ratio": f"{n['best_error_ratio']:.2f}",
+        "best_x": f"{1 / n['best_error_ratio']:.2f}",
+        "archive_n": f"{n['archive_records']:,}",
+        "cycles_n": f"{n['last_cycle_id'] + 1:,}",
+        "budget": f"{n['budget_cycles']:,}",
+    }
+    ctx["won_sentence"] = (T.F_EFFICIENCY_WON_ALL if won == disc
+                           else T.F_EFFICIENCY_WON_SOME).format(**ctx)
+    ctx["eff_title"] = (T.F_EFFICIENCY_TITLE_ALL if won == disc
+                        else T.F_EFFICIENCY_TITLE_SOME).format(**ctx)
+    return ctx
+
+
+def _mat(rows) -> str:
+    return "[" + ", ".join("[" + ", ".join(_fr(x) for x in r) + "]" for r in rows) + "]"
+
+
+def _vec(v) -> str:
+    return "(" + ", ".join(_fr(x) for x in v) + ")"
+
+
+def _results_ctx(kf: dict, vd: dict, bench: dict, eff: dict) -> dict:
+    """Every number the key-findings, architecture and decisions prose needs.
+
+    Each value is read from key_findings.json, validation/results.json or
+    benchmark/results.json; each pattern the prose states in words is checked here
+    (_claim), so a refreshed analysis that breaks a sentence fails the build."""
+    ctx = dict(eff)
+    ctx.update(_anchor_costs())
+
+    # finding 1: the best discovered method against the best classical one
+    n = kf["efficiency"]["numbers"]
+    bd = n["best_discovered"]
+    anchor = min(n["classical_anchors"], key=lambda a: a["heldout_error"])
+    tab = bd["tableau"]
+    coeffs = [Fraction(x) for row in tab["A"] for x in row] + [
+        Fraction(x) for x in tab["b"] + tab["c"]]
+    _claim(all(f.denominator & (f.denominator - 1) == 0 for f in coeffs),
+           "finding 1 says every coefficient of the best discovered method is dyadic")
+    ctx.update(
+        bd_stages=bd["stages"], bd_order=bd["order"], bd_cycles=bd["cycles"],
+        bd_err=_short(bd["heldout_error"]), anchor_err=_short(anchor["heldout_error"]),
+        anchor_name=anchor["name"], bd_A=_mat(tab["A"]), bd_b=_vec(tab["b"]),
+        bd_c=_vec(tab["c"]), bd_measured=f"{bd['measured_order']:.2f}",
+        bd_per_problem=", ".join(f"{k} {_short(v)}"
+                                 for k, v in bd["per_problem_heldout"].items()),
+        bd_tier=bd["tier"])
+
+    # finding 2: floor against round-to-nearest
+    agg = kf["floor_bias_flip"]["numbers"]["aggregate"]
+    fl, rd = agg["floor"]["search_rms"], agg["round_to_nearest"]["search_rms"]
+    n_flip = len(fl["rank"])
+    _claim(fl["rank"]["euler"] == 1 and fl["rank"]["rk4"] == n_flip,
+           "finding 2 says floor puts euler first and rk4 last on the search set")
+    _claim(rd["rank"]["rk4"] < rd["rank"]["euler"],
+           "finding 2 says round-to-nearest puts rk4 ahead of euler")
+    series = kf["floor_bias_flip"]["series"]["per_problem_floor_vs_round"]
+    problems = sorted({r["problem"] for r in series})
+    changed = 0
+    for pr in problems:
+        rows = [r for r in series if r["problem"] == pr]
+        fmin = min(r["floor_error"] for r in rows)
+        rmin = min(r["round_error"] for r in rows)
+        if not ({r["method"] for r in rows if r["floor_error"] == fmin}
+                & {r["method"] for r in rows if r["round_error"] == rmin}):
+            changed += 1
+    dq = [r for r in series if r["problem"] == "dahlquist"]
+    dmin = min(r["floor_error"] for r in dq)
+    tie = [r for r in dq if r["floor_error"] == dmin]
+    _claim(len(tie) >= 2, "finding 2 says several methods tie exactly on dahlquist")
+    _claim(abs(dmin - math.exp(-10)) < 1e-3 * math.exp(-10),
+           "finding 2 says the dahlquist floor error is the whole reference value")
+    ctx.update(
+        n_methods=n_flip, fl_euler=_short(fl["error"]["euler"]),
+        fl_rk4=_short(fl["error"]["rk4"]),
+        fl_ratio=f"{fl['error']['rk4'] / fl['error']['euler']:.1f}",
+        rd_rk4=_short(rd["error"]["rk4"]), rd_euler=_short(rd["error"]["euler"]),
+        n_changed=changed, n_problems=len(problems),
+        dq_tie=_join(sorted(r["method"] for r in tie)), dq_err=f"{dmin:.3g}",
+        dq_worst=f"{max(r['round_error'] / r['floor_error'] for r in tie):,.0f}")
+
+    # finding 3: the falsification sweep
+    co = kf["crossover"]["numbers"]
+    r4, h2 = co["methods"]["rk4"], co["methods"]["heun2"]
+    th = co["thresholds"]
+    _claim(r4["crossover_practical"] and h2["crossover_practical"]
+           and h2["crossover_h"] < r4["crossover_h"],
+           "finding 3 says both crossovers are practical and heun2's is at the smaller h")
+    _claim(r4["q15_error_at_smallest_h"] > r4["min_q15_error"],
+           "finding 3 says rk4's Q15 error climbs back as h shrinks")
+    fast = [m["coefficient_fraction"]["m0plus_fast"] for m in co["methods"].values()]
+    heun2_slow = h2["coefficient_fraction"]["m0plus_slow"]
+    _claim(min(fast) >= th["proceed_fraction"] and heun2_slow < th["kill_fraction"],
+           "finding 3 says fast fractions pass the proceed line and heun2 slow is under "
+           "the kill line")
+    sw = [r for r in kf["crossover"]["series"]["sweeps"]["rk4"]
+          if isinstance(r.get("q15_error"), (int, float))]
+    won4, of4 = co["rk4_wins_at_budget"]["floor"]["fraction"].split("/")
+    _claim(int(of4) == len(problems), "finding 3 counts the same problems as finding 2")
+    ctx.update(
+        problem=co["problem"], rk4_min=_short(r4["min_q15_error"]),
+        rk4_cross=_short(r4["crossover_h"]), h_small=_short(min(r["h"] for r in sw)),
+        rk4_small=_short(r4["q15_error_at_smallest_h"]),
+        heun2_cross=_short(h2["crossover_h"]), verdict=co["stored_verdict"],
+        fals_verdict=co["stored_verdict"], fast_lo=_pct(min(fast), 0),
+        fast_hi=_pct(max(fast), 0), proceed=_pct(th["proceed_fraction"], 0),
+        heun2_slow=_pct(heun2_slow, 1), kill=_pct(th["kill_fraction"], 0),
+        n_flip=n_flip, rk4_wins="none" if won4 == "0" else won4)
+
+    # finding 4: the rc_thermal collapse
+    rc = kf["rc_thermal_collapse"]["numbers"]
+    pm = kf["rc_thermal_collapse"]["series"]["per_method"]
+    by = {r["method"]: r for r in pm}
+    lsbs = [r["final_state_lsbs_from_origin"] for r in pm]
+    bdrc = rc["best_discovered_rc_thermal"]
+    bd_rc = bdrc["error"]
+    _claim((bdrc["stages"], bdrc["cycles"]) != (bd["stages"], bd["cycles"]),
+           "finding 4 says the best discovered method on rc_thermal is not the finding 1 "
+           "champion")
+    _claim(by["rk38"]["round_error"] < rc["floor_error_min"] and bd_rc < rc["floor_error_min"],
+           "finding 4 says rk38 under round-to-nearest and the best discovered method "
+           "under floor both get under the floor")
+    ctx.update(
+        deriv_scale=_fr(rc["deriv_scale"]), lsb=f"{rc['lsb_physical']:.3g}",
+        n_classical=len(pm), fe_min=f"{rc['floor_error_min']:.4f}",
+        fe_max=f"{rc['floor_error_max']:.4f}",
+        spread=_pct(rc["floor_error_spread_relative"], 1),
+        lsb_lo=min(lsbs), lsb_hi=max(lsbs),
+        euler_state=str(tuple(by["euler"]["final_state_q15"])),
+        rk4_state=str(tuple(by["rk4"]["final_state_q15"])),
+        ref_norm=f"{rc['reference_norm']:.4f}", t_end=f"{rc['t_end']:g}",
+        rk38_rd=_short(by["rk38"]["round_error"]), bd_rc=_short(bd_rc),
+        bdrc_stages=bdrc["stages"], bdrc_order=bdrc["order"], bdrc_cycles=bdrc["cycles"])
+
+    # finding 5: phase 0
+    p0 = kf["phase0_exhaustive"]["numbers"]
+    opt, ru = p0["optimum"], p0["runner_up"]
+    gap = abs(ru["heldout_error"] - opt["heldout_error"]) / opt["heldout_error"] * 100
+    _claim(opt["name"] is None and ru["name"] is None,
+           "finding 5 says neither phase-0 optimum is a textbook method")
+    _claim(ru["heldout_error"] < anchor["heldout_error"],
+           "finding 5 says both phase-0 optima beat every classical method")
+    _claim(gap < 1, "finding 5 calls the two phase-0 optima a tie")
+    ctx.update(
+        lattice=p0["lattice_candidates"], valid=p0["valid_tableaus"],
+        opt_a21=_fr(opt["a21"]), opt_b=_vec(opt["b"]), opt_err=_short(opt["heldout_error"]),
+        opt_cyc=opt["cycles"], ru_a21=_fr(ru["a21"]), ru_err=_short(ru["heldout_error"]),
+        gap=f"{gap:.2f}", n_anchors=len(n["classical_anchors"]),
+        mid_rank=p0["midpoint_rank"], heun_rank=p0["heun2_rank"])
+
+    # finding 6 and the matrix: the practical validation suite
+    vv = vd["verdicts"]
+    per = vv["per_problem"]
+    prac = [p for p in vd["problems"] if not p.get("stiff")]
+    stiff = [p for p in vd["problems"] if p.get("stiff")]
+    names = {p["name"] for p in prac}
+    rows = [(p["name"], per[p["name"]]) for p in prac if p["name"] in per]
+    _claim(vv["practical_problems_compared"] == len(rows) == len(prac),
+           "finding 6 compares every practical problem")
+    _claim(vd.get("budget_cycles") == n["budget_cycles"],
+           "finding 6 runs at the same budget as the archive")
+    _claim(bd["stages"] == 3, "finding 6 calls the champion the three-stage method")
+    wide_name, wide = min(rows, key=lambda nd: nd[1]["ratio_discovered_over_classical"])
+    loss = "".join(T.F_VALIDATION_LOSS.format(
+        p=name, c_name=d["best_classical"], c_err=_short(d["best_classical_q15_error"]),
+        d_err=_short(d["best_discovered_q15_error"]),
+        ratio=f"{d['ratio_discovered_over_classical']:.2f}")
+        for name, d in rows if d.get("winner_kind") == "classical")
+    res = [r for r in vd["results"] if r["problem"] in names
+           and isinstance(r.get("q15_error"), (int, float))
+           and isinstance(r.get("float_error"), (int, float)) and r["float_error"] > 0]
+    sr = [p["stiffness_ratio"] for p in stiff]
+    tp = bench["timing_protocol"]
+    ctx.update(
+        n_prac=len(prac), n_stiff=len(stiff),
+        n_val_methods=len(vd["methods"]), domains=_join([p["domain"] for p in prac]),
+        won=vv["practical_problems_won_by_discovered"],
+        median=f"{vv['practical_median_ratio_discovered_over_classical']:.3f}",
+        wide=wide_name, wide_d=_short(wide["best_discovered_q15_error"]),
+        wide_c=_short(wide["best_classical_q15_error"]), wide_cname=wide["best_classical"],
+        wide_x=f"{1 / wide['ratio_discovered_over_classical']:.1f}",
+        champ_wins=sum(1 for _n, d in rows if d.get("winner") == bd["tableau_hash"]),
+        loss_sentence=loss,
+        float_x=f"{min(r['q15_error'] / r['float_error'] for r in res):,.0f}",
+        max_q=max(r["max_abs_q"] for r in vd["results"]
+                  if r["problem"] in names and isinstance(r.get("max_abs_q"), int)),
+        repeats=tp["n_repeats"], warmup=tp["warmup"],
+        sr_lo=f"{min(sr):,.0f}", sr_hi=f"{max(sr):,.0f}")
+
+    # the matrix verdict and measured speed: the benchmark
+    bv = bench["verdicts"]
+    comp, low = bv["fixed_step_cells_compared"], bv["fixed_step_cells_where_q15_error_lower"]
+    sp = bench["speedup"]
+    srows = [r for r in sp["rows"] if r.get("status") == "ok"]
+    keeps = [r["problem"] for r in srows if not r["champion_error_lower"]]
+    _claim(sp["champion_error_lower_count"] == len(srows) - len(keeps),
+           "the speed section counts the champion's error wins from the same rows")
+    dev = max(abs(r["measured_ratio_rk4_over_champion"] / r["predicted_ratio_rk4_over_champion"]
+                  - 1) for r in srows)
+    ctx.update(
+        lib_ratio=f"{bv['median_ratio_q15_over_library_at_matched_tolerance']:,.0f}",
+        rk4_cells=f"all {comp}" if low == 0 else f"{comp - low} of {comp}",
+        sp_n=len(srows), sp_won=sp["champion_error_lower_count"],
+        maxdev=math.ceil(100 * dev), rk4_keeps=_join(keeps) or "none",
+        sp_med=f"{sp['median_error_ratio_champion_over_rk4']:.2f}")
+
+    # design decisions: the encourager calendar
+    ctx.update(package_date=sg.encourager.PACKAGE_DATE.isoformat(),
+               freeze_date=sg.encourager.FREEZE_DATE.isoformat())
+    return ctx
+
+
+# ----------------------------------------------------------------------------- page checks
 
 # Estimated advance width per character, px, by svg text class; the default matches the
-# task rule of ~7 px/char at the 13px base size. Deliberately conservative.
+# rule of ~7 px/char at the 13px base size. Deliberately conservative.
 _CHAR_PX = {"bt": 8.6, "bs": 7.35, "alab": 6.9, "dlab": 7.3, "lbl": 7.3, "mono": 7.9}
 _SVG_RE = re.compile(r'<svg [^>]*viewBox="0 0 ([0-9.]+) ([0-9.]+)"[^>]*>(.*?)</svg>', re.S)
 _TEXT_RE = re.compile(r"<text([^>]*)>(.*?)</text>", re.S)
@@ -2147,21 +1873,6 @@ def _audit_svg_text(name: str, html_text: str) -> list[str]:
     return issues
 
 
-# ----------------------------------------------------------------------------- pages
-
-def _chips(items) -> str:
-    return '<div class="chips">' + "".join(
-        f'<div class="chip"><div class="v">{sg._esc(v)}</div><div class="k">{sg._esc(k)}</div></div>'
-        for v, k in items) + "</div>"
-
-
-def _finding(slug, num, title, intro, figures, interp) -> str:
-    figs = "".join(f for f in figures if f)
-    return (f'<section class="finding" id="{slug}">'
-            f'<h2><span class="findnum">{num}</span>{sg._esc(title)}</h2>'
-            f"{intro}{figs}{interp}</section>")
-
-
 _BALANCED_TAGS = ("div", "section", "figure", "svg", "details", "table", "ul", "ol", "dl")
 
 
@@ -2179,437 +1890,273 @@ def _check_balance(name: str, html_text: str) -> bool:
     return ok
 
 
-def sidetrack_section(kf: dict) -> str:
-    """The side-track ledger, rendered from key_findings.json rather than read here.
-
-    Every number on this page comes through _kf_load so it cannot disagree with the findings
-    site, and the absent case is a normal state rather than an error: the executor ships
-    disabled and writes nothing until it is switched on. No JavaScript, sorted iteration,
-    no clock: same inputs, same bytes.
-    """
-    st = (kf or {}).get("side_tracks") or {}
-    nums = st.get("numbers") or {}
-    series = st.get("series") or {}
-    if not nums.get("points_measured"):
-        return (T.TRACKS_ABSENT_NOTE + '<p class="note">' + sg._esc(str(st.get("verdict", ""))) +
-                "</p>")
-
-    out = [T.TRACKS_LEDGER_INTRO]
-    # measured/planned only when the plan size is known. It used to be a hand-typed 40
-    # against a line count of 143, which read as "143 of 40 done"; the plan total now
-    # comes from the catalogue and is None if the catalogue could not be read.
-    measured, planned = nums.get("points_measured"), nums.get("points_planned")
-    counted = f"{measured}/{planned}" if planned else str(measured)
-    again = nums.get("points_remeasured") or 0
-    caption = "one per parameter point in the plan"
-    if again:
-        caption += f"; {again} were measured again after the executor changed"
-    cards = [
-        ("points measured", counted, caption),
-        ("jobs", str(nums.get("jobs")), "each closes one open design question"),
-        ("code hash", str(nums.get("code_hash") or "n/a"),
-         "digest over the executor and the prototypes, at the latest measurement"),
-        ("failed points", str(nums.get("failed", 0)), "recorded, retried, then set aside"),
-    ]
-    out.append('<div class="cards">' + "".join(
-        f'<div class="card"><div class="k">{sg._esc(k)}</div><div class="v">{sg._esc(v)}</div>'
-        f'<div class="d">{sg._esc(d)}</div></div>' for k, v, d in cards) + "</div>")
-
-    by_job: dict[str, list[dict]] = {}
-    for p in series.get("points") or []:
-        by_job.setdefault(str(p.get("job", "")), []).append(p)
-    meta = series.get("job_meta") or {}
-    for job in sorted(by_job):
-        rows = sorted(by_job[job], key=lambda p: str(p.get("key", "")))
-        keys: list[str] = sorted({k for r in rows for k in (r.get("summary") or {})})
-        head = ("<tr><th>point</th>" + "".join(f"<th>{sg._esc(k)}</th>" for k in keys) + "</tr>")
-        trs = []
-        for r in rows:
-            summary = r.get("summary") or {}
-            cells = "".join(f"<td>{sg._esc(_cell_text(summary.get(k)))}</td>" for k in keys)
-            trs.append(f'<tr><th class="mono">{sg._esc(r.get("key"))}</th>{cells}</tr>')
-        out.append(f"<h3>{sg._esc(job)}</h3>")
-        jm = meta.get(job) or {}
-        if jm.get("closes"):
-            out.append(f'<p>Closes: {sg._esc(jm["closes"])}</p>')
-        # Each job states its own arithmetic. A page-level claim would be false for the
-        # stability scan, which is exact over Fractions rather than float64.
-        if jm.get("arithmetic"):
-            out.append(f'<p class="note">Arithmetic: {sg._esc(jm["arithmetic"])}</p>')
-        out.append('<div class="scroll"><table>' + head + "".join(trs) + "</table></div>")
-    out.append(T.TRACKS_LEDGER_CAVEAT)
-    return chr(10).join(out)
+_HREF_RE = re.compile(r'href="([^"]*)"')
+_ID_RE = re.compile(r'\bid="([^"]+)"')
 
 
-def _cell_text(v) -> str:
-    if v is None:
-        return "n/a"
-    if isinstance(v, bool):
-        return "yes" if v else "no"
-    if isinstance(v, float):
-        return f"{v:.4g}"
-    if isinstance(v, (list, tuple)):
-        return ", ".join(_cell_text(x) for x in v) or "none"
-    if isinstance(v, dict):
-        # Without this a nested summary reaches the page as a Python repr, escaped quotes
-        # and all. Sorted so the row stays a function of the data. Mirrors sitegen._st_cell.
-        return "; ".join(f"{k} {_cell_text(v[k])}" for k in sorted(v)) or "none"
-    return str(v)
+def _check_links(pages: dict[str, str]) -> list[str]:
+    """Every internal href names a page being written and an id on it. Every link into
+    rk-findings names one of its current pages, and any fragment is an id that page is
+    known to carry (_FINDINGS_FRAGMENTS). A retired name fails the build."""
+    ids = {name: set(_ID_RE.findall(text)) for name, text in pages.items()}
+    issues = []
+    for name, text in pages.items():
+        markup = re.sub(r"<script>.*?</script>", "", text, flags=re.S)
+        for href in _HREF_RE.findall(markup):
+            if href.startswith(LIVE_URL):
+                page, _, frag = href[len(LIVE_URL):].partition("#")
+                if page not in _FINDINGS_PAGES:
+                    issues.append(f"{name}: {href} is not a current findings page")
+                elif frag and frag not in _FINDINGS_FRAGMENTS.get(page, ()):
+                    issues.append(f"{name}: {href} names an id that "
+                                  f"{page or 'index.html'} is not known to carry "
+                                  "(see _FINDINGS_FRAGMENTS)")
+            elif re.match(r"[a-z]+:", href):
+                continue
+            else:
+                page, _, frag = href.partition("#")
+                target = page or name
+                if target not in pages:
+                    issues.append(f"{name}: {href} names no page on this site")
+                elif frag and frag not in ids[target]:
+                    issues.append(f"{name}: {href} names no id on {target}")
+    return issues
 
 
-def build() -> None:
-    global TESTS_TOTAL, SUITE_TIERS, SNAPSHOT_DATE
-    SUITE_TIERS, TESTS_TOTAL = _collect_suite()
-    print(f"suite: {TESTS_TOTAL:,} tests collected across {len(SUITE_TIERS)} tiers")
-    records = archive.read_all()
-    if not records:
-        raise SystemExit("no archive records: refusing to build a snapshot of nothing")
-    SNAPSHOT_DATE = timefmt.fmt_ct(max(r.timestamp for r in records))[:10]
-    print(f"snapshot date derived from the newest archive record: {SNAPSHOT_DATE}")
-    events = []
-    ev_path = WS / "rk-work" / "events.jsonl"
-    if ev_path.exists():
-        for line in ev_path.read_text(encoding="utf-8", errors="replace").splitlines():
-            try:
-                ev = json.loads(line)
-                if isinstance(ev, dict):
-                    events.append(ev)
-            except ValueError:
-                pass
-    kf = _kf_load()
-    vd = _validation_load()
-    bench = _bench_load()
+def _check_incoming(pages: dict[str, str]) -> list[str]:
+    """The mirror of _check_links, for the other direction. The findings methodology page
+    deep-links section ids on architecture.html; those links are read from the rendered
+    article rather than from its source, because methodology.py builds them inside
+    f-strings. Renaming a section here then fails this build instead of leaving a dead
+    link on the other site."""
+    wanted = set(re.findall(re.escape(meth._ARCH) + r"#([\w-]+)", meth._body()))
+    if not wanted:
+        return ["rk_harness.methodology renders no link into the architecture page: the "
+                "parse broke, so this check is protecting nothing"]
+    have = set(_ID_RE.findall(pages["architecture.html"]))
+    return [f'architecture.html has no id "{i}", which the findings methodology page links'
+            for i in sorted(wanted - have)]
 
-    DOCS.mkdir(parents=True, exist_ok=True)
-    (DOCS / ".nojekyll").write_text("", encoding="utf-8")
 
-    n_cycles = (max((r.cycle_id for r in records), default=-1) + 1)
-    n_rejected = sum(1 for e in events if e.get("kind") == "rejected")
-    print("computing symbolic orders for the grid chart "
-          f"({len(records):,} records)...")
-    orders = [archive.record_order(r) for r in records]
-    n_cells = sum(len(g) for g in archive._grids_from(records, orders).values())
+# ----------------------------------------------------------------------------- pages
 
-    # ---------------- index
-    body = [T.HERO_LEAD, _DEMO.hero_body()]
-    try:
-        sp = bench["speedup"]
-        effn = kf["efficiency"]["numbers"]
-        vverd = vd["verdicts"]
-        champ = sp["champion"]
-        row0 = sp["rows"][0]
-        bullets = T.RESUME_BULLETS.format(
-            cells_won=effn["cells_where_discovered_beats_all_cheaper_or_equal_anchors"],
-            cells=effn["cells_held_by_discovered"],
-            prac_won=vverd["practical_problems_won_by_discovered"],
-            prac=vverd["practical_problems_compared"],
-            best_x=f"{1 / effn['best_error_ratio']:.2f}&times;",
-            prac_median=f"{vverd['practical_median_ratio_discovered_over_classical']:.3f}",
-            champ_cyc=row0["champion_cycles_per_step"],
-            rk4_cyc=row0["rk4_cycles_per_step"],
-            champ_us=f"{sp['per_method_us_per_step'][champ]['median_us_per_step']:.1f}",
-            rk4_us=f"{sp['per_method_us_per_step']['rk4']['median_us_per_step']:.1f}",
-            meas_x=f"{sp['geomean_measured_speedup_rk4_over_champion']:.2f}&times;",
-            pearson=f"{bench['correlation']['pearson_r']:.2f}",
-            err_won=sp["champion_error_lower_count"],
-            err_n=sp["error_comparisons"],
-            tests=TESTS_TOTAL,
-        )
-    except (KeyError, IndexError, TypeError) as exc:
-        raise SystemExit(f"resume bullets need speedup/validation/key-findings data: {exc!r}")
-    # Scale of the run only. The result numbers (speedup, test count) are in the bullets
-    # above with the context that makes them mean something; repeating them here as bare
-    # chips said the same thing twice.
-    chips = [
-        (f"{len(records):,}", "verified tableaus archived"),
-        (f"{n_cycles:,}", "search cycles completed"),
-        (f"{n_rejected:,}", "candidates rejected by the verifier"),
-        (f"{n_cells}", "MAP-Elites grid cells occupied"),
-    ]
-    # Problem -> Approach -> Result -> Verify. Each block is one claim and one link; the
-    # detail lives on the page it links to, so the landing page never re-explains it.
-    body.append('<div class="spine">' + "".join(
-        f'<section><span class="k">{sg._esc(k)}</span>'
-        f'<h2>{sg._esc(h)}</h2>{t}'
+def _chips(items) -> str:
+    return '<div class="chips">' + "".join(
+        f'<div class="chip"><div class="v">{sg._esc(v)}</div><div class="k">{sg._esc(k)}</div></div>'
+        for v, k in items) + "</div>"
+
+
+def _finding(slug, num, title, intro, figures, interp) -> str:
+    figs = "".join(f for f in figures if f)
+    return (f'<section class="finding" id="{slug}">'
+            f'<h2><span class="findnum">{num}</span>{sg._esc(title)}</h2>'
+            f"{intro}{figs}{interp}</section>")
+
+
+def _anchor_bars_live() -> str:
+    """sitegen's anchor chart, with every relative link pointed at the live findings site
+    (its glossary links are relative to rk-findings, not to this site)."""
+    return re.sub(r'href="(?![a-z]+:|#)([^"]*)"',
+                  lambda m: f'href="{LIVE_URL}{m.group(1)}"', sg._anchor_bars())
+
+
+def _index_page(ctx: dict, demo: dict) -> str:
+    spine = '<div class="spine">' + "".join(
+        f'<section><span class="k">{sg._esc(k)}</span><h2>{sg._esc(h)}</h2>{_t(t, **ctx)}'
         f'<a class="more" href="{href}">{sg._esc(link)} &rarr;</a></section>'
-        for k, h, t, href, link in T.SPINE) + "</div>")
-    body.append(bullets)
-    body.append('<h2 id="scale">What it took</h2>')
-    body.append(_chips(chips))
-    body.append('<h2 id="source">The source</h2>')
-    body.append('<p class="lead">Three repositories, so every number above can be traced '
-                "to the code that produced it.</p>")
-    body.append('<div class="grid-cards">' + "".join(
+        for k, h, t, href, link in T.SPINE) + "</div>"
+    classes = '<div class="cards">' + "".join(
+        f'<div class="card klass k-{cls}"><div class="k">{sg._esc(status)}</div>'
+        f'<div class="v">{cls}</div><p class="n">{sg._esc(text)}</p>'
+        f'<p class="go"><a href="{LIVE_URL}{cls}.html">{cls} methods on rk-findings '
+        "&#8599;</a></p></div>" for cls, status, text in T.CLASSES) + "</div>"
+    chips = _chips([(ctx["archive_n"], "verified tableaus archived"),
+                    (ctx["cycles_n"], "search cycles"),
+                    (str(ctx["cells_total"]), "grid cells occupied"),
+                    (f"{TESTS_TOTAL:,}", "tests in the suite")])
+    repos = '<div class="grid-cards">' + "".join(
         f'<a class="gcard" href="{url}"><div class="t">{sg._esc(name)} &#8599;</div>'
-        f'<div class="d">{sg._esc(desc)}</div></a>' for name, url, desc in REPOS) + "</div>")
-    body.append("<h2>Everything else</h2>")
-    body.append('<div class="teasers">' + "".join(
-        f'<a class="tease" href="{href}"><span class="tn">{i + 1}</span>'
-        f'<span><span class="tt">{sg._esc(title)}.</span> '
-        f'<span class="td">{sg._esc(desc)}</span></span></a>'
-        for i, (href, title, desc) in enumerate(T.PAGE_TEASERS)) + "</div>")
-    hero = _hero_data(_demo_load())
-    pages = {"index.html": _page(
-        T.HERO_TITLE, "\n".join(body), "index.html",
-        "An unattended search, a hash-pinned scorer, and what the numbers say so far.",
-        head_extra="<style>" + _DEMO.HERO_CSS + "</style>\n",
-        body_end=("<script>window.__RKFLIP__="
-                  + json.dumps(hero, separators=(",", ":"))
-                  + ";</script>\n<script>" + _DEMO.HERO_JS + "</script>\n"))}
+        f'<div class="d">{sg._esc(desc)}</div></a>' for name, url, desc in T.REPOS) + "</div>"
+    body = [_t(T.HERO_LEAD), _DEMO.hero_body(len(demo["methods"]), demo["budget_cycles"]),
+            spine, '<h2 id="classes">Three method classes</h2>', _t(T.CLASSES_LEAD), classes,
+            '<h2 id="scale">What it took</h2>', chips,
+            '<h2 id="source">The source</h2>', _t(T.SOURCE_LEAD), repos]
+    hero = _hero_data(demo)
+    return _page(T.HERO_TITLE, "\n".join(body), "index.html", T.HERO_SUB,
+                 head_extra="<style>" + _DEMO.HERO_CSS + "</style>\n",
+                 body_end=("<script>window.__RKFLIP__="
+                           + json.dumps(hero, separators=(",", ":"))
+                           + ";</script>\n<script>" + _DEMO.HERO_JS + "</script>\n"))
 
-    # ---------------- results (key findings)
-    eff = _eff_ctx(kf, records, orders)
-    body = [T.HEADLINE_VERDICT]
-    body.append(f'<p class="note">{sg._esc(T.RESULTS_SCOPE)}</p>')
-    body.append('<ol class="findex">' + "".join(
-        f'<li><a href="#{slug}">{sg._esc(title.format(**eff))}</a>'
-        f'<span class="d">{sg._esc(desc.format(**eff))}</span></li>'
-        for slug, title, desc in T.TEASERS) + "</ol>")
-    body.append(_finding(
-        "efficiency", 1,
-        "The efficiency frontier: discovered methods lead in "
-        f"{eff['cells_won']} of {eff['cells_disc']} cells",
-        T.F_EFFICIENCY_INTRO.format(**eff),
-        [frontier_chart(kf), grid_coverage_chart(records, orders)],
-        T.F_EFFICIENCY_INTERP.format(**eff)))
-    body.append(_finding(
-        "floor-flip", 2, "Floor rounding reorders the classical field",
-        T.F_FLIP_INTRO, [flip_slope_chart(kf), flip_problem_chart(kf)], T.F_FLIP_INTERP))
-    body.append(_finding(
-        "crossover", 3, "Where quantization overtakes truncation",
-        T.F_CROSSOVER_INTRO, [crossover_chart(kf)], T.F_CROSSOVER_INTERP))
-    body.append(_finding(
-        "rc-thermal", 4, "The rc_thermal quantization floor",
-        T.F_RC_INTRO, [rc_chart(kf)], T.F_RC_INTERP))
-    p0_table = phase0_rows(records) if records else ""
-    body.append(_finding(
-        "phase0", 5, "Phase 0, closed: an exhaustive result",
-        T.F_PHASE0_INTRO, [phase0_chart(kf)], T.F_PHASE0_INTERP + p0_table))
-    body.append(_finding(
-        "validation", 6, "Practical validation: five problems nobody tuned for",
-        T.F_VALIDATION_INTRO, [validation_chart(vd)], T.F_VALIDATION_INTERP))
-    body.append("<h2>The run behind the numbers</h2>")
-    body.append(T.RUN_CHARTS_INTRO)
-    if records:
-        last_ts = max(r.timestamp for r in records)
-        body.append(f'<p class="note">Archive at generation time: {len(records):,} records; '
-                    f"the latest was appended {sg._esc(timefmt.fmt_ct(last_ts))}.</p>")
-    body.append(_panel(records_time_chart(events)))
-    body.append('<div class="two">')
-    body.append(_panel(tier_chart(records)))
-    body.append(_panel(reject_chart(events)))
-    body.append("</div>")
-    pages["results.html"] = _page("key findings", "\n".join(body), "results.html",
-                                  "What the search found, in six charts, at snapshot "
-                                  f"{SNAPSHOT_DATE}.")
 
-    # ---------------- research tracks
-    ac = _json_file(WS / "rk-work" / "prototypes" / "adaptive_curve.json",
-                    "adaptive_curve.json")
-    sc = _json_file(WS / "rk-work" / "prototypes" / "sdirk_curve.json",
-                    "sdirk_curve.json")
-    body = [T.TRACKS_LEAD]
-    body.append("<h2>Where the loop stands</h2>")
-    body.append(orchestrator_panel())
-    body.append(T.TRACKS_ORCH_NOTE)
-    body.append("<h2>Explicit fixed-step tableaus: the scored search (epoch 1, live)</h2>")
-    body.append(T.TRACK_A_MILESTONES.format(records=len(records), cycles=n_cycles,
-                                            cells=n_cells, **eff))
-    body.append(T.TRACKS_PRELIM_NOTE)
-    body.append("<h2>Adaptive embedded pairs (epoch 2 candidate)</h2>")
-    body.append(T.TRACK_B_INTRO)
-    body.append(adaptive_curve_chart(ac))
-    body.append(T.TRACK_B_INTERP)
-    body.append("<h2>Implicit SDIRK for stiff problems (epoch 3 candidate)</h2>")
-    body.append(T.TRACK_C_INTRO)
-    body.append(sdirk_chart(sc))
-    body.append(T.TRACK_C_INTERP)
-    body.append("<h2>What the container has measured off-archive</h2>")
-    body.append(sidetrack_section(kf))
-    body.append("<h2>Where it all lands</h2>")
-    body.append('<p>Every strand feeds the same destination: the '
-                '<a href="tradeoffs.html">trade-offs matrix</a>, the paper\'s central '
-                "table, already assembled from the epoch-1 data and rebuilt as each "
-                "epoch adds its column of evidence.</p>")
-    pages["tracks.html"] = _page("research tracks", "\n".join(body), "tracks.html",
-                                 "One live scored search, two side efforts, all with "
-                                 "measured artifacts.")
+def _results_page(ctx: dict, kf: dict, vd: dict, bench: dict, records, orders) -> str:
+    charts = {"efficiency": [frontier_chart(kf), grid_coverage_chart(records, orders)],
+              "floor-flip": [flip_slope_chart(kf),
+                             _fold("Per problem: floor against round-to-nearest",
+                                   flip_problem_chart(kf))],
+              "crossover": [crossover_chart(kf)],
+              "rc-thermal": [rc_chart(kf)],
+              "phase0": [phase0_chart(kf)],
+              "validation": [validation_chart(vd)]}
+    toc = ([("anchor", T.ANCHOR_TITLE)]
+           + [(slug, _t(title, **ctx)) for slug, title, _i, _p in T.FINDINGS]
+           + [("matrix", T.MATRIX_TITLE), ("speed", T.SPEED_TITLE),
+              ("protocol", T.PROTOCOL_TITLE), ("limits", T.LIMITS_TITLE),
+              ("others", T.OTHERS_TITLE)])
+    body = [_t(T.HEADLINE_VERDICT, **ctx),
+            f'<p class="note">{sg._esc(_t(T.RESULTS_SCOPE, **ctx))}</p>',
+            '<ul class="toc">' + "".join(f'<li><a href="#{s}">{sg._esc(t)}</a></li>'
+                                         for s, t in toc) + "</ul>",
+            f'<h2 id="anchor">{sg._esc(T.ANCHOR_TITLE)}</h2>',
+            '<div class="two"><div>' + _t(T.ANCHOR_TEXT, **ctx) + "</div>"
+            '<div class="panel">' + _anchor_bars_live() + "</div></div>"]
+    for i, (slug, title, intro, interp) in enumerate(T.FINDINGS, 1):
+        body.append(_finding(slug, i, _t(title, **ctx), _t(intro, **ctx), charts[slug],
+                             _t(interp, **ctx)))
+    body += [f'<h2 id="matrix">{sg._esc(T.MATRIX_TITLE)}</h2>', _t(T.MATRIX_LEAD, **ctx),
+             heldout_chart(kf, vd), _t(T.MATRIX_VERDICT, **ctx),
+             '<details class="fold"><summary>The full matrix: every method, every column, '
+             "and where each column comes from</summary><div>"
+             + method_matrix(vd, bench, kf, _t(T.MATRIX_FOOTNOTES, **ctx)) + "</div></details>",
+             f'<h2 id="speed">{sg._esc(T.SPEED_TITLE)}</h2>', _t(T.SPEED_INTRO, **ctx),
+             speedup_chart(bench), _t(T.SPEED_INTERP, **ctx),
+             f'<h2 id="protocol">{sg._esc(T.PROTOCOL_TITLE)}</h2>', _t(T.PROTOCOL, **ctx),
+             f'<h2 id="limits">{sg._esc(T.LIMITS_TITLE)}</h2>', _t(T.LIMITS, **ctx),
+             f'<h2 id="others">{sg._esc(T.OTHERS_TITLE)}</h2>', _t(T.OTHERS, **ctx)]
+    return _page("Key findings", "\n".join(body), "results.html",
+                 _t(T.RESULTS_SUB, date=SNAPSHOT_DATE))
 
-    # ---------------- literature
-    pages["literature.html"] = _page("literature", literature_body(), "literature.html",
-                                     "What the model-driven reading loop searched, found, "
-                                     "and fed back into the search.")
 
-    # ---------------- trade-offs matrix
-    body = [T.TRADEOFFS_LEAD]
-    body.append(tradeoffs_chips(vd, bench))
-    body.append(T.TRADEOFFS_HOWTO)
-    body.append('<h2 id="anchor">The anchor result, first</h2>')
-    body.append('<div class="two">')
-    body.append("<div>" + T.ANCHOR_TEXT + "</div>")
-    body.append('<div class="panel">' + sg._anchor_bars().replace(
-        'href="glossary.html#', f'href="{LIVE_URL}glossary.html#') + "</div>")
-    body.append("</div>")
-    body.append("<h2>The matrix</h2>")
-    body.append(tradeoffs_error_chart(kf, vd))
-    body.append(tradeoffs_matrix(vd, bench, kf))
-    body.append('<h2 id="speed">Measured speed: the champion against rk4 on a clock</h2>')
-    body.append(T.TRADEOFFS_SPEED_INTRO)
-    body.append(speedup_chart(bench))
-    body.append(us_step_chart(bench))
-    body.append(T.TRADEOFFS_SPEED_INTERP)
-    body.append("<h2>Measurement caveats, verbatim</h2>")
-    caveats = bench.get("caveats") or []
-    if caveats:
-        body.append("<ul>" + "".join(
-            f"<li>{sg._esc(str(c))}</li>" for c in caveats) + "</ul>")
-        body.append('<p class="note">Caveats copied from '
-                    "<code>rk-work/benchmark/results.json</code>; the timing protocol "
-                    f"(median of {int((bench.get('timing_protocol') or {}).get('n_repeats', 15))} "
-                    "repeats after "
-                    f"{int((bench.get('timing_protocol') or {}).get('warmup', 3))} warmups, "
-                    "gc paused, BLAS threads capped) and the environment "
-                    f"(Python {sg._esc(str((bench.get('environment') or {}).get('python', '?')))}, "
-                    f"SciPy {sg._esc(str((bench.get('environment') or {}).get('scipy', '?')))}, "
-                    f"NumPy {sg._esc(str((bench.get('environment') or {}).get('numpy', '?')))}) "
-                    "are recorded in the same file.</p>")
-    body.append("<h2>Reading it</h2>")
-    body.append(T.TRADEOFFS_VERDICT)
-    body.append('<p>The stiff column\'s failure pattern is measured in detail on the '
-                f'<a href="{LIVE_URL}validation.html">findings validation page</a> '
-                "(stiff subset) and motivates the "
-                '<a href="tracks.html">implicit SDIRK side effort</a>.</p>')
-    pages["tradeoffs.html"] = _page("trade-offs", "\n".join(body), "tradeoffs.html",
-                                    "Discovered, classical and library methods in one "
-                                    "table; every cell traced to a data file.")
+def _architecture_page(ctx: dict) -> str:
+    tiers = ('<details class="fold"><summary>What each test tier covers</summary><div>'
+             '<div class="scroll"><table><tr><th>tier</th><th class="num">tests</th>'
+             "<th>covers</th></tr>" + "".join(
+                 f'<tr><td>{t}</td><td class="num">{n:,}</td><td>{sg._esc(d)}</td></tr>'
+                 for t, n, d in SUITE_TIERS) + "</table></div></div></details>")
+    body = [_marker_sprite(), _t(T.ARCH_LEAD),
+            '<h2 id="repos">The repositories</h2>', repo_diagram(), _t(T.ARCH_REPOS),
+            '<h2 id="boundaries">Trust boundaries</h2>', system_diagram(),
+            _t(T.ARCH_BOUNDARIES),
+            '<h2 id="loop">The cycle loop</h2>', cycle_diagram(), _t(T.ARCH_CYCLE),
+            '<h2 id="lanes">Three classes, taking turns</h2>', _t(T.ARCH_LANES),
+            '<h2 id="verify">Verification, in order</h2>', pipeline_diagram(),
+            _t(T.ARCH_GATE, **ctx),
+            '<h2 id="arithmetic">Arithmetic, exactly</h2>', _t(T.ARCH_ARITH, **ctx),
+            '<h2 id="costmodel">The cost model</h2>',
+            _t(T.ARCH_COSTMODEL, table=_cost_table()),
+            '<h2 id="candidates">Where candidates come from</h2>',
+            _t(T.ARCH_CANDIDATES, **ctx),
+            '<h2 id="archive">The archive</h2>', _t(T.ARCH_ARCHIVE),
+            '<h2 id="outer">The outer loop</h2>', _t(T.ARCH_OUTER),
+            '<h2 id="host">The host layer</h2>', _t(T.ARCH_HOST),
+            '<h2 id="tests">Testing</h2>', _t(T.ARCH_TESTS, **ctx), tiers,
+            '<h3 id="preflight">The pre-flight, run as a program</h3>', _t(T.ARCH_PREFLIGHT),
+            '<h2 id="repro">Reproducibility</h2>', _t(T.ARCH_REPRO)]
+    return _page("Architecture", "\n".join(body), "architecture.html", T.ARCH_SUB)
 
-    # ---------------- methodology (one skeleton, shared with the findings methodology)
-    body = [T.METH_LEAD]
-    body.append('<h2 id="setup">Experimental setup</h2>')
-    body.append(T.METH_SETUP)
-    body.append('<h2 id="measurement">Measurement</h2>')
-    body.append(T.METH_MEASURE)
-    body.append('<h2 id="protocol">Statistical protocol</h2>')
-    body.append(T.METH_PROTOCOL)
-    body.append('<h3 id="practical">Practical validation</h3>')
-    body.append(T.METH_PRACTICAL)
-    body.append('<h2 id="trust">Verification and trust</h2>')
-    body.append(pipeline_diagram())
-    body.append('<h3 id="gate">The gate at container start</h3>')
-    body.append(T.METH_GATE)
-    body.append("<h3>Ten files, one hash</h3>")
-    body.append(T.METH_HASH)
-    body.append("<h3>What the container cannot reach</h3>")
-    body.append(T.METH_REACH)
-    body.append('<h2 id="tests">Testing</h2>')
-    body.append(T.METH_SUITE.format(tests=TESTS_TOTAL, tiers=len(SUITE_TIERS)))
-    body.append('<h3 id="preflight">The pre-flight, executed as a program</h3>')
-    body.append(T.METH_PREFLIGHT)
-    body.append('<h2 id="repro">Reproducibility</h2>')
-    body.append(T.METH_REPRO)
-    body.append('<h2 id="limits">Limitations</h2>')
-    body.append(T.METH_LIMITS)
-    pages["methodology.html"] = _page("methodology", "\n".join(body), "methodology.html",
-                                      "The method: setup, measurement, protocol, trust, "
-                                      "testing, and its limits.")
 
-    # ---------------- architecture
-    body = [T.ARCH_LEAD]
-    body.append("<h2>The four repositories</h2>")
-    body.append(repo_diagram())
-    body.append(T.ARCH_REPOS)
-    body.append("<h2>Trust boundaries</h2>")
-    body.append(system_diagram())
-    body.append(T.ARCH_BOUNDARIES)
-    body.append("<h2>The cycle loop</h2>")
-    body.append(cycle_diagram())
-    body.append(T.ARCH_CYCLE)
-    body.append("<h2>Verification, in order</h2>")
-    body.append(T.ARCH_VERIFY)
-    body.append('<h2 id="arithmetic">Arithmetic, exactly</h2>')
-    body.append(T.ARCH_ARITH)
-    body.append('<h2 id="costmodel">The cost model</h2>')
-    body.append(T.ARCH_COSTMODEL)
-    body.append('<h2 id="candidates">Where candidates come from</h2>')
-    body.append(T.ARCH_CANDIDATES)
-    body.append('<h2 id="archive">The archive</h2>')
-    body.append(T.ARCH_ARCHIVE)
-    body.append('<h2 id="outer">The outer loop: a research partner, not a sampler</h2>')
-    body.append(T.ARCH_OUTER)
-    body.append("<h2>The host layer</h2>")
-    body.append(T.ARCH_HOST)
-    pages["architecture.html"] = _page("architecture", "\n".join(body), "architecture.html",
-                                       "The as-built system: repositories, boundaries, "
-                                       "loop, arithmetic, search, host layer.")
-
-    # ---------------- design decisions
-    body = [f'<p class="note">{sg._esc(T.DECISIONS_LEAD)}</p>']
-    body.append("<h3>Contents</h3>")
-    body.append('<ul class="toc">' + "".join(
-        f'<li><a href="#{slug}">{sg._esc(title)}</a></li>'
-        for slug, title, _orig, _asbuilt in T.DECISIONS) + "</ul>")
+def _decisions_page(ctx: dict) -> str:
+    _claim(REVISED_DECISIONS <= {slug for slug, _t_, _o, _a in T.DECISIONS},
+           "every decision tagged as revised exists on the page")
+    lead = _t(T.DECISIONS_LEAD, n=len(T.DECISIONS), n_rev=len(REVISED_DECISIONS))
+    body = [f'<p class="note">{lead}</p>']
     for slug, title, orig, asbuilt in T.DECISIONS:
         tag = ('<span class="tag tag-changed">revised in build</span>'
                if slug in REVISED_DECISIONS
                else '<span class="tag tag-kept">held up</span>')
         body.append(f'<div class="decision" id="{slug}">'
                     f'<h3><a href="#{slug}" style="color:inherit;text-decoration:none">'
-                    f"{sg._esc(title)}</a>{tag}</h3>"
-                    f'<div class="orig"><strong>Context, and what it ruled out:</strong> '
-                    f"{orig}</div>"
-                    f'<div class="asbuilt"><strong>Decision, and its consequences:</strong> '
-                    f"{asbuilt}</div>"
-                    "</div>")
-    body.append("<h2>What was deliberately cut</h2>")
-    body.append(T.CUTS)
-    body.append("<h2>Known prior art, and where the gap is</h2>")
-    body.append(T.PRIOR_ART)
-    pages["design-decisions.html"] = _page("design decisions", "\n".join(body),
-                                           "design-decisions.html",
-                                           "Every deliberate choice, annotated with what "
-                                           "the build did to it.")
+                    f"{title}</a>{tag}</h3>"
+                    f'<div class="orig"><strong>Before the build:</strong> '
+                    f"{_t(orig, **ctx)}</div>"
+                    f'<div class="asbuilt"><strong>As built:</strong> '
+                    f"{_t(asbuilt, **ctx)}</div></div>")
+    body += ['<h2 id="cuts">What was deliberately cut</h2>', _t(T.CUTS),
+             '<h2 id="prior-art">Known prior art, and where the gap is</h2>', _t(T.PRIOR_ART)]
+    return _page("Design decisions", "\n".join(body), "design-decisions.html",
+                 T.DECISIONS_SUB)
 
-    # ---------------- demo (the only page with JavaScript)
-    demo = _demo_load()
-    pages["demo.html"] = _page(
-        "Run the arithmetic yourself", _DEMO.body(LIVE_URL), "demo.html",
-        "The Q15 integrator, in your browser, checked against the evaluator that scored "
-        "the archive.",
-        head_extra="<style>" + _DEMO.DEMO_CSS + "</style>\n",
-        body_end=("<script>window.__RKDEMO__="
-                  + json.dumps(demo, separators=(",", ":"))
-                  + ";</script>\n<script>" + _DEMO.DEMO_JS + "</script>\n"))
 
-    all_ok = True
-    audit_issues: list[str] = []
+def _demo_page(demo: dict) -> str:
+    cross = demo["_meta"]["crosscheck"]
+    body = _DEMO.body(LIVE_URL, len(demo["methods"]), demo["budget_cycles"],
+                      len(demo["expected"]), cross["comparisons"], cross["max_rel_diff"])
+    return _page("Run the arithmetic yourself", body, "demo.html",
+                 "The Q15 integrator running in your browser, checked against the "
+                 "evaluator that scored the archive.",
+                 head_extra="<style>" + _DEMO.DEMO_CSS + "</style>\n",
+                 body_end=("<script>window.__RKDEMO__="
+                           + json.dumps(demo, separators=(",", ":"))
+                           + ";</script>\n<script>" + _DEMO.DEMO_JS + "</script>\n"))
+
+
+def build() -> None:
+    global TESTS_TOTAL, SUITE_TIERS, GATE_TESTS, SNAPSHOT_DATE
+    SUITE_TIERS, TESTS_TOTAL = _collect_suite()
+    GATE_TESTS = _gate_count()
+    print(f"suite: {TESTS_TOTAL:,} tests collected across {len(SUITE_TIERS)} tiers; "
+          f"start gate {GATE_TESTS}")
+    records = archive.read_all()
+    if not records:
+        raise SystemExit("no archive records: refusing to build a snapshot of nothing")
+    SNAPSHOT_DATE = timefmt.fmt_ct(max(r.timestamp for r in records))[:10]
+    print(f"snapshot date derived from the newest archive record: {SNAPSHOT_DATE}")
+    kf, vd, bench, demo = _kf_load(), _validation_load(), _bench_load(), _demo_load()
+    kf_n = kf["efficiency"]["numbers"]["archive_records"]
+    if kf_n != len(records):
+        print(f"NOTE: key_findings.json covers {kf_n:,} records and the archive now holds "
+              f"{len(records):,}; rerun tools/key_findings.py to refresh the analysis")
+    print(f"computing symbolic orders for the grid chart ({len(records):,} records)...")
+    orders = [archive.record_order(r) for r in records]
+    ctx = _results_ctx(kf, vd, bench, _eff_ctx(kf, records, orders))
+    ctx.update(gate=GATE_TESTS, tests=TESTS_TOTAL, tiers=len(SUITE_TIERS),
+               demo_cases=len(demo["expected"]))
+
+    pages = {"index.html": _index_page(ctx, demo),
+             "architecture.html": _architecture_page(ctx),
+             "design-decisions.html": _decisions_page(ctx),
+             "results.html": _results_page(ctx, kf, vd, bench, records, orders),
+             "demo.html": _demo_page(demo)}
+    assert list(pages) == [href for href, _l in _NAV]
+
+    # The page checks run before anything is written, so a failed check leaves docs/ as it
+    # was. The two node checks need the written pages and run last, in _check_scripts().
+    problems: list[str] = []
     for name, text in pages.items():
         if not _check_balance(name, text):
-            all_ok = False
+            problems.append(f"{name}: unbalanced tags (see WARN lines)")
         if name != "demo.html":          # the demo's charts are built at view time
-            audit_issues += _audit_svg_text(name, text)
-        n_svg = len(_SVG_RE.findall(text))
+            problems += [f"SVG-AUDIT: {i}" for i in _audit_svg_text(name, text)]
+    problems += [f"LINK: {i}" for i in _check_links(pages)]
+    problems += [f"LINK: {i}" for i in _check_incoming(pages)]
+    for line in problems:
+        print(line)
+    if problems:
+        raise SystemExit("page checks failed; nothing was written")
+
+    DOCS.mkdir(parents=True, exist_ok=True)
+    (DOCS / ".nojekyll").write_text("", encoding="utf-8")
+    for name, text in pages.items():
         (DOCS / name).write_text(text, encoding="utf-8")
-        print("wrote", name,
-              f"({len(text.encode('utf-8')) / 1024:.0f} KB, {n_svg} charts)")
-    for issue in audit_issues:
-        print("SVG-AUDIT:", issue)
-    if audit_issues:
-        all_ok = False
-    if not all_ok:
-        raise SystemExit("page checks failed; see WARN/SVG-AUDIT lines above")
-
-    _check_scripts()
-
-    # The findings site used to be copied under docs/findings/ as a frozen snapshot. It
-    # drifted from the live site within days and gave the nav two entries pointing at the
-    # same thing, so the nav links to the live site only and the copy is removed.
+        print("wrote", name, f"({len(text.encode('utf-8')) / 1024:.0f} KB, "
+              f"{len(_SVG_RE.findall(text))} charts)")
+    # Pages the site no longer has would otherwise keep being served by GitHub Pages.
+    for name in _RETIRED:
+        if (DOCS / name).exists():
+            (DOCS / name).unlink()
+            print("removed retired page", name)
     stale = DOCS / "findings"
     if stale.exists():
         shutil.rmtree(stale)
         print("removed the stale docs/findings snapshot; the nav links to the live site")
 
+    _check_scripts()
+
 
 if __name__ == "__main__":
     import os
+    # A Windows console defaults to cp1252, which cannot print the arrows and fractions
+    # some check messages quote.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     os.environ.setdefault("RK_WORK_DIR", str(WS / "rk-work"))
     build()

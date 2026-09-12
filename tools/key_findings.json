@@ -10,8 +10,8 @@
   "budget_cycles": 65536,
   "cost_model": "m0plus_fast",
   "rounding_mode": "floor (ASRS), per HANDOFF 4.2",
-  "archive_records": 132152,
-  "archive_last_cycle_id": 2966,
+  "archive_records": 141364,
+  "archive_last_cycle_id": 3930,
   "archive_dates": [
    "2026-08-29",
    "2026-08-30",
@@ -24,7 +24,8 @@
    "2026-09-06",
    "2026-09-07",
    "2026-09-08",
-   "2026-09-09"
+   "2026-09-09",
+   "2026-09-10"
   ],
   "classical_seed_check": "all 8 classical anchors identified by tableau content-hash; each appears exactly once, at cycle_id 0 / seed 0",
   "floor_round_vs_archive_max_rel_diff": 0.0,
@@ -37,9 +38,9 @@
    "budget_cycles": 65536,
    "cost_model": "m0plus_fast",
    "rounding_mode": "floor (ASRS)",
-   "archive_records": 132152,
-   "unique_tableaus": 132152,
-   "last_cycle_id": 2966,
+   "archive_records": 141364,
+   "unique_tableaus": 141364,
+   "last_cycle_id": 3930,
    "grid_cells_total": 18,
    "cells_held_by_discovered": 16,
    "cells_held_by_classical": 2,

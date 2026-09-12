@@ -38,6 +38,9 @@ DEMO_CSS = """
 @media (max-width:880px){.demo-grid{grid-template-columns:1fr}}
 .demo-grid>.panel{margin:0;min-width:0}
 .panel>div[id]{overflow-x:auto}
+/* On a phone each chart keeps its drawn size and scrolls inside its panel, rather than
+   shrinking until its labels cannot be read. */
+@media (max-width:700px){.panel>div[id] svg{max-width:none}}
 .hint{font-size:12.5px;color:var(--text-3);margin:6px 0 0}
 svg .bar{fill:var(--s1)}
 svg .bar.classical{fill:var(--s2)}
@@ -285,11 +288,10 @@ function board(){
     var y=top+i*rowh, bw=x(r.r.error)-ml, cls=r.m.origin==="classical"?"bar classical":"bar";
     if(r.m.key===S.meth) cls+=" sel";
     out.push('<g class="hot" data-meth="'+esc(r.m.key)+'"><title>'+esc(r.m.label)+
-      " — error "+fmt(r.r.error)+", "+cyclesFor(r.m,p)+" cycles/step, "+r.r.steps+" steps</title>");
+      ": error "+fmt(r.r.error)+", "+cyclesFor(r.m,p)+" cycles/step, "+r.r.steps+" steps</title>");
     out.push('<rect x="0" y="'+y+'" width="'+W+'" height="'+rowh+'" fill="transparent"/>');
-    out.push('<text class="rowlab'+(r.m.key===S.meth?" on":"")+'" x="'+(ml-52)+'" y="'+(y+rowh/2+4)+'" text-anchor="end">'+esc(r.m.label)+"</text>");
-    out.push('<text class="val" x="'+(ml-10)+'" y="'+(y+rowh/2+4)+'" text-anchor="end">#'+rankHere[r.m.key]+
-      " · "+cyclesFor(r.m,p)+"c</text>");
+    out.push('<text class="rowlab'+(r.m.key===S.meth?" on":"")+'" x="'+(ml-10)+'" y="'+(y+rowh/2+4)+'" text-anchor="end">'+esc(r.m.label)+
+      ' <tspan class="val">#'+rankHere[r.m.key]+" · "+cyclesFor(r.m,p)+"c</tspan></text>");
     out.push('<rect class="'+cls+'" x="'+ml+'" y="'+(y+6)+'" width="'+Math.max(1,bw).toFixed(1)+'" height="'+(rowh-13)+'" rx="3"/>');
     var e2=r.other.error;
     if(isFinite(e2)&&e2>0){
@@ -345,9 +347,9 @@ function traj(){
   }
   for(var t=0;t<=4;t++){
     var vt=p.t_end*t/4;
-    out.push('<text x="'+X(vt).toFixed(1)+'" y="'+(H-12)+'" text-anchor="middle">'+fmt(vt)+"</text>");
+    out.push('<text x="'+X(vt).toFixed(1)+'" y="'+(H-16)+'" text-anchor="middle">'+fmt(vt)+"</text>");
   }
-  out.push('<text x="'+ml+'" y="'+(H-1)+'">t</text>');
+  out.push('<text x="'+((ml+W-mr)/2)+'" y="'+(H-2)+'" text-anchor="middle">time t</text>');
   var d1=p.ref_curve.map(function(row,i){ return (i?"L":"M")+X(row[0]).toFixed(1)+" "+Y(row[1+k]).toFixed(1); }).join(" ");
   out.push('<path class="refline" d="'+d1+'"/>');
   if(r.status==="ok"){
@@ -368,7 +370,7 @@ function traj(){
     ["step size h", fmt(p.t_end/n)],
     ["final error", r.status==="ok"?fmt(r.error):"overflow"],
     ["one LSB", fmt(lsb)+" in physical units"],
-    ["int16 headroom", r.status==="ok"?fmt(r.headroom)+"×":"—"]
+    ["int16 headroom", r.status==="ok"?fmt(r.headroom)+"×":"n/a"]
   ];
   var dl=rows.map(function(z){ return "<dt>"+z[0]+"</dt><dd>"+z[1]+"</dd>"; }).join("");
   var tab='<table class="tab"><tr><th>A</th>'+m.b_frac.map(function(_,j){ return "<th>col "+j+"</th>"; }).join("")+"</tr>";
@@ -414,7 +416,7 @@ function pareto(){
   pts.forEach(function(z){
     var cls="dot"+(z.m.origin==="classical"?" classical":"")+(z.m.key===S.meth?" sel":"");
     var onFront=front.indexOf(z)>=0;
-    out.push('<g class="hot" data-meth="'+esc(z.m.key)+'"><title>'+esc(z.m.label)+" — "+z.x+
+    out.push('<g class="hot" data-meth="'+esc(z.m.key)+'"><title>'+esc(z.m.label)+": "+z.x+
       " cycles/step, error "+fmt(z.y)+(onFront?", on the frontier":"")+"</title>");
     out.push('<circle class="'+cls+'" cx="'+X(z.x).toFixed(1)+'" cy="'+Y(z.y).toFixed(1)+'" r="'+(z.m.key===S.meth?7:5)+'"/>');
     if(onFront||z.m.key===S.meth){
@@ -535,14 +537,16 @@ document.addEventListener("DOMContentLoaded",function(){
 """
 
 
-def body(live_url: str) -> str:
-    """The demo page body. Every number on it is computed in the browser at view time."""
+def body(live_url: str, n_methods: int, budget: int, n_cases: int, n_cross: int,
+         max_diff: float) -> str:
+    """The demo page body. The charts are computed in the browser at view time; the counts
+    in the prose come from demo_data.json, passed in by generate.py."""
     return f"""
-<p class="herolead">Everything below runs in your browser: the Q15 primitives, the
-explicit Runge&ndash;Kutta step and the error metric are a line-for-line port of
+<p class="herolead">Everything on this page runs in your browser. The Q15 primitives,
+the explicit Runge-Kutta step and the error metric are a line-for-line port of
 <span class="mono">rk_harness.fixedpoint</span> and
-<span class="mono">rk_harness.simulate</span>. Nothing here is a pre-rendered chart, so
-the ranking you see is computed from the coefficients when you click.</p>
+<span class="mono">rk_harness.simulate</span>, and every chart is computed from the
+coefficients when you click.</p>
 
 <div class="selfcheck" id="selfcheck"><span class="dot"></span><span>checking this page's
 arithmetic against the Python evaluator&hellip;</span></div>
@@ -555,14 +559,14 @@ arithmetic against the Python evaluator&hellip;</span></div>
 </div>
 
 <h2>Rank the whole field at one cycle budget</h2>
-<p class="lead">Eleven methods, one budget of 65,536 cycles, one problem. A cheap method
-takes more and smaller steps inside that budget than an expensive one, so this is a
-comparison of methods rather than of step sizes. The thin vertical mark on each bar is
-where that method lands under the other rounding mode.</p>
+<p class="lead">{n_methods} methods, one budget of {budget:,} cycles, one problem.
+Inside that budget a cheap method takes more, smaller steps than an expensive one, so
+this compares methods rather than step sizes. The thin mark on each bar is where that
+method lands under the other rounding mode.</p>
 <p class="flip" id="rankline"></p>
 <div class="panel"><div id="board"></div></div>
 <p class="hint">Click a bar to load that method into the trajectory below. Orange is
-classical, blue is discovered by the search.</p>
+classical, blue was found by the search.</p>
 
 <h2>Watch one method integrate</h2>
 <div class="ctl" style="margin:0 0 12px"><label for="methseg">Method</label>
@@ -570,33 +574,31 @@ classical, blue is discovered by the search.</p>
 <div class="demo-grid">
   <div class="panel"><div id="traj"></div>
     <p class="hint">Dashed is the float64 reference solution; solid is the int16 state,
-    converted back to physical units for display.</p></div>
+    converted back to physical units.</p></div>
   <div class="panel"><div id="readout"></div></div>
 </div>
 
 <h2>Cost against error, recomputed live</h2>
-<p class="lead">The same eleven methods placed by what they cost and what they achieve on
-the selected problem. The dashed line is the Pareto frontier: the methods no other method
-matches on both axes at once. It is computed from the runs above, so it moves when you
-change the problem or the rounding mode.</p>
+<p class="lead">The same {n_methods} methods, placed by what they cost and what they
+achieve on the selected problem. The dashed line is the Pareto frontier: the methods that
+no other method beats on cost and error at once. It moves when you change the problem or
+the rounding mode.</p>
 <div class="panel"><div id="pareto"></div>
   <p class="hint" id="paretoline"></p></div>
 
 <h2>How this page is checked</h2>
-<p>A browser reimplementation is only worth showing if it is the same arithmetic, so the
-page checks that rather than asserting it.
-<span class="mono">tools/demo_data.py</span> runs
-every (method, problem, rounding) case through the pinned Python evaluator and stores the
-final int16 state and step count; the badge at the top recomputes all of them here and
-reports how many match to the last bit. The round-to-nearest rule was pinned the same way:
-it reproduces all 56 published errors in
-<span class="mono">tools/floor_round.json</span>, the file the floor-bias finding is
-computed from, with a maximum relative difference of 0.</p>
-<p>Two honest limits. The cycle counts are the analytic cost model, not silicon; the
-<a href="tradeoffs.html#speed">measured wall clock</a> is where that model is checked
-against a real clock. And the archive fitness that ranks methods on the
-<a href="{live_url}">findings site</a> is the RMS over four held-out problems, while this
-page shows one problem at a time so the mechanism stays visible.</p>
+<p><span class="mono">tools/demo_data.py</span> runs every method, problem and rounding
+case ({n_cases} in all) through the pinned Python evaluator and stores the final int16
+state and step count. The badge at the top recomputes all of them here and reports how
+many match to the last bit. The round-to-nearest rule was pinned the same way: it
+reproduces all {n_cross} errors in <span class="mono">tools/floor_round.json</span>, the
+file the floor-bias finding is computed from, with a largest relative difference of
+{max_diff:g}.</p>
+<p>Two limits. The cycle counts come from the analytic cost model, not silicon; the
+<a href="results.html#speed">measured wall clock</a> is where that model meets a real
+clock. And the <a href="{live_url}">findings site</a> ranks methods by RMS error over
+four held-out problems, while this page shows one problem at a time so the mechanism
+stays visible.</p>
 """
 
 
@@ -620,6 +622,7 @@ HERO_CSS = """
 .flipseg button[aria-pressed="true"]{background:var(--surface-1);border-color:var(--line);
   color:var(--text-1);font-weight:600}
 #flip{overflow-x:auto}
+@media (max-width:700px){#flip svg{max-width:none}}
 #flipsay{font-size:14.5px;line-height:1.6;margin:10px 0 2px;max-width:80ch}
 #flipsay b{font-variant-numeric:tabular-nums}
 svg .fl{stroke:var(--text-3);stroke-width:1.4;fill:none;opacity:.5}
@@ -740,22 +743,21 @@ document.addEventListener("DOMContentLoaded",function(){
 """
 
 
-def hero_body() -> str:
+def hero_body(n_methods: int, budget: int) -> str:
     """The one thing worth putting above the fold: the result, running."""
-    return """
+    return f"""
 <div class="hero">
 <h2>The result, in one interaction</h2>
-<p class="heroq">Eleven Runge&ndash;Kutta methods, ranked by their error at an equal
-65,536-cycle budget. On the left the multiplies floor, which is what an FPU-less
-Cortex-M0+ actually does. On the right they round to nearest, which is what the textbooks
-assume. Hover a line; switch problems.</p>
+<p class="heroq">{n_methods} Runge-Kutta methods, ranked by their error at an equal
+{budget:,}-cycle budget. On the left every multiply rounds down, which is what a
+Cortex-M0+ without an FPU does. On the right it rounds to nearest, as the textbooks
+assume. Hover a line or switch problems.</p>
 <div class="flipwrap">
   <div class="flipbar"><span class="lab">test problem</span><div class="flipseg" id="flipseg"></div></div>
   <div id="flip"></div>
   <p id="flipsay"></p>
 </div>
-<p class="cta"><a href="demo.html">Run it yourself &rarr;</a> <span>change the method and
-the problem, watch the trajectory quantize, and read a Pareto frontier recomputed on every
-click.</span></p>
+<p class="cta"><a href="demo.html">Open the demo &rarr;</a> <span>Change the method and
+the problem and watch the trajectory quantize.</span></p>
 </div>
 """
