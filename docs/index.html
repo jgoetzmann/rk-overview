@@ -95,6 +95,14 @@ svg .cv{font-weight:600}
 svg .axis{stroke:var(--line)}
 svg .gridline{stroke:var(--grid)}
 svg .cellstroke{stroke:var(--surface-1);stroke-width:2px}
+/* A chart mark that is a link is a tab stop, and until now nothing marked which one had
+   the keyboard. The outline draws the ring; the stroke is the fallback for engines that
+   do not paint an outline on an SVG child. Only :focus-visible, so a mouse click on a
+   cell does not leave a ring behind it. */
+svg a:focus-visible rect,svg a:focus-visible circle,svg a:focus-visible path{
+  outline:2px solid var(--s1);outline-offset:2px;stroke:var(--s1);stroke-width:2.5px}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--s1);outline-offset:2px;
+  border-radius:3px}
 .scroll{overflow-x:auto}
 table{border-collapse:collapse;margin:10px 0;font-size:13px;background:var(--surface-1);
   border:1px solid var(--line);border-radius:8px}
@@ -110,6 +118,9 @@ th.num,td.num{text-align:right}
 .tier-heldout_verified{background:var(--good-bg);color:var(--good-fg)}
 .tier-search_only{background:var(--warn-bg);color:var(--warn-fg)}
 .tier-unreplicated{background:var(--mut-bg);color:var(--mut-fg)}
+/* The two tiers that replaced the merged unreplicated label. Neither is a grade, so both
+   wear the muted badge that label wore. */
+.tier-no_incumbent,.tier-no_improvement{background:var(--mut-bg);color:var(--mut-fg)}
 .badge-open{background:var(--mut-bg);color:var(--mut-fg)}
 .badge-supported{background:var(--good-bg);color:var(--good-fg)}
 .badge-refuted{background:var(--bad-bg);color:var(--bad-fg)}
@@ -402,16 +413,19 @@ svg .fd.disc{fill:var(--s1)}
 <p class="herolead">Textbook Runge-Kutta coefficients are tuned for exact arithmetic. A
 microcontroller without an FPU rounds every multiply down, so the error always leans the
 same way. This project is an unattended search for the coefficients that do best after
-that rounding. Each candidate is scored on its end-to-end error in Q15 at a fixed
-Cortex-M0+ cycle budget.</p>
+that rounding. Each candidate is scored on its end-to-end error in
+<a href="https://jgoetzmann.github.io/rk-findings/methodology.html#q15">Q15</a> at a fixed
+<a href="https://jgoetzmann.github.io/rk-findings/methodology.html#cycle-budget">cycle budget</a>, modeled for a
+<a href="architecture.html#costmodel">Cortex-M0+</a> rather than measured on one.</p>
 
 
 <div class="hero">
 <h2>The result, in one interaction</h2>
-<p class="heroq">11 Runge-Kutta methods, ranked by their error at an equal
+<p class="heroq">11 Runge-Kutta methods, 8 textbook and
+3 found by the search, ranked by their error at an equal
 65,536-cycle budget. On the left every multiply rounds down, which is what a
 Cortex-M0+ without an FPU does. On the right it rounds to nearest, as the textbooks
-assume. Hover a line or switch problems.</p>
+assume. Tap or hover a line, or switch problems.</p>
 <div class="flipwrap">
   <div class="flipbar"><span class="lab">test problem</span><div class="flipseg" id="flipseg"></div></div>
   <div id="flip"></div>
@@ -421,23 +435,52 @@ assume. Hover a line or switch problems.</p>
 the problem and watch the trajectory quantize.</span></p>
 </div>
 
-<div class="spine"><section><span class="k">problem</span><h2>Textbook coefficients assume arithmetic the chip does not have</h2><p>Runge-Kutta tableaus are derived by cancelling truncation error in exact arithmetic. A Cortex-M0+ has no FPU, so the state lives in Q15 and every multiply ends in a right shift that rounds down, biasing each product by half an LSB in the same direction. None of the prior tableau searches that the project's literature loop surveyed models this rounding.</p><a class="more" href="results.html#crossover">the premise, tested before the search &rarr;</a></section><section><span class="k">approach</span><h2>Score end-to-end error at a fixed cycle budget, and pin the scorer</h2><p>Fitness is the error a method delivers within 65,536 cycles, so a cheap method gets to take more, smaller steps. Cost is counted analytically from the tableau under two Cortex-M0+ multiplier models. A classical optimizer fills a MAP-Elites grid, and a language model in the outer loop chooses where to search but never touches the scorer. Ten files are hashed, and the container will not start if the hash changes.</p><a class="more" href="architecture.html">how the system is built &rarr;</a></section><section><span class="k">result</span><h2>Floor rounding is a bias the search can use</h2><p>On one test problem the true answer is smaller than one Q15 step, and the bias carries the cheapest method to the closest value the format has, while rk4, the textbook favorite, ends up several times further away. Searched against that bias, the best coefficients are not the textbook ones.</p><a class="more" href="results.html">six findings, with their caveats &rarr;</a></section><section><span class="k">verify</span><h2>Every number traces to a file, and the demo checks itself</h2><p>The charts are built from one analysis file recomputed from the run archive. The demo page re-implements the Q15 integrator in the browser and, on load, compares all 154 of its runs with the pinned Python evaluator down to the final int16 state. The build fails if any of them differ.</p><a class="more" href="architecture.html#tests">how it is tested &rarr;</a></section></div>
+<div class="spine"><section><span class="k">problem</span><h2>Textbook coefficients assume arithmetic the chip does not have</h2><p>Runge-Kutta <a href="https://jgoetzmann.github.io/rk-findings/methodology.html#tableau">tableaus</a> are derived by cancelling truncation error in exact arithmetic. A Cortex-M0+ has no FPU, so the state lives in Q15 and every multiply ends in a right shift that rounds down, biasing each product by half an <a href="https://jgoetzmann.github.io/rk-findings/methodology.html#lsb">LSB</a> in the same direction. The adjacent literature analyzes fixed methods under round-to-nearest and stochastic rounding in low-precision floating point; this run searches the tableau space against directed floor rounding in fixed point (<a href="design-decisions.html#prior-art">related work</a>).</p><a class="more" href="results.html#crossover">the premise, tested before the search &rarr;</a></section><section><span class="k">approach</span><h2>Score end-to-end error at a fixed cycle budget, and pin the scorer</h2><p>Fitness is the error a method delivers within 65,536 cycles, so a cheap method gets to take more, smaller steps. Cost is counted analytically from the tableau under two Cortex-M0+ multiplier models. <a href="architecture.html#candidates">CMA-ES</a> fills a <a href="https://jgoetzmann.github.io/rk-findings/methodology.html#map-elites">MAP-Elites</a> grid, and a language model in the outer loop chooses where to search but never touches the scorer. Ten files are hashed, and the container will not start if the hash changes.</p><a class="more" href="architecture.html">how the system is built &rarr;</a></section><section><span class="k">result</span><h2>Floor rounding is a bias the search can use</h2><p>On one test problem the true answer is smaller than one Q15 step, and the bias carries the cheapest method to the closest value the format has, while rk4, the textbook favorite, ends up several times further away. Searched against that bias, the best coefficients are not the textbook ones.</p><a class="more" href="results.html">six findings, with their caveats &rarr;</a></section><section><span class="k">verify</span><h2>Every number traces to a file, and the demo checks itself</h2><p>The charts are built from one analysis file recomputed from the run archive. The demo page re-implements the Q15 integrator in the browser and, on load, compares all 154 of its runs with the pinned Python evaluator down to the final int16 state. The build fails if any of them differ.</p><a class="more" href="architecture.html#tests">how it is tested &rarr;</a></section></div>
+<h2 id="boundary">Where these coefficients do not belong</h2>
+
+<p>These coefficients are built for one regime, and outside it they are the wrong choice.
+Give the same tableaus float64 and the same step counts and they are far less accurate
+than rk4: on buck_converter the champion's float64 error is 9.69e-07 against 1.15e-10 for
+rk4, and across the 7 validation problems where both finish it runs 1,992 to
+420,975 times worse (<a href="https://jgoetzmann.github.io/rk-findings/validation.html">every row is on the findings
+validation page</a>). That is what an order-2 method against an order-4 one looks like
+once the arithmetic stops rounding down.</p>
+<p>They are for fixed-point targets with no FPU, at budgets where quantization dominates
+truncation. The explicit class also runs out of room on the stiff problems: on
+1 of the 3 stiff validation problems every discovered tableau overflows
+Q15 where cheap classical methods finish
+(<a href="results.html#validation">finding 6</a>), which is an argument for the implicit
+class rather than for these coefficients.</p>
+<p class="note">Both figures come from rk-work/validation/results.json, built at
+141,364 archive records rather than at this page's snapshot.</p>
+
 <h2 id="classes">Three method classes</h2>
 
 <p class="lead">The run takes turns between three classes of integrator. Only the
 explicit class is scored by the pinned verifier. The live findings site gives each class
 its own page.</p>
 
-<div class="cards"><div class="card klass k-explicit"><div class="k">scored</div><div class="v">explicit</div><p class="n">Fixed-step explicit tableaus, found by MAP-Elites and CMA-ES and scored by the pinned verifier in Q15 at a fixed cycle budget. Every result on the key findings page comes from this class.</p><p class="go"><a href="https://jgoetzmann.github.io/rk-findings/explicit.html">explicit methods on rk-findings &#8599;</a></p></div><div class="card klass k-implicit"><div class="k">measured, not scored</div><div class="v">implicit</div><p class="n">Two-stage SDIRK methods for stiff problems, enumerated over a dyadic grid with a fixed Newton iteration count. They are ranked by the cycles they need to reach a tolerance, in float64, and their order is not checked by the pinned verifier.</p><p class="go"><a href="https://jgoetzmann.github.io/rk-findings/implicit.html">implicit methods on rk-findings &#8599;</a></p></div><div class="card klass k-adaptive"><div class="k">measured, not scored</div><div class="v">adaptive</div><p class="n">Embedded pairs on the dyadic lattice with a division-free step-size controller. They are ranked the same way as the implicit class: cycles to reach a tolerance, in float64, not order-verified.</p><p class="go"><a href="https://jgoetzmann.github.io/rk-findings/adaptive.html">adaptive methods on rk-findings &#8599;</a></p></div></div>
+<div class="cards"><div class="card klass k-explicit"><div class="k">scored</div><div class="v">explicit</div><p class="n">Fixed-step explicit tableaus, found by MAP-Elites and CMA-ES and scored by the pinned verifier in Q15 at a fixed cycle budget. Every result on the key findings page comes from this class.</p><p class="go"><a href="https://jgoetzmann.github.io/rk-findings/explicit.html">explicit methods on rk-findings &#8599;</a></p></div><div class="card klass k-implicit"><div class="k">measured, not scored</div><div class="v">implicit</div><p class="n">Two-stage <a href="https://jgoetzmann.github.io/rk-findings/methodology.html#sdirk">SDIRK</a> methods for stiff problems, enumerated over a <a href="https://jgoetzmann.github.io/rk-findings/methodology.html#dyadic-rational">dyadic</a> grid with a fixed Newton iteration count. They are ranked by the cycles they need to reach a tolerance, in float64, and their order is not checked by the pinned verifier.</p><p class="go"><a href="https://jgoetzmann.github.io/rk-findings/implicit.html">implicit methods on rk-findings &#8599;</a></p></div><div class="card klass k-adaptive"><div class="k">measured, not scored</div><div class="v">adaptive</div><p class="n"><a href="https://jgoetzmann.github.io/rk-findings/methodology.html#embedded-pair">Embedded pairs</a> on the dyadic lattice with a division-free step-size controller. They are ranked the same way as the implicit class: cycles to reach a tolerance, in float64, not order-verified.</p><p class="go"><a href="https://jgoetzmann.github.io/rk-findings/adaptive.html">adaptive methods on rk-findings &#8599;</a></p></div></div>
 <h2 id="scale">What it took</h2>
-<div class="chips"><div class="chip"><div class="v">141,364</div><div class="k">verified tableaus archived</div></div><div class="chip"><div class="v">3,931</div><div class="k">search cycles</div></div><div class="chip"><div class="v">18</div><div class="k">grid cells occupied</div></div><div class="chip"><div class="v">1,746</div><div class="k">tests in the suite</div></div></div>
+<div class="chips"><div class="chip"><div class="v">141,364</div><div class="k">verified tableaus archived</div></div><div class="chip"><div class="v">3,931</div><div class="k">search cycles</div></div><div class="chip"><div class="v">17 of 136</div><div class="k">searchable grid cells occupied</div></div><div class="chip"><div class="v">3,897</div><div class="k">cycles since the best <a href="https://jgoetzmann.github.io/rk-findings/methodology.html#held-out-set">held-out</a> error improved</div></div></div><p class="note">The first three are counted from the run archive as of 2026-09-10 (US Central), at 141,364 records. The fourth is from tools/key_findings.json, computed at 141,364 records.</p>
+
+<p class="note">Cells are counted against the searchable lattice: an order can only use
+stage counts that can reach it, which leaves 136 cells rather than every
+order, stage and bucket combination. One more cell holds a seeded classical method (euler at one stage) outside that range, so the archive holds 18 elites in all. The best held-out error has
+stepped down 5 times since cycle 0 and last moved at cycle 33. The
+run's saturation check still reads CONTINUE: it asks whether any cell has gained or
+improved an elite inside its window, not whether that number moved. The suite collects
+1,793 tests: 119 golden ones pinned to fixture values, 71 canaries
+against gaming, and 1,603 behavior and property tests. The container runs 55 of
+the golden and canary cases as its start gate before a cycle may begin.</p>
+
 <h2 id="source">The source</h2>
 
 <p class="lead">Four public repositories. Every number on this site traces back through
 them to the code that produced it.</p>
 
 <div class="grid-cards"><a class="gcard" href="https://github.com/jgoetzmann/rk-harness"><div class="t">rk-harness &#8599;</div><div class="d">The package the container runs: verifier, cost model, evaluator, search, site generator, and the tests that gate all of it.</div></a><a class="gcard" href="https://github.com/jgoetzmann/rk-work"><div class="t">rk-work &#8599;</div><div class="d">Run data: the append-only archive, the hypothesis ledger, and the validation and benchmark results, written by the container every cycle.</div></a><a class="gcard" href="https://github.com/jgoetzmann/rk-findings"><div class="t">rk-findings &#8599;</div><div class="d">The numbers site, rebuilt by the container every cycle with no human in the loop.</div></a><a class="gcard" href="https://github.com/jgoetzmann/rk-overview"><div class="t">rk-overview &#8599;</div><div class="d">This site, and the tools that build it from the run archive.</div></a></div>
-<footer>Built by rk-overview/tools/generate.py from the run archive, data as of 2026-09-10 (US Central). This site is a snapshot; rk-findings carries the live numbers. Text drafted with Claude, edited and owned by the author.</footer>
+<footer>Built by rk-overview/tools/generate.py from the run archive, data as of 2026-09-10 (US Central). This site is a snapshot; rk-findings carries the live numbers. Built from rk-harness df5794c637d7, rk-work 12d49784a442, rk-findings cf4f6c7f54a7 and rk-overview a46b45eb201b, the commit each repository was at when this page was written. Text drafted with Claude, edited and owned by the author.</footer>
 </div>
 <script>window.__RKFLIP__={"methods":[{"key":"euler","label":"euler","origin":"classical"},{"key":"midpoint","label":"midpoint","origin":"classical"},{"key":"heun2","label":"heun2","origin":"classical"},{"key":"ralston2","label":"ralston2","origin":"classical"},{"key":"heun3","label":"heun3","origin":"classical"},{"key":"kutta3","label":"kutta3","origin":"classical"},{"key":"rk4","label":"rk4","origin":"classical"},{"key":"rk38","label":"rk38","origin":"classical"},{"key":"11e898cb","label":"found p2s3","origin":"discovered"},{"key":"2d2c2b75","label":"found p2s2","origin":"discovered"},{"key":"4f501ec6","label":"found p3s3","origin":"discovered"}],"problems":["dahlquist","damped_osc","vanderpol_mild","pendulum","dc_motor","rc_thermal","quaternion"],"default_problem":"damped_osc","err":{"dahlquist":{"floor":[4.5399929762484854e-05,7.667038273751514e-05,4.5399929762484854e-05,4.5399929762484854e-05,0.00016747024226248486,0.00016747024226248486,0.00016747024226248486,4.5399929762484854e-05,0.00019874069523751514,4.5399929762484854e-05,0.027542490695237516],"nearest":[0.07991065475773751,0.036209482882737516,0.09223975632023751,0.024979014132737516,0.017410654757737516,0.015335459445237514,0.036209482882737516,0.033279795382737516,0.018021006320237516,0.2399448344452375,0.013626475070237514]},"damped_osc":{"floor":[0.01420474495373885,0.006682451072882086,0.005542856617862107,0.015266707873699218,0.006519279786923354,0.005353562299354354,0.01592481589265515,0.00817433518563924,0.003939476715808808,0.00817433518563924,0.02256772255938788],"nearest":[0.008008549327178212,0.000626530932236836,0.013035239880741168,0.00463329654287779,0.0007401989273146357,0.007574205842697583,0.007359123803889368,0.0005331638629503505,0.0002710678346870621,0.0018757273421466662,0.006610667493233176]},"vanderpol_mild":{"floor":[0.017224456856685954,0.021772742195347725,0.02963212564304778,0.038119788227827585,0.027597147483354355,0.0943037543534842,0.10097267020647743,0.0371158023739345,0.019468228198280157,0.019284155930467672,0.060458159271868074],"nearest":[0.012300071623552605,0.0020275573760571244,0.04999554387368987,0.015393501634668464,0.018011474397553812,0.055096936621347244,0.033689989351977576,0.007079199605176021,0.007721393714683593,0.010768092026526566,0.02449905397630865]},"pendulum":{"floor":[0.5942848111443483,6.44553796067338e-05,0.004214897111370254,0.004732681514435422,0.009713322840046354,0.0003826290377943037,0.0040323428220641975,0.001100483753618598,0.004744384784578245,0.003305687820387876,0.005478597815253304],"nearest":[0.5538720172239101,0.004400983165005654,0.00116041179880806,0.003209756059796729,0.00012450435890192204,0.0004684053274071953,0.002765217641793491,0.0024416252949300025,0.0006662938025701532,0.0023216473906161206,0.0014306476038736357]},"dc_motor":{"floor":[0.1710447625539884,0.05677772182887742,0.09741163194331529,0.07880731045212863,0.05432323516371821,0.04819929724182171,0.07635890248163581,0.05199695242231674,0.027647584508691654,0.04158692513481159,0.041348465746714226],"nearest":[0.01623550300369505,0.012001643961700907,0.07181090291603405,0.008632819167140598,0.006221962655066991,0.005452751587198856,0.012088185234060142,0.011398690466783773,0.00676908809212425,0.009157327090316213,0.0052251952957243835]},"rc_thermal":{"floor":[0.1559050126465386,0.1557632379378313,0.1559050126465386,0.1559050126465386,0.155982860818894,0.15823691889515895,0.15815914382342158,0.15611574711712428,0.046087531063901954,0.11224905825757357,0.07543073857658758],"nearest":[0.1486355365820598,0.07253416052491507,0.1969129734070993,0.0016987648526209961,0.027114400278404314,0.03459625456178057,0.06631716157221952,0.05105368618724063,0.00587736678655277,0.007567064024032453,0.01697930174299118]},"quaternion":{"floor":[0.05958228351610484,0.03222635463559009,0.05594214635311068,0.05662635355938217,0.04056790270154331,0.05567798013301739,0.054056370405000886,0.04466254979733597,0.019105502156982923,0.026534283283096927,0.04072751490431081],"nearest":[0.012404228025449049,0.0005907012808179513,0.02736412869391991,0.011759937582092483,0.008808220739584316,0.0012750484208265966,0.0017139007946047613,0.005575032459760543,0.00022405856091367582,0.0017522577310820076,0.002450377158908834]}}};</script>
 <script>
@@ -472,7 +515,8 @@ function draw(){
   var rowh=25, top=44, W=760, H2=top+L.length*rowh+16;
   var xl=250, xr=W-250;
   var o=['<svg viewBox="0 0 '+W+' '+H2+'" width="'+W+'" height="'+H2+'" role="img" '+
-         'aria-label="method ranking under floor rounding against round-to-nearest">'];
+         'aria-label="'+L.length+' methods ranked under floor rounding against '+
+         'round-to-nearest">'];
   o.push('<text class="fh" x="'+xl+'" y="20" text-anchor="end">floor (what the chip does)</text>');
   o.push('<text class="fh" x="'+xr+'" y="20" text-anchor="start">round-to-nearest</text>');
   L.forEach(function(z,i){

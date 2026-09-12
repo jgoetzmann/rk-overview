@@ -5,7 +5,8 @@
    "rk-work/archive/*.jsonl (via rk_harness.archive.cached_view)",
    "rk-work/falsification.json",
    "rk-overview/tools/floor_round.json",
-   "rk-work/sidetrack/ledger.jsonl (absent until the executor fires)"
+   "rk-work/sidetrack/ledger.jsonl (absent until the executor fires)",
+   "rk-work/saturation_state.json (the run's last saturation check)"
   ],
   "budget_cycles": 65536,
   "cost_model": "m0plus_fast",
@@ -100,62 +101,178 @@
      "cycles": 5,
      "heldout_error": 0.32026831291564534,
      "search_error": 0.012890031734667783,
-     "measured_order": 0.984858142857499
+     "measured_order": 0.984858142857499,
+     "per_problem_heldout": {
+      "pendulum": 0.5942848111443483,
+      "dc_motor": 0.1710447625539884,
+      "rc_thermal": 0.1559050126465386,
+      "quaternion": 0.05958228351610484
+     }
     },
     {
      "name": "midpoint",
      "cycles": 11,
      "heldout_error": 0.0844458969940956,
      "search_error": 0.01314931345982402,
-     "measured_order": 2.010939664047258
+     "measured_order": 2.010939664047258,
+     "per_problem_heldout": {
+      "pendulum": 6.44553796067338e-05,
+      "dc_motor": 0.05677772182887742,
+      "rc_thermal": 0.1557632379378313,
+      "quaternion": 0.03222635463559009
+     }
     },
     {
      "name": "heun2",
      "cycles": 13,
      "heldout_error": 0.09610240384926588,
      "search_error": 0.017404867046941882,
-     "measured_order": 2.010939664077968
+     "measured_order": 2.010939664077968,
+     "per_problem_heldout": {
+      "pendulum": 0.004214897111370254,
+      "dc_motor": 0.09741163194331529,
+      "rc_thermal": 0.1559050126465386,
+      "quaternion": 0.05594214635311068
+     }
     },
     {
      "name": "ralston2",
      "cycles": 16,
      "heldout_error": 0.09185029578172949,
      "search_error": 0.023707893797839535,
-     "measured_order": 2.010939664108535
+     "measured_order": 2.010939664108535,
+     "per_problem_heldout": {
+      "pendulum": 0.004732681514435422,
+      "dc_motor": 0.07880731045212863,
+      "rc_thermal": 0.1559050126465386,
+      "quaternion": 0.05662635355938217
+     }
     },
     {
      "name": "heun3",
      "cycles": 23,
      "heldout_error": 0.085178885467726,
      "search_error": 0.016372045325699153,
-     "measured_order": 3.040408793816297
+     "measured_order": 3.040408793816297,
+     "per_problem_heldout": {
+      "pendulum": 0.009713322840046354,
+      "dc_motor": 0.05432323516371821,
+      "rc_thermal": 0.155982860818894,
+      "quaternion": 0.04056790270154331
+     }
     },
     {
      "name": "kutta3",
      "cycles": 26,
      "heldout_error": 0.08726723129662106,
      "search_error": 0.0545340467376036,
-     "measured_order": 3.0404087939813516
+     "measured_order": 3.0404087939813516,
+     "per_problem_heldout": {
+      "pendulum": 0.0003826290377943037,
+      "dc_motor": 0.04819929724182171,
+      "rc_thermal": 0.15823691889515895,
+      "quaternion": 0.05567798013301739
+     }
     },
     {
      "name": "rk4",
      "cycles": 33,
      "heldout_error": 0.09190123466683545,
      "search_error": 0.05901725153467999,
-     "measured_order": 4.070626424711394
+     "measured_order": 4.070626424711394,
+     "per_problem_heldout": {
+      "pendulum": 0.0040323428220641975,
+      "dc_motor": 0.07635890248163581,
+      "rc_thermal": 0.15815914382342158,
+      "quaternion": 0.054056370405000886
+     }
     },
     {
      "name": "rk38",
      "cycles": 36,
      "heldout_error": 0.08525221988024427,
      "search_error": 0.021942383665270307,
-     "measured_order": 4.070626426317067
+     "measured_order": 4.070626426317067,
+     "per_problem_heldout": {
+      "pendulum": 0.001100483753618598,
+      "dc_motor": 0.05199695242231674,
+      "rc_thermal": 0.15611574711712428,
+      "quaternion": 0.04466254979733597
+     }
+    }
+   ],
+   "leave_one_out": [
+    {
+     "dropped": null,
+     "problems_kept": [
+      "pendulum",
+      "dc_motor",
+      "rc_thermal",
+      "quaternion"
+     ],
+     "champion_error": 0.02861808365520825,
+     "best_anchor_name": "midpoint",
+     "best_anchor_error": 0.0844458969940956,
+     "runner_up_anchor_name": "heun3",
+     "ratio": 2.9507879706937388
+    },
+    {
+     "dropped": "pendulum",
+     "problems_kept": [
+      "dc_motor",
+      "rc_thermal",
+      "quaternion"
+     ],
+     "champion_error": 0.0329315940569835,
+     "best_anchor_name": "midpoint",
+     "best_anchor_error": 0.09750971562200636,
+     "runner_up_anchor_name": "heun3",
+     "ratio": 2.960977699812511
+    },
+    {
+     "dropped": "dc_motor",
+     "problems_kept": [
+      "pendulum",
+      "rc_thermal",
+      "quaternion"
+     ],
+     "champion_error": 0.028934350515265557,
+     "best_anchor_name": "midpoint",
+     "best_anchor_error": 0.09183450401033413,
+     "runner_up_anchor_name": "heun3",
+     "ratio": 3.173892013296891
+    },
+    {
+     "dropped": "rc_thermal",
+     "problems_kept": [
+      "pendulum",
+      "dc_motor",
+      "quaternion"
+     ],
+     "champion_error": 0.01959522330246042,
+     "best_anchor_name": "midpoint",
+     "best_anchor_error": 0.03769284540277355,
+     "runner_up_anchor_name": "heun3",
+     "ratio": 1.9235731494848929
+    },
+    {
+     "dropped": "quaternion",
+     "problems_kept": [
+      "pendulum",
+      "dc_motor",
+      "rc_thermal"
+     ],
+     "champion_error": 0.031149952572010507,
+     "best_anchor_name": "rk38",
+     "best_anchor_error": 0.0950035448876138,
+     "runner_up_anchor_name": "kutta3",
+     "ratio": 3.0498776737457485
     }
    ],
    "note_on_comparison": "Every heldout_error is evaluated at the same total budget of 65536 cycles, so cheaper methods take more steps; 'cycles' is the per-step coefficient-arithmetic cost at n_states=1 under m0plus_fast. The cheapest anchor with the lowest error is midpoint (11 cycles), which is cheaper than every discovered elite, so beating all cheaper-or-equal anchors here equals beating every anchor outright.",
    "caveats": [
     "Cell elites are selected by held-out error among 45k+ unique candidates, so the champion values carry selection (winner's curse) bias; the CMA-ES search itself optimizes only the search-set error.",
-    "Tier labels are mechanical insertion-time comparisons against the then-incumbent, not a validation grade of the final elite; the overall best cell is tier 'unreplicated'.",
+    "Tier labels are mechanical insertion-time comparisons against the then-incumbent, not a validation grade of the final elite: the best cell's elite cleared neither tier above its own, and both of those start from a lower search error than the incumbent's. The vocabulary now writes that case no_improvement and an empty cell no_incumbent; records written before the split, this one included, still carry the merged word 'unreplicated'.",
     "rc_thermal saturates near 0.156 for every classical method (see rc_thermal_collapse), so classical held-out RMS values are floored near 0.078; discovered winners break that floor."
    ]
   },
@@ -462,7 +579,7 @@
   }
  },
  "floor_bias_flip": {
-  "verdict": "Floor rounding reorders the field at the 65,536-cycle budget. On the three search problems euler's RMS error is 0.0129 under floor against 0.0590 for rk4 (4.6x worse), while under round-to-nearest rk4 beats euler (0.0289 vs 0.0469): euler moves from rank 3 to rank 1 and rk4 from rank 2 to rank 4 of 4. Over all 7 problems rk38 stays first in both modes, but the floor-mode spread between methods collapses.",
+  "verdict": "Floor rounding reorders the field at the 65,536-cycle budget. On the three search problems euler's RMS error is 0.0129 under floor against 0.0590 for rk4 (4.6x worse), while under round-to-nearest rk4 has the lower error (0.0289 against 0.0469): euler moves from rank 3 to rank 1 and rk4 from rank 2 to rank 4 of 4. Over all 7 problems rk38 stays first in both modes, but the floor-mode spread between methods collapses.",
   "numbers": {
    "budget_cycles": 65536,
    "cost_model": "m0plus_fast",
@@ -1143,7 +1260,7 @@
   }
  },
  "phase0_exhaustive": {
-  "verdict": "Closed result: the phase-0 space (2-stage, a21 on the dyadic lattice s<=6, |a21|<=2: 256 candidates, 16 with exactly representable b) was enumerated in full and all 16 members are in the archive. Nothing in it beats a21 = -1/8, b = (5/1, -4/1) at 15 cycles/step with held-out error 0.0613, a near-tie with a21 = -1/4 (0.0614); within the same family midpoint ranks 7 and heun2 ranks 12 of 16. The optimum also beats all 8 classical anchors (best: midpoint, 0.0844) at the equal budget.",
+  "verdict": "Closed result: the phase-0 space (2-stage, a21 on the dyadic lattice s<=6, |a21|<=2: 256 candidates, 16 with exactly representable b) was enumerated in full and all 16 members are in the archive. Nothing in it improves on a21 = -1/8, b = (5/1, -4/1) at 15 cycles/step with held-out error 0.0613, a near-tie with a21 = -1/4 (0.0614); within the same family midpoint ranks 7 and heun2 ranks 12 of 16. The optimum also has a lower held-out error than all 8 classical anchors (best: midpoint, 0.0844) at the equal budget.",
   "numbers": {
    "lattice_candidates": 256,
    "valid_tableaus": 16,
@@ -1159,6 +1276,12 @@
     "in_archive": true,
     "cycles": 15,
     "heldout_error": 0.0613276429988836,
+    "per_problem_heldout": {
+     "pendulum": 0.003305687820387876,
+     "dc_motor": 0.04158692513481159,
+     "rc_thermal": 0.11224905825757357,
+     "quaternion": 0.026534283283096927
+    },
     "tableau_hash": "2d2c2b75d7193bbca80707ea30a28e7d7f7314c4dffc32a28920582921efa210",
     "rank": 1
    },
@@ -1172,11 +1295,221 @@
     "in_archive": true,
     "cycles": 15,
     "heldout_error": 0.061351818475320535,
+    "per_problem_heldout": {
+     "pendulum": 0.005469610647409166,
+     "dc_motor": 0.04158692513481159,
+     "rc_thermal": 0.11182722701808448,
+     "quaternion": 0.028132984832005437
+    },
     "tableau_hash": "48e02f78ce704d1633a9bf10dc44fc2b3495aeb1ee972c0b3e4ba6006ef714a6",
     "rank": 2
    },
    "midpoint_rank": 7,
    "heun2_rank": 12,
+   "rank_stability": {
+    "variants": [
+     "none",
+     "pendulum",
+     "dc_motor",
+     "rc_thermal",
+     "quaternion"
+    ],
+    "rows": [
+     {
+      "a21": "-1/8",
+      "name": null,
+      "ranks": {
+       "none": 1,
+       "pendulum": 3,
+       "dc_motor": 2,
+       "rc_thermal": 1,
+       "quaternion": 2
+      }
+     },
+     {
+      "a21": "-1/4",
+      "name": null,
+      "ranks": {
+       "none": 2,
+       "pendulum": 2,
+       "dc_motor": 3,
+       "rc_thermal": 2,
+       "quaternion": 1
+      }
+     },
+     {
+      "a21": "-1/32",
+      "name": null,
+      "ranks": {
+       "none": 3,
+       "pendulum": 1,
+       "dc_motor": 7,
+       "rc_thermal": 6,
+       "quaternion": 3
+      }
+     },
+     {
+      "a21": "1/8",
+      "name": null,
+      "ranks": {
+       "none": 4,
+       "pendulum": 5,
+       "dc_motor": 6,
+       "rc_thermal": 7,
+       "quaternion": 4
+      }
+     },
+     {
+      "a21": "1/4",
+      "name": null,
+      "ranks": {
+       "none": 5,
+       "pendulum": 7,
+       "dc_motor": 9,
+       "rc_thermal": 3,
+       "quaternion": 5
+      }
+     },
+     {
+      "a21": "-1/2",
+      "name": null,
+      "ranks": {
+       "none": 6,
+       "pendulum": 6,
+       "dc_motor": 8,
+       "rc_thermal": 4,
+       "quaternion": 6
+      }
+     },
+     {
+      "a21": "1/2",
+      "name": "midpoint",
+      "ranks": {
+       "none": 7,
+       "pendulum": 8,
+       "dc_motor": 10,
+       "rc_thermal": 5,
+       "quaternion": 7
+      }
+     },
+     {
+      "a21": "-1/64",
+      "name": null,
+      "ranks": {
+       "none": 8,
+       "pendulum": 4,
+       "dc_motor": 11,
+       "rc_thermal": 10,
+       "quaternion": 8
+      }
+     },
+     {
+      "a21": "-1/16",
+      "name": null,
+      "ranks": {
+       "none": 9,
+       "pendulum": 9,
+       "dc_motor": 4,
+       "rc_thermal": 12,
+       "quaternion": 9
+      }
+     },
+     {
+      "a21": "1/32",
+      "name": null,
+      "ranks": {
+       "none": 10,
+       "pendulum": 10,
+       "dc_motor": 5,
+       "rc_thermal": 11,
+       "quaternion": 11
+      }
+     },
+     {
+      "a21": "2/1",
+      "name": null,
+      "ranks": {
+       "none": 11,
+       "pendulum": 12,
+       "dc_motor": 14,
+       "rc_thermal": 8,
+       "quaternion": 10
+      }
+     },
+     {
+      "a21": "1/1",
+      "name": "heun2",
+      "ranks": {
+       "none": 12,
+       "pendulum": 13,
+       "dc_motor": 13,
+       "rc_thermal": 9,
+       "quaternion": 12
+      }
+     },
+     {
+      "a21": "1/16",
+      "name": null,
+      "ranks": {
+       "none": 13,
+       "pendulum": 14,
+       "dc_motor": 1,
+       "rc_thermal": 15,
+       "quaternion": 13
+      }
+     },
+     {
+      "a21": "-2/1",
+      "name": null,
+      "ranks": {
+       "none": 14,
+       "pendulum": 15,
+       "dc_motor": 15,
+       "rc_thermal": 13,
+       "quaternion": 14
+      }
+     },
+     {
+      "a21": "-1/1",
+      "name": null,
+      "ranks": {
+       "none": 15,
+       "pendulum": 16,
+       "dc_motor": 12,
+       "rc_thermal": 14,
+       "quaternion": 15
+      }
+     },
+     {
+      "a21": "1/64",
+      "name": null,
+      "ranks": {
+       "none": 16,
+       "pendulum": 11,
+       "dc_motor": 16,
+       "rc_thermal": 16,
+       "quaternion": 16
+      }
+     }
+    ],
+    "winner_by_variant": {
+     "none": "-1/8",
+     "pendulum": "-1/32",
+     "dc_motor": "1/16",
+     "rc_thermal": "-1/8",
+     "quaternion": "-1/4"
+    },
+    "distinct_winners": [
+     "-1/32",
+     "-1/4",
+     "-1/8",
+     "1/16"
+    ],
+    "top2_identical_in_every_variant": false,
+    "winner_a21_negative_in_every_variant": false,
+    "full_set_matches_published_rank": true,
+    "note": "Each variant re-ranks every member over the three problems it keeps. The full-set column reproduces the published ranking."
+   },
    "best_classical_anchor": {
     "name": "midpoint",
     "heldout_error": 0.0844458969940956
@@ -1195,6 +1528,12 @@
      "in_archive": true,
      "cycles": 15,
      "heldout_error": 0.0613276429988836,
+     "per_problem_heldout": {
+      "pendulum": 0.003305687820387876,
+      "dc_motor": 0.04158692513481159,
+      "rc_thermal": 0.11224905825757357,
+      "quaternion": 0.026534283283096927
+     },
      "tableau_hash": "2d2c2b75d7193bbca80707ea30a28e7d7f7314c4dffc32a28920582921efa210",
      "rank": 1
     },
@@ -1208,6 +1547,12 @@
      "in_archive": true,
      "cycles": 15,
      "heldout_error": 0.061351818475320535,
+     "per_problem_heldout": {
+      "pendulum": 0.005469610647409166,
+      "dc_motor": 0.04158692513481159,
+      "rc_thermal": 0.11182722701808448,
+      "quaternion": 0.028132984832005437
+     },
      "tableau_hash": "48e02f78ce704d1633a9bf10dc44fc2b3495aeb1ee972c0b3e4ba6006ef714a6",
      "rank": 2
     },
@@ -1221,6 +1566,12 @@
      "in_archive": true,
      "cycles": 15,
      "heldout_error": 0.07099453332225676,
+     "per_problem_heldout": {
+      "pendulum": 0.07682080933062008,
+      "dc_motor": 0.04093191222975391,
+      "rc_thermal": 0.11111772113465855,
+      "quaternion": 0.015391195906250932
+     },
      "tableau_hash": "1401580d7d93ab826bc457b4e38b3befe1221b3969761cfd926a927a1c8c6bc3",
      "rank": 3
     },
@@ -1234,6 +1585,12 @@
      "in_archive": true,
      "cycles": 15,
      "heldout_error": 0.07628193704091181,
+     "per_problem_heldout": {
+      "pendulum": 0.027652064491931763,
+      "dc_motor": 0.08347227702602963,
+      "rc_thermal": 0.12210136678440928,
+      "quaternion": 0.02519393184196339
+     },
      "tableau_hash": "784e5c6b78baeb2adb051e6904fa6590d7cf780c60d8f786e1b1eb4025dbcfb9",
      "rank": 4
     },
@@ -1247,6 +1604,12 @@
      "in_archive": true,
      "cycles": 13,
      "heldout_error": 0.0780525278519792,
+     "per_problem_heldout": {
+      "pendulum": 0.0026932108528428082,
+      "dc_motor": 0.04796098580452883,
+      "rc_thermal": 0.14583612936119295,
+      "quaternion": 0.028162071039631864
+     },
      "tableau_hash": "ef7ab78b85501c91009b96c456f18dfed3ab9ac49c390c15f0cb7f5327ae9622",
      "rank": 5
     },
@@ -1260,6 +1623,12 @@
      "in_archive": true,
      "cycles": 13,
      "heldout_error": 0.07806870854694108,
+     "per_problem_heldout": {
+      "pendulum": 0.005626164529238326,
+      "dc_motor": 0.04807716589399147,
+      "rc_thermal": 0.14575797351172556,
+      "quaternion": 0.02811473931580366
+     },
      "tableau_hash": "892bd5b10e398f805728c6c060f344e0bc7c480341f6638fc4f13abc92b4a64a",
      "rank": 6
     },
@@ -1273,6 +1642,12 @@
      "in_archive": true,
      "cycles": 11,
      "heldout_error": 0.0844458969940956,
+     "per_problem_heldout": {
+      "pendulum": 6.44553796067338e-05,
+      "dc_motor": 0.05677772182887742,
+      "rc_thermal": 0.1557632379378313,
+      "quaternion": 0.03222635463559009
+     },
      "tableau_hash": "5bbff5a88c0924e50f2e32401966c76205b2dae85d282a78ec50eac38408c896",
      "rank": 7
     },
@@ -1286,6 +1661,12 @@
      "in_archive": true,
      "cycles": 15,
      "heldout_error": 0.08494523080731724,
+     "per_problem_heldout": {
+      "pendulum": 0.11640275995970302,
+      "dc_motor": 0.04829578602577645,
+      "rc_thermal": 0.11213498699911556,
+      "quaternion": 0.020160063597567057
+     },
      "tableau_hash": "d6984882797e3af43493335868d164e68c9ffe251c978ff6516177e89b96358b",
      "rank": 8
     },
@@ -1299,6 +1680,12 @@
      "in_archive": true,
      "cycles": 15,
      "heldout_error": 0.08886889061844895,
+     "per_problem_heldout": {
+      "pendulum": 0.04388564303271406,
+      "dc_motor": 0.12776364038861857,
+      "rc_thermal": 0.1121149496640515,
+      "quaternion": 0.027775159245187475
+     },
      "tableau_hash": "6c8f825bda85525865b9b1b8a1ac68fb530be36b1507410f27aed9190b228251",
      "rank": 9
     },
@@ -1312,6 +1699,12 @@
      "in_archive": true,
      "cycles": 15,
      "heldout_error": 0.08979991464081374,
+     "per_problem_heldout": {
+      "pendulum": 0.03975535950442358,
+      "dc_motor": 0.12727692437719598,
+      "rc_thermal": 0.11885187754388628,
+      "quaternion": 0.018719663299278988
+     },
      "tableau_hash": "ceefe45d862e18daf431222ff84f6b347067c7e57a115211246a56ec5952528b",
      "rank": 10
     },
@@ -1325,6 +1718,12 @@
      "in_archive": true,
      "cycles": 15,
      "heldout_error": 0.093704603841954,
+     "per_problem_heldout": {
+      "pendulum": 0.0036347530185340364,
+      "dc_motor": 0.08407048987496361,
+      "rc_thermal": 0.1559050126465386,
+      "quaternion": 0.0611128420143483
+     },
      "tableau_hash": "546336ddd9b0228cf0becdf5befe3b0e76e6d5764f15e87350b29e82ebb77582",
      "rank": 11
     },
@@ -1338,6 +1737,12 @@
      "in_archive": true,
      "cycles": 13,
      "heldout_error": 0.09610240384926588,
+     "per_problem_heldout": {
+      "pendulum": 0.004214897111370254,
+      "dc_motor": 0.09741163194331529,
+      "rc_thermal": 0.1559050126465386,
+      "quaternion": 0.05594214635311068
+     },
      "tableau_hash": "205fa13b1cf02de0b783c05ca2fa47967a78ed39a2bfa7358f4c586e59b2d003",
      "rank": 12
     },
@@ -1351,6 +1756,12 @@
      "in_archive": true,
      "cycles": 15,
      "heldout_error": 0.10169225807527146,
+     "per_problem_heldout": {
+      "pendulum": 0.009632394370735514,
+      "dc_motor": 0.168703791649956,
+      "rc_thermal": 0.11142231456423586,
+      "quaternion": 0.01991423833727468
+     },
      "tableau_hash": "d3f13d07deefaf7efb9f8a1720fc3772f0a60bbeede66fdc5fd29102875a6188",
      "rank": 13
     },
@@ -1364,6 +1775,12 @@
      "in_archive": true,
      "cycles": 15,
      "heldout_error": 0.10919800750081247,
+     "per_problem_heldout": {
+      "pendulum": 0.004620222003892348,
+      "dc_motor": 0.1373119480225005,
+      "rc_thermal": 0.15844765541872952,
+      "quaternion": 0.06095278779349156
+     },
      "tableau_hash": "af14a3770d53bfb7b6f990fb5de46d6534424f770842fe2e8b8d179d7089eb0a",
      "rank": 14
     },
@@ -1377,6 +1794,12 @@
      "in_archive": true,
      "cycles": 14,
      "heldout_error": 0.11026444717636405,
+     "per_problem_heldout": {
+      "pendulum": 0.002641391299953979,
+      "dc_motor": 0.14747194468156563,
+      "rc_thermal": 0.15611574711712428,
+      "quaternion": 0.05005911835356858
+     },
      "tableau_hash": "56945e03d577257f0559898055735939c190053fe746914b8c2470f4c5557ac7",
      "rank": 15
     },
@@ -1390,11 +1813,72 @@
      "in_archive": true,
      "cycles": 15,
      "heldout_error": 0.13571392737442647,
+     "per_problem_heldout": {
+      "pendulum": 0.20706002380569763,
+      "dc_motor": 0.12912483153883678,
+      "rc_thermal": 0.11648720337543916,
+      "quaternion": 0.023595258103789263
+     },
      "tableau_hash": "a79596858510035b0c3a60da2c8c758e26943dd4d128b655485f8e7ea641675c",
      "rank": 16
     }
    ],
    "chart_hint": "dot plot: x=a21 (categorical, ordered by value), y=heldout_error, highlight optimum, midpoint, heun2"
+  }
+ },
+ "search_progress": {
+  "verdict": "The archive's best held-out error has stepped down 5 times in 3,931 cycles, at 0, 1, 4, 6, 33. The step at cycle 0 is a seeded classical method, so the search itself has lowered the number 4 times, most recently at cycle 33, 3,897 cycles ago. The run's saturation check still reads CONTINUE. The saturation check reads the accepted-record events rather than this number. It asks whether any cell has taken a new elite, improved the one it held, or accepted a record at the heldout_verified tier inside its window, and it can only return SATURATING once the falsification run has been published. CONTINUE therefore means the grid is still moving somewhere, not that the best held-out error has moved.",
+  "numbers": {
+   "archive_records": 141364,
+   "last_cycle_id": 3930,
+   "cycles_run": 3931,
+   "improvements": 5,
+   "improvements_by_search": 4,
+   "best_heldout_error": 0.02861808365520825,
+   "last_improvement_cycle_id": 33,
+   "cycles_since_last_improvement": 3897,
+   "saturation": {
+    "last_verdict": "CONTINUE",
+    "consecutive": 0,
+    "last_check": "2026-09-10T14:41:56.965453+00:00"
+   },
+   "note_on_counting": "A step is a cycle whose best held-out error is lower than every earlier cycle's. Counting steps over the raw record order instead counts the order the cycle-0 seeds were written and reports eight.",
+   "note_on_saturation": "The saturation check reads the accepted-record events rather than this number. It asks whether any cell has taken a new elite, improved the one it held, or accepted a record at the heldout_verified tier inside its window, and it can only return SATURATING once the falsification run has been published. CONTINUE therefore means the grid is still moving somewhere, not that the best held-out error has moved."
+  },
+  "series": {
+   "best_heldout_by_cycle": [
+    {
+     "cycle_id": 0,
+     "heldout_error": 0.0844458969940956,
+     "tableau_hash": "5bbff5a88c0924e50f2e32401966c76205b2dae85d282a78ec50eac38408c896",
+     "kind": "classical"
+    },
+    {
+     "cycle_id": 1,
+     "heldout_error": 0.0613276429988836,
+     "tableau_hash": "2d2c2b75d7193bbca80707ea30a28e7d7f7314c4dffc32a28920582921efa210",
+     "kind": "discovered"
+    },
+    {
+     "cycle_id": 4,
+     "heldout_error": 0.05620795812287395,
+     "tableau_hash": "33c5b196b5cce7bf317ddd8640e98aa15a6a1bcdb52bd7445aa114f1ab0e3516",
+     "kind": "discovered"
+    },
+    {
+     "cycle_id": 6,
+     "heldout_error": 0.04766612383579887,
+     "tableau_hash": "4f501ec6a5ce8c6258fc99ab267807e5d5f35445e222252b1b5a82a15671416c",
+     "kind": "discovered"
+    },
+    {
+     "cycle_id": 33,
+     "heldout_error": 0.02861808365520825,
+     "tableau_hash": "11e898cbab591a7f432670d4040b788f4c00cc646a005d4f967505578e2c0033",
+     "kind": "discovered"
+    }
+   ],
+   "chart_hint": "step plot, x=cycle_id, y=heldout_error, log y"
   }
  },
  "side_tracks": {

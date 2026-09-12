@@ -95,6 +95,14 @@ svg .cv{font-weight:600}
 svg .axis{stroke:var(--line)}
 svg .gridline{stroke:var(--grid)}
 svg .cellstroke{stroke:var(--surface-1);stroke-width:2px}
+/* A chart mark that is a link is a tab stop, and until now nothing marked which one had
+   the keyboard. The outline draws the ring; the stroke is the fallback for engines that
+   do not paint an outline on an SVG child. Only :focus-visible, so a mouse click on a
+   cell does not leave a ring behind it. */
+svg a:focus-visible rect,svg a:focus-visible circle,svg a:focus-visible path{
+  outline:2px solid var(--s1);outline-offset:2px;stroke:var(--s1);stroke-width:2.5px}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--s1);outline-offset:2px;
+  border-radius:3px}
 .scroll{overflow-x:auto}
 table{border-collapse:collapse;margin:10px 0;font-size:13px;background:var(--surface-1);
   border:1px solid var(--line);border-radius:8px}
@@ -110,6 +118,9 @@ th.num,td.num{text-align:right}
 .tier-heldout_verified{background:var(--good-bg);color:var(--good-fg)}
 .tier-search_only{background:var(--warn-bg);color:var(--warn-fg)}
 .tier-unreplicated{background:var(--mut-bg);color:var(--mut-fg)}
+/* The two tiers that replaced the merged unreplicated label. Neither is a grade, so both
+   wear the muted badge that label wore. */
+.tier-no_incumbent,.tier-no_improvement{background:var(--mut-bg);color:var(--mut-fg)}
 .badge-open{background:var(--mut-bg);color:var(--mut-fg)}
 .badge-supported{background:var(--good-bg);color:var(--good-fg)}
 .badge-refuted{background:var(--bad-bg);color:var(--bad-fg)}
@@ -397,18 +408,41 @@ measured outside the scored archive, on the findings site's
 <a href="https://jgoetzmann.github.io/rk-findings/adaptive.html">adaptive</a> and <a href="https://jgoetzmann.github.io/rk-findings/implicit.html">implicit</a>
 pages.</p>
 
-<h2 id="prior-art">Known prior art, and where the gap is</h2>
+<h2 id="prior-art">Related work, and where the gap is</h2>
 
 <p>RKTK (Zhang, 2019) already runs unstructured numerical searches over Butcher order
 conditions and holds a stage-count record at order 10, so numerical tableau search is not
 the contribution. That line of work optimizes order, stage count and error constants in
 exact arithmetic. It does not price coefficients against a hardware cost model or measure
-end-to-end error in fixed point, and that gap is narrow enough to finish. The run's
-literature loop keeps collecting adjacent work (fixed-point ODE solvers, constant
-multiplication, rounding-error analysis), and its digests are in the findings site's
-<a href="https://jgoetzmann.github.io/rk-findings/hypotheses.html#literature">research log</a>.</p>
+end-to-end error in fixed point, and that gap is narrow enough to finish.</p>
+<p>The closer line is the work on low-precision and reduced-precision time integration,
+and it is worth stating plainly rather than leaving to a reader to find. Croci and Giles
+analyze Runge-Kutta discretizations of the heat equation under round-to-nearest and
+stochastic rounding, and show that the round-to-nearest solution stagnates once the
+timestep is small enough, with the global rounding error growing like the unit roundoff
+over the timestep until it does
+(<a href="https://academic.oup.com/imajna/article-abstract/43/3/1358/6570843">Effects of
+round-to-nearest and stochastic rounding in the numerical solution of the heat equation in
+low precision</a>, IMA J. Numer. Anal. 43(3)). Hopkins and coauthors measure
+reduced-precision fixed-point ODE solvers on neural models and find that the compiler's
+default downward rounding costs accuracy, while stochastic rounding recovers much of it
+(<a href="https://arxiv.org/abs/1904.11263">Stochastic rounding and reduced-precision
+fixed-point arithmetic for solving neural ordinary differential equations</a>). A survey
+of that rounding mode collects the error analysis behind both
+(<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8905452/">Stochastic rounding:
+implementation, error analysis and applications</a>).</p>
+<p>Two things are different here. That work is about floating point at low precision under
+round-to-nearest or stochastic rounding, while this run is fixed-point Q15 with directed
+floor rounding, where every inexact product moves the same way instead of scattering about
+zero. And that work analyzes fixed methods under an arithmetic, while this run searches the
+tableau space against the bias. The stagnation result is a check on this harness rather
+than a rival to it: <a href="results.html#crossover">finding 3</a> measures the same
+turn-up in a different arithmetic, which is what a working measurement of a known effect
+should do. The run's literature loop keeps collecting adjacent work, and its digests are in
+the findings site's <a href="https://jgoetzmann.github.io/rk-findings/hypotheses.html#literature">research log</a>, labeled as
+model-written.</p>
 
-<footer>Built by rk-overview/tools/generate.py from the run archive, data as of 2026-09-10 (US Central). This site is a snapshot; rk-findings carries the live numbers. Text drafted with Claude, edited and owned by the author.</footer>
+<footer>Built by rk-overview/tools/generate.py from the run archive, data as of 2026-09-10 (US Central). This site is a snapshot; rk-findings carries the live numbers. Built from rk-harness df5794c637d7, rk-work 12d49784a442, rk-findings cf4f6c7f54a7 and rk-overview a46b45eb201b, the commit each repository was at when this page was written. Text drafted with Claude, edited and owned by the author.</footer>
 </div>
 </body>
 </html>

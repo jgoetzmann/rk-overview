@@ -85,6 +85,102 @@ def _ranks(scores: dict[str, float]) -> dict[str, int]:
     return {name: i + 1 for i, name in enumerate(order)}
 
 
+def _leave_one_out(best: dict, anchor_rows: list[dict]) -> list[dict]:
+    """The champion against the best classical anchor, one held-out problem dropped.
+
+    Held-out error is an RMS over four problems, so each one carries a quarter of the
+    headline ratio and a single degenerate problem could carry most of the lead with it.
+    Dropping each in turn says how much rests on any one of them. The anchor is re-chosen
+    on every reduced set, because the lowest classical error does not stay with the same
+    method: drop quaternion and it moves from midpoint to rk38.
+    """
+    if any(best["per_problem_heldout"].get(p) is None for p in HELDOUT_PROBLEMS):
+        return []
+    usable = [a for a in anchor_rows
+              if all(a["per_problem_heldout"].get(p) is not None for p in HELDOUT_PROBLEMS)]
+    rows = []
+    for drop in (None,) + HELDOUT_PROBLEMS:
+        kept = [p for p in HELDOUT_PROBLEMS if p != drop]
+        champ = _rms([best["per_problem_heldout"][p] for p in kept])
+        # Ties broken by name, the convention _ranks already uses.
+        ranked = sorted((_rms([a["per_problem_heldout"][p] for p in kept]), a["name"])
+                        for a in usable)
+        err, name = ranked[0]
+        rows.append({
+            "dropped": drop,
+            "problems_kept": kept,
+            "champion_error": _num(champ),
+            "best_anchor_name": name,
+            "best_anchor_error": _num(err),
+            "runner_up_anchor_name": ranked[1][1] if len(ranked) > 1 else None,
+            "ratio": _num(err / champ) if champ else None,
+        })
+    return rows
+
+
+def _rank_stability(rows: list[dict]) -> dict:
+    """Re-rank every evaluated phase-0 member with one held-out problem dropped.
+
+    The top two members of the full-set ranking sit a fraction of a percent apart, which is
+    a tie rather than an ordering, so the question worth answering is whether the winning
+    region survives the problem set that produced it. Each variant recomputes the RMS over
+    the problems it keeps and re-ranks all members. Ties break by a21, the way _ranks breaks
+    them by name, so two runs cannot print two orders.
+    """
+    usable = [r for r in rows
+              if r.get("heldout_error") is not None
+              and all(r.get("per_problem_heldout", {}).get(p) is not None
+                      for p in HELDOUT_PROBLEMS)]
+    if len(usable) < 2:
+        return {"absent": "phase-0 members carry no per-problem held-out errors"}
+    variants, ranks = [], {}
+    for drop in (None,) + HELDOUT_PROBLEMS:
+        kept = [p for p in HELDOUT_PROBLEMS if p != drop]
+        scored = sorted((_rms([r["per_problem_heldout"][p] for p in kept]), r["a21"])
+                        for r in usable)
+        key = drop or "none"
+        variants.append(key)
+        ranks[key] = {a21: i + 1 for i, (_e, a21) in enumerate(scored)}
+    out_rows = sorted(({"a21": r["a21"], "name": r["name"],
+                        "ranks": {v: ranks[v][r["a21"]] for v in variants}}
+                       for r in usable),
+                      key=lambda d: d["ranks"]["none"])
+    winners = {v: next(a for a, k in ranks[v].items() if k == 1) for v in variants}
+    top2 = {frozenset(a for a, k in ranks[v].items() if k <= 2) for v in variants}
+    return {
+        "variants": variants,
+        "rows": out_rows,
+        "winner_by_variant": winners,
+        "distinct_winners": sorted({winners[v] for v in variants}),
+        "top2_identical_in_every_variant": len(top2) == 1,
+        "winner_a21_negative_in_every_variant": all(winners[v].startswith("-")
+                                                    for v in variants),
+        # The full-set column is recomputed from the per-problem errors rather than read
+        # back, so it is also a check that held-out error really is that RMS.
+        "full_set_matches_published_rank": all(
+            ranks["none"][r["a21"]] == r.get("rank") for r in usable),
+        "note": ("Each variant re-ranks every member over the three problems it keeps. The "
+                 "full-set column reproduces the published ranking."),
+    }
+
+
+def _saturation_state() -> dict:
+    """rk-work/saturation_state.json as the run last wrote it.
+
+    Read tolerantly: the file appears only once the orchestrator has run a check, and a
+    missing one must leave the analysis buildable rather than stop it.
+    """
+    path = WS / "rk-work" / "saturation_state.json"
+    try:
+        d = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"last_verdict": None, "consecutive": None, "last_check": None,
+                "absent": "rk-work/saturation_state.json has not been written"}
+    return {"last_verdict": d.get("last_verdict"),
+            "consecutive": d.get("consecutive"),
+            "last_check": d.get("last_check")}
+
+
 # --------------------------------------------------------------------- loading
 
 def load_inputs():
@@ -120,7 +216,12 @@ def efficiency(state, records, anchors: dict):
         ({"name": n, "cycles": r.score.cycles[MODEL],
           "heldout_error": _num(r.score.heldout_error),
           "search_error": _num(r.score.search_error),
-          "measured_order": _num(r.score.measured_order)}
+          "measured_order": _num(r.score.measured_order),
+          # The four bare problem names and nothing else. per_problem also holds
+          # variant-prefixed keys (slow:pendulum, avr_approx:pendulum), so a loop over
+          # its keys would mix cost models into a table that compares one.
+          "per_problem_heldout": {p: _num(r.score.per_problem.get(p))
+                                  for p in HELDOUT_PROBLEMS}}
          for n, r in anchors.items()), key=lambda d: (d["cycles"], d["name"]))
 
     cells = []           # every grid cell, discovered and classical
@@ -182,6 +283,7 @@ def efficiency(state, records, anchors: dict):
                                     for p in HELDOUT_PROBLEMS},
             "ratio_vs_best_classical_anchor":
                 _num(br.score.heldout_error / best_anchor_overall)}
+    loo = _leave_one_out(best, anchor_rows)
 
     med_all = sorted(ratios_all)[len(ratios_all) // 2] if ratios_all else None
     med_win = sorted(ratios_wins)[len(ratios_wins) // 2] if ratios_wins else None
@@ -211,6 +313,7 @@ def efficiency(state, records, anchors: dict):
             "best_error_ratio": _num(min(ratios_all)) if ratios_all else None,
             "best_discovered": best,
             "classical_anchors": anchor_rows,
+            "leave_one_out": loo,
             "note_on_comparison": (
                 "Every heldout_error is evaluated at the same total budget of "
                 f"{BUDGET} cycles, so cheaper methods take more steps; 'cycles' is "
@@ -225,8 +328,13 @@ def efficiency(state, records, anchors: dict):
                 "curse) bias; the CMA-ES search itself optimizes only the "
                 "search-set error.",
                 "Tier labels are mechanical insertion-time comparisons against "
-                "the then-incumbent, not a validation grade of the final elite; "
-                "the overall best cell is tier 'unreplicated'.",
+                "the then-incumbent, not a validation grade of the final elite: "
+                "the best cell's elite cleared neither tier above its own, and "
+                "both of those start from a lower search error than the "
+                "incumbent's. The vocabulary now writes that case no_improvement "
+                "and an empty cell no_incumbent; records written before the "
+                "split, this one included, still carry the merged word "
+                "'unreplicated'.",
                 "rc_thermal saturates near 0.156 for every classical method "
                 "(see rc_thermal_collapse), so classical held-out RMS values "
                 "are floored near 0.078; discovered winners break that floor.",
@@ -275,7 +383,7 @@ def floor_bias_flip(fr: dict):
         f"Floor rounding reorders the field at the {BUDGET:,}-cycle budget. On the three "
         f"search problems euler's RMS error is {sf['euler']:.4f} under floor against "
         f"{sf['rk4']:.4f} for rk4 ({sf['rk4'] / sf['euler']:.1f}x worse), while under "
-        f"round-to-nearest rk4 beats euler ({sr['rk4']:.4f} vs {sr['euler']:.4f}): euler "
+        f"round-to-nearest rk4 has the lower error ({sr['rk4']:.4f} against {sr['euler']:.4f}): euler "
         f"moves from rank {agg['round_to_nearest']['search_rms']['rank']['euler']} to rank "
         f"{agg['floor']['search_rms']['rank']['euler']} and rk4 from rank "
         f"{agg['round_to_nearest']['search_rms']['rank']['rk4']} to rank "
@@ -472,6 +580,11 @@ def phase0_exhaustive(records, anchors: dict):
             "in_archive": bool(rs),
             "cycles": best.score.cycles[MODEL] if best else None,
             "heldout_error": _num(best.score.heldout_error) if best else None,
+            # The four bare problem names and nothing else, the same slice the anchor rows
+            # take: per_problem also holds variant-prefixed keys, and mixing cost models
+            # into a reduced-set RMS would re-rank the lattice against the wrong numbers.
+            "per_problem_heldout": ({p: _num(best.score.per_problem.get(p))
+                                     for p in HELDOUT_PROBLEMS} if best else {}),
             "tableau_hash": h,
         })
     evaluated = [r for r in rows if r["heldout_error"] is not None]
@@ -488,11 +601,11 @@ def phase0_exhaustive(records, anchors: dict):
         f"Closed result: the phase-0 space (2-stage, a21 on the dyadic lattice s<=6, "
         f"|a21|<=2: {n_lattice} candidates, {len(tabs)} with exactly representable b) was "
         f"enumerated in full and all {len(tabs)} members are in the archive. Nothing in it "
-        f"beats a21 = {opt['a21']}, b = ({', '.join(opt['b'])}) at {opt['cycles']} "
+        f"improves on a21 = {opt['a21']}, b = ({', '.join(opt['b'])}) at {opt['cycles']} "
         f"cycles/step with held-out error {opt['heldout_error']:.4f}, a near-tie with "
         f"a21 = {runner_up['a21']} ({runner_up['heldout_error']:.4f}); within the same "
         f"family midpoint ranks {rank_of.get('1/2')} and heun2 ranks {rank_of.get('1/1')} "
-        f"of {len(evaluated)}. The optimum also beats all 8 classical anchors "
+        f"of {len(evaluated)}. The optimum also has a lower held-out error than all 8 classical anchors "
         f"(best: {best_anchor[1]}, {best_anchor[0]:.4f}) at the equal budget.")
     return {
         "verdict": verdict,
@@ -505,6 +618,7 @@ def phase0_exhaustive(records, anchors: dict):
             "runner_up": runner_up,
             "midpoint_rank": rank_of.get("1/2"),
             "heun2_rank": rank_of.get("1/1"),
+            "rank_stability": _rank_stability(rows),
             "best_classical_anchor": {"name": best_anchor[1],
                                       "heldout_error": _num(best_anchor[0])},
             "closure_note": (
@@ -517,6 +631,81 @@ def phase0_exhaustive(records, anchors: dict):
             "all_members": rows,
             "chart_hint": "dot plot: x=a21 (categorical, ordered by value), "
                           "y=heldout_error, highlight optimum, midpoint, heun2",
+        },
+    }
+
+
+# ------------------------------------------------------------- search progress
+
+def search_progress(state, records, anchors: dict) -> dict:
+    """How the headline metric has moved, indexed by cycle rather than by record.
+
+    Records inside one cycle are appended in whatever order that cycle produced them, so a
+    running minimum taken over the file counts the order the eight seeds happened to be
+    written as progress: it reports eight improvements where the search made four.
+    Grouping by cycle first removes that artifact. A step is a cycle whose best held-out
+    error is lower than every earlier cycle's.
+    """
+    seeded = {r.tableau_hash for r in anchors.values()}
+    best_by_cycle: dict[int, tuple[float, str]] = {}
+    for r in records:
+        he = r.score.heldout_error
+        if not math.isfinite(he):
+            continue
+        cur = best_by_cycle.get(r.cycle_id)
+        if cur is None or (he, r.tableau_hash) < cur:
+            best_by_cycle[r.cycle_id] = (he, r.tableau_hash)
+    steps, running = [], None
+    for cycle in sorted(best_by_cycle):
+        he, h = best_by_cycle[cycle]
+        if running is None or he < running:
+            running = he
+            steps.append({"cycle_id": cycle, "heldout_error": _num(he),
+                          "tableau_hash": h,
+                          "kind": "classical" if h in seeded else "discovered"})
+    by_search = [s for s in steps if s["kind"] == "discovered"]
+    last = steps[-1] if steps else None
+    since = state.last_cycle_id - last["cycle_id"] if last else None
+    sat = _saturation_state()
+    measures = (
+        "The saturation check reads the accepted-record events rather than this number. It "
+        "asks whether any cell has taken a new elite, improved the one it held, or accepted "
+        "a record at the heldout_verified tier inside its window, and it can only return "
+        "SATURATING once the falsification run has been published. CONTINUE therefore means "
+        "the grid is still moving somewhere, not that the best held-out error has moved.")
+    counting = (
+        "A step is a cycle whose best held-out error is lower than every earlier cycle's. "
+        "Counting steps over the raw record order instead counts the order the cycle-0 "
+        "seeds were written and reports eight.")
+    if steps:
+        verdict = (
+            f"The archive's best held-out error has stepped down {len(steps)} times in "
+            f"{state.last_cycle_id + 1:,} cycles, at "
+            f"{', '.join(str(s['cycle_id']) for s in steps)}. The step at cycle 0 is a "
+            f"seeded classical method, so the search itself has lowered the number "
+            f"{len(by_search)} times, most recently at cycle {last['cycle_id']}, "
+            f"{since:,} cycles ago. The run's saturation check still reads "
+            f"{sat.get('last_verdict')}. " + measures)
+    else:
+        verdict = "No archived record carries a finite held-out error."
+    return {
+        "verdict": verdict,
+        "numbers": {
+            "archive_records": state.n_records,
+            "last_cycle_id": state.last_cycle_id,
+            "cycles_run": state.last_cycle_id + 1,
+            "improvements": len(steps),
+            "improvements_by_search": len(by_search),
+            "best_heldout_error": _num(running) if running is not None else None,
+            "last_improvement_cycle_id": last["cycle_id"] if last else None,
+            "cycles_since_last_improvement": since,
+            "saturation": sat,
+            "note_on_counting": counting,
+            "note_on_saturation": measures,
+        },
+        "series": {
+            "best_heldout_by_cycle": steps,
+            "chart_hint": "step plot, x=cycle_id, y=heldout_error, log y",
         },
     }
 
@@ -671,7 +860,8 @@ def build() -> dict:
             "sources": ["rk-work/archive/*.jsonl (via rk_harness.archive.cached_view)",
                         "rk-work/falsification.json",
                         "rk-overview/tools/floor_round.json",
-                        "rk-work/sidetrack/ledger.jsonl (absent until the executor fires)"],
+                        "rk-work/sidetrack/ledger.jsonl (absent until the executor fires)",
+                        "rk-work/saturation_state.json (the run's last saturation check)"],
             "budget_cycles": BUDGET,
             "cost_model": MODEL,
             "rounding_mode": "floor (ASRS), per HANDOFF 4.2",
@@ -692,6 +882,7 @@ def build() -> dict:
         "crossover": crossover(fals, fr),
         "rc_thermal_collapse": rc_thermal_collapse(state, anchors, fr),
         "phase0_exhaustive": phase0_exhaustive(records, anchors),
+        "search_progress": search_progress(state, records, anchors),
         "side_tracks": side_tracks(),
     }
     out["_meta"]["nonfinite_written_as_null"] = _nonfinite_count
@@ -720,21 +911,50 @@ def _check_series(out: dict) -> list[str]:
     return issues
 
 
+def _check_claims(out: dict) -> list[str]:
+    """Gate the two things finding 1 publishes as robustness rather than as description.
+
+    There is no test file on this side of the workspace, so the assertion lives where the
+    number is made: a snapshot that breaks either claim fails here instead of shipping.
+    """
+    issues = []
+    eff = out.get("efficiency", {}).get("numbers", {})
+    loo = eff.get("leave_one_out") or []
+    expected = 1 + len(HELDOUT_PROBLEMS)
+    if len(loo) != expected:
+        issues.append(f"efficiency.numbers.leave_one_out has {len(loo)} rows, expected "
+                      f"{expected} (the full set and one row per held-out problem)")
+    ratios = [r["ratio"] for r in loo if r.get("ratio") is not None]
+    if ratios and min(ratios) <= 1.0:
+        issues.append(f"the leave-one-out minimum ratio is {min(ratios):.4f}: the champion "
+                      "no longer leads the best classical anchor on every reduced held-out "
+                      "set, so the published claim is false")
+    full = next((r for r in loo if r.get("dropped") is None), None)
+    best_ratio = eff.get("best_error_ratio")
+    if full and full.get("ratio") and best_ratio:
+        headline = 1 / best_ratio
+        if abs(full["ratio"] - headline) > 5e-3 * headline:
+            issues.append(f"the full-set leave-one-out ratio {full['ratio']:.4f} does not "
+                          f"reproduce best_error_ratio ({headline:.4f})")
+    return issues
+
+
 def main() -> int:
     out = build()
     text = json.dumps(out, indent=1, allow_nan=False)
     OUT_PATH.write_text(text + "\n", encoding="utf-8", newline="\n")
     # strict validation: reject NaN/Infinity tokens and re-check shape
     strict = json.loads(text, parse_constant=lambda c: (_ for _ in ()).throw(ValueError(c)))
-    issues = _check_series(strict)
+    issues = _check_series(strict) + _check_claims(strict)
     print(f"wrote {OUT_PATH} ({len(text):,} bytes, "
           f"{out['_meta']['nonfinite_written_as_null']} non-finite values -> null)")
     if issues:
-        print("SERIES PROBLEMS:")
+        print("PROBLEMS:")
         for i in issues:
             print(" -", i)
         return 1
-    print("all findings have verdict/numbers/series and every series is non-empty")
+    print("all findings have verdict/numbers/series, every series is non-empty, and the "
+          "leave-one-out rows still carry the claim finding 1 makes")
     return 0
 
 

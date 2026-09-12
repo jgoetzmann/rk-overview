@@ -28,11 +28,13 @@ A page that needs a fact from another page links to it instead of repeating it.
 
 LIVE_URL = "https://jgoetzmann.github.io/rk-findings/"
 
-# One quiet line per page. {date} is the snapshot date, US Central.
+# One quiet line per page. {date} is the snapshot date, US Central. {shas} names the commit
+# each of the four repositories stood at when the page was written, read straight from .git
+# by generate._repo_shas, because a date is not something a reader can check out.
 FOOTER = (
     "Built by rk-overview/tools/generate.py from the run archive, data as of {date} (US "
-    "Central). This site is a snapshot; rk-findings carries the live numbers. Text drafted "
-    "with Claude, edited and owned by the author.")
+    "Central). This site is a snapshot; rk-findings carries the live numbers. Built from "
+    "{shas}. Text drafted with Claude, edited and owned by the author.")
 
 # ------------------------------------------------------------------------------ index
 
@@ -43,27 +45,33 @@ HERO_LEAD = """
 <p class="herolead">Textbook Runge-Kutta coefficients are tuned for exact arithmetic. A
 microcontroller without an FPU rounds every multiply down, so the error always leans the
 same way. This project is an unattended search for the coefficients that do best after
-that rounding. Each candidate is scored on its end-to-end error in Q15 at a fixed
-Cortex-M0+ cycle budget.</p>
+that rounding. Each candidate is scored on its end-to-end error in
+<a href="{live}methodology.html#q15">Q15</a> at a fixed
+<a href="{live}methodology.html#cycle-budget">cycle budget</a>, modeled for a
+<a href="architecture.html#costmodel">Cortex-M0+</a> rather than measured on one.</p>
 """
 
 # Problem, approach, result, verify. One claim and one link per block; anything that
 # needs a second paragraph belongs on the page the block links to.
 SPINE = (
     ("problem", "Textbook coefficients assume arithmetic the chip does not have",
-     "<p>Runge-Kutta tableaus are derived by cancelling truncation error in exact "
-     "arithmetic. A Cortex-M0+ has no FPU, so the state lives in Q15 and every multiply "
-     "ends in a right shift that rounds down, biasing each product by half an LSB in the "
-     "same direction. None of the prior tableau searches that the project's literature "
-     "loop surveyed models this rounding.</p>",
+     "<p>Runge-Kutta <a href=\"{live}methodology.html#tableau\">tableaus</a> are derived "
+     "by cancelling truncation error in exact arithmetic. A Cortex-M0+ has no FPU, so the "
+     "state lives in Q15 and every multiply ends in a right shift that rounds down, "
+     "biasing each product by half an <a href=\"{live}methodology.html#lsb\">LSB</a> in "
+     "the same direction. The adjacent literature analyzes fixed methods under "
+     "round-to-nearest and stochastic rounding in low-precision floating point; this run "
+     "searches the tableau space against directed floor rounding in fixed point "
+     "(<a href=\"design-decisions.html#prior-art\">related work</a>).</p>",
      "results.html#crossover", "the premise, tested before the search"),
     ("approach", "Score end-to-end error at a fixed cycle budget, and pin the scorer",
      "<p>Fitness is the error a method delivers within {budget} cycles, so a cheap "
      "method gets to take more, smaller steps. Cost is counted analytically from the "
-     "tableau under two Cortex-M0+ multiplier models. A classical optimizer fills a "
-     "MAP-Elites grid, and a language model in the outer loop chooses where to search "
-     "but never touches the scorer. Ten files are hashed, and the container will not "
-     "start if the hash changes.</p>",
+     "tableau under two Cortex-M0+ multiplier models. "
+     "<a href=\"architecture.html#candidates\">CMA-ES</a> fills a "
+     "<a href=\"{live}methodology.html#map-elites\">MAP-Elites</a> grid, and a language "
+     "model in the outer loop chooses where to search but never touches the scorer. Ten "
+     "files are hashed, and the container will not start if the hash changes.</p>",
      "architecture.html", "how the system is built"),
     ("result", "Floor rounding is a bias the search can use",
      "<p>On one test problem the true answer is smaller than one Q15 step, and the bias "
@@ -79,6 +87,28 @@ SPINE = (
      "architecture.html#tests", "how it is tested"),
 )
 
+# Where these coefficients do not belong, on the front page rather than three clicks into
+# the site. Every number is filled from rk-work/validation/results.json in
+# generate._results_ctx and guarded there by a _claim, so a refreshed validation run that
+# flips the comparison stops the build instead of publishing a stale boundary.
+BOUNDARY = """
+<p>These coefficients are built for one regime, and outside it they are the wrong choice.
+Give the same tableaus float64 and the same step counts and they are far less accurate
+than rk4: on {f64_prob} the champion's float64 error is {f64_champ} against {f64_rk4} for
+rk4, and across the {f64_n} validation problems where both finish it runs {f64_lo} to
+{f64_hi} times worse (<a href="{live}validation.html">every row is on the findings
+validation page</a>). That is what an order-2 method against an order-4 one looks like
+once the arithmetic stops rounding down.</p>
+<p>They are for fixed-point targets with no FPU, at budgets where quantization dominates
+truncation. The explicit class also runs out of room on the stiff problems: on
+{stiff_none} of the {n_stiff} stiff validation problems every discovered tableau overflows
+Q15 where cheap classical methods finish
+(<a href="results.html#validation">finding 6</a>), which is an argument for the implicit
+class rather than for these coefficients.</p>
+<p class="note">Both figures come from rk-work/validation/results.json, built at
+{vd_records} archive records rather than at this page's snapshot.</p>
+"""
+
 CLASSES_LEAD = """
 <p class="lead">The run takes turns between three classes of integrator. Only the
 explicit class is scored by the pinned verifier. The live findings site gives each class
@@ -86,19 +116,23 @@ its own page.</p>
 """
 
 # (class, status label, one paragraph). The card links to the class page on rk-findings.
+# The paragraphs are trusted HTML, placed by generate.py without escaping, so a term can
+# carry a link to its definition on the page's first use of it.
 CLASSES = (
     ("explicit", "scored",
      "Fixed-step explicit tableaus, found by MAP-Elites and CMA-ES and scored by the "
      "pinned verifier in Q15 at a fixed cycle budget. Every result on the key findings "
      "page comes from this class."),
     ("implicit", "measured, not scored",
-     "Two-stage SDIRK methods for stiff problems, enumerated over a dyadic grid with a "
-     "fixed Newton iteration count. They are ranked by the cycles they need to reach a "
+     "Two-stage <a href=\"{live}methodology.html#sdirk\">SDIRK</a> methods for stiff "
+     "problems, enumerated over a "
+     "<a href=\"{live}methodology.html#dyadic-rational\">dyadic</a> grid with a fixed "
+     "Newton iteration count. They are ranked by the cycles they need to reach a "
      "tolerance, in float64, and their order is not checked by the pinned verifier."),
     ("adaptive", "measured, not scored",
-     "Embedded pairs on the dyadic lattice with a division-free step-size controller. "
-     "They are ranked the same way as the implicit class: cycles to reach a tolerance, "
-     "in float64, not order-verified."),
+     "<a href=\"{live}methodology.html#embedded-pair\">Embedded pairs</a> on the dyadic "
+     "lattice with a division-free step-size controller. They are ranked the same way as "
+     "the implicit class: cycles to reach a tolerance, in float64, not order-verified."),
 )
 
 SOURCE_LEAD = """
@@ -119,6 +153,20 @@ REPOS = (
     ("rk-overview", "https://github.com/jgoetzmann/rk-overview",
      "This site, and the tools that build it from the run archive."),
 )
+
+# What the four chips under "What it took" mean, and what they do not. Every number in it
+# comes from _eff_ctx or the test collection; none is typed here.
+SCALE_NOTE = """
+<p class="note">Cells are counted against the searchable lattice: an order can only use
+stage counts that can reach it, which leaves {cells_reachable} cells rather than every
+order, stage and bucket combination. {outside_cell_sentence} The best held-out error has
+stepped down {imp_total} times since cycle 0 and last moved at cycle {imp_last_cycle}. The
+run's saturation check still reads {sat_verdict}: it asks whether any cell has gained or
+improved an elite inside its window, not whether that number moved. The suite collects
+{tests:,} tests: {t_golden:,} golden ones pinned to fixture values, {t_canary:,} canaries
+against gaming, and {t_other:,} behavior and property tests. The container runs {gate} of
+the golden and canary cases as its start gate before a cycle may begin.</p>
+"""
 
 # ------------------------------------------------------------------------ architecture
 
@@ -239,6 +287,13 @@ much cheaper. Derivative evaluation is left out, since it costs the same for eve
 method with the same stage count. A hand-counted ARMv6-M sequence pinned as a fixture
 must match the model under both M0+ models, and the
 <a href="results.html#anchor">anchor result</a> is pinned as golden test G21.</p>
+<p>The model is analytic, so for most of the run nothing had compiled the instruction
+sequence it describes. That check now exists, off the run: the Q15 step was compiled for
+cortex-m0plus with arm-none-eabi-gcc at -O2, executed under an instruction-accurate
+emulator, and the executed instructions were priced with the same table. The emulator
+reports which instructions run and in what order rather than what a part would take, so it
+is not cycle accurate and the comparison does not claim to be.{trace_para} The per-method
+rows are on the <a href="{live}validation.html#trace">findings validation page</a>.</p>
 """
 
 ARCH_CANDIDATES = """
@@ -274,6 +329,16 @@ the inner loop. It emits JSON directives that can only narrow the search, such a
 order or stage counts. A schema rejects unknown keys and bounds every field, and a
 malformed directive is discarded in favor of a deterministic fallback that searches the
 emptiest grid cell. Calls stop at a plan-usage cap.</p>
+<p>The model in the outer loop does see held-out results, and this is exactly what it
+sees. Every directive, hypothesis and interpretation prompt carries one held-out error per
+occupied archive cell, plus the count, mean and lowest held-out error for each (order,
+stage count) group. A code path reads the same number without asking the model: when the
+gap between search-set and held-out error widens, the encourager rotates problems. What
+never reaches the model is a per-problem held-out value, the practical validation suite or
+the benchmark, and the inner optimizer is still scored on search-set error alone. So the
+<a href="{live}methodology.html#held-out-set">held-out set</a> steers where the search
+looks rather than sitting outside the loop, and the elites chosen on it carry selection
+bias.</p>
 <p>The model also proposes falsifiable hypotheses. Code assigns their ids and verdicts,
 and each predicate must parse under a closed grammar with a hand-written parser. No eval
 runs anywhere near model output, and a grep canary enforces that. A field such as
@@ -312,8 +377,10 @@ tests (G-numbered) pin behavior to fixture values written before the code existe
 to exact measured orders and cycle counts. Canary tests (K-numbered) guard against
 gaming: K1 plants a candidate tuned on the search set and asserts that it can earn
 search_only but never heldout_verified, and K2 asserts that a winner on a single problem
-family stays unreplicated. The {gate} golden and canary cases are also the container's
-start gate.</p>
+family lands at no_improvement, the tier for a candidate that earns neither of the others.
+Its counterpart no_incumbent marks a record written into an empty cell. The two were one
+word, unreplicated, until they were split, and records written before that still carry it.
+The {gate} golden and canary cases are also the container's start gate.</p>
 """
 
 ARCH_PREFLIGHT = """
@@ -484,10 +551,33 @@ PRIOR_ART = """
 conditions and holds a stage-count record at order 10, so numerical tableau search is not
 the contribution. That line of work optimizes order, stage count and error constants in
 exact arithmetic. It does not price coefficients against a hardware cost model or measure
-end-to-end error in fixed point, and that gap is narrow enough to finish. The run's
-literature loop keeps collecting adjacent work (fixed-point ODE solvers, constant
-multiplication, rounding-error analysis), and its digests are in the findings site's
-<a href="{live}hypotheses.html#literature">research log</a>.</p>
+end-to-end error in fixed point, and that gap is narrow enough to finish.</p>
+<p>The closer line is the work on low-precision and reduced-precision time integration,
+and it is worth stating plainly rather than leaving to a reader to find. Croci and Giles
+analyze Runge-Kutta discretizations of the heat equation under round-to-nearest and
+stochastic rounding, and show that the round-to-nearest solution stagnates once the
+timestep is small enough, with the global rounding error growing like the unit roundoff
+over the timestep until it does
+(<a href="https://academic.oup.com/imajna/article-abstract/43/3/1358/6570843">Effects of
+round-to-nearest and stochastic rounding in the numerical solution of the heat equation in
+low precision</a>, IMA J. Numer. Anal. 43(3)). Hopkins and coauthors measure
+reduced-precision fixed-point ODE solvers on neural models and find that the compiler's
+default downward rounding costs accuracy, while stochastic rounding recovers much of it
+(<a href="https://arxiv.org/abs/1904.11263">Stochastic rounding and reduced-precision
+fixed-point arithmetic for solving neural ordinary differential equations</a>). A survey
+of that rounding mode collects the error analysis behind both
+(<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8905452/">Stochastic rounding:
+implementation, error analysis and applications</a>).</p>
+<p>Two things are different here. That work is about floating point at low precision under
+round-to-nearest or stochastic rounding, while this run is fixed-point Q15 with directed
+floor rounding, where every inexact product moves the same way instead of scattering about
+zero. And that work analyzes fixed methods under an arithmetic, while this run searches the
+tableau space against the bias. The stagnation result is a check on this harness rather
+than a rival to it: <a href="results.html#crossover">finding 3</a> measures the same
+turn-up in a different arithmetic, which is what a working measurement of a known effect
+should do. The run's literature loop keeps collecting adjacent work, and its digests are in
+the findings site's <a href="{live}hypotheses.html#literature">research log</a>, labeled as
+model-written.</p>
 """
 
 # ------------------------------------------------------------------------ key findings
@@ -497,7 +587,10 @@ RESULTS_SUB = "What the explicit search found, at snapshot {date}."
 HEADLINE_VERDICT = """
 <p class="verdict">At a fixed budget of {budget} cycles on a Cortex-M0+ cost model, the
 search found Runge-Kutta methods with up to <strong>{best_x}&times;</strong> lower
-held-out error than the best classical method. The data also shows why: Q15's floor
+<a href="{live}methodology.html#held-out-set">held-out error</a> than the best classical
+method. Drop any one of the four held-out problems
+and the lead runs from {loo_min}&times; to {loo_max}&times;, so it does not rest on one of
+them. The data also shows why: Q15's floor
 rounding adds a bias of about half an LSB to every multiply, and that alone reorders the
 classical methods before any search starts. The <a href="demo.html">demo</a> lets you
 watch it happen.</p>
@@ -506,7 +599,10 @@ watch it happen.</p>
 RESULTS_SCOPE = (
     "Unless a figure says otherwise: a {budget}-cycle budget per problem, the m0plus_fast "
     "cost model, Q15 with floor rounding, the four held-out problems. Charts come from "
-    "tools/key_findings.json; finding 6 reads rk-work/validation/results.json.")
+    "tools/key_findings.json; finding 6 reads rk-work/validation/results.json. The two "
+    "documents stand at different states of the run: findings 1 to 5 were computed at "
+    "{kf_records} archive records, finding 6 and the method matrix at {vd_records}. Each "
+    "figure carries the state it was computed at.")
 
 ANCHOR_TITLE = "The anchor result"
 
@@ -538,19 +634,30 @@ F_EFFICIENCY_TITLE_SOME = "Discovered methods lead in {cells_won} of {cells_disc
 
 F_EFFICIENCY_INTERP = """
 <p>The best discovered method is a {bd_stages}-stage, order-{bd_order} tableau at
-{bd_cycles} cycles per step, with held-out error {bd_err} against {anchor_err} for
-{anchor_name}, the best classical method. Every coefficient is dyadic, so the method
-needs only shifts and adds.</p>
+{bd_cycles} cycles per step for one state (m0plus_fast, n_states=1), with held-out error
+{bd_err} against {anchor_err} for {anchor_name}, the best classical method. Cost scales
+with the problem's state dimension, so the same tableau costs {bd_cycles_2state} cycles
+per step on a two-state problem. Every coefficient is dyadic, so the method needs only
+shifts and adds.</p>
 <details class="fold"><summary>Its tableau and its error on each held-out
 problem</summary><div>
 <p>A = {bd_A}, b = {bd_b}, c = {bd_c}. Measured order {bd_measured}. Held-out error per
 problem: {bd_per_problem}.</p>
 </div></details>
+<h3>Dropping one held-out problem at a time</h3>
+<p>Held-out error is an RMS over four problems, so each of them carries a quarter of the
+ratio above. rc_thermal is the problem where every classical method lands on the same
+quantization floor (<a href="#rc-thermal">finding 4</a>), and it is what makes the
+full-set ratio the widest. Dropping it leaves {loo_min}&times;, the lowest ratio in the
+table below; across the whole table the lead runs from {loo_min}&times; to
+{loo_max}&times;, and the best classical method changes identity when quaternion goes.</p>
+{loo_table}
 <p>Two caveats. Elites are chosen by held-out error from {archive_n} archived candidates,
 so the best values carry selection bias, although the optimizer itself only sees
 search-set error. And a tier is a mechanical comparison with the cell's incumbent when
-the record is written, not a validation grade: the best cell is {bd_tier}, and
-{cells_hv} of the {cells_disc} discovered elites are heldout_verified.</p>
+the record is written, not a validation grade: the best cell's elite is {bd_tier}, which
+means it cleared neither tier above it, and both of those start from a lower search error.
+Of the {cells_disc} discovered elites, {cells_hv} are heldout_verified.</p>
 """
 
 F_FLIP_INTRO = """
@@ -591,6 +698,12 @@ per-step cycles under the fast multiplier, above the {proceed}% proceed line, bu
 under the slow one sits at {heun2_slow}%, just under the {kill}% kill line. At the shared
 budget under floor, rk4 is the best of the {n_flip} methods on {rk4_wins} of the
 {n_problems} problems.</p>
+<p>The shape of this is not new, and reporting it that way is the point. Analysis of
+low-precision Runge-Kutta integration finds that a round-to-nearest solution stagnates
+once the timestep is small enough, with the rounding term growing as the step shrinks.
+Measuring the same turn-up in fixed point under floor rounding says the harness is seeing
+a real effect rather than an artifact of its own arithmetic
+(<a href="design-decisions.html#prior-art">related work</a>).</p>
 """
 
 F_RC_INTRO = """
@@ -617,15 +730,23 @@ F_PHASE0_INTRO = """
 <p>Phase 0 is the one part of the space small enough to close completely: two-stage
 methods with a21 on a dyadic lattice, {lattice} candidates, of which {valid} have
 exactly representable b weights. All {valid} were enumerated, verified and archived, so
-the result holds over the whole space rather than a sample.</p>
+the result holds over the whole space rather than a sample. It is an exhaustive
+evaluation and not a theorem, and it is contingent on three things: these four held-out
+problems, this {budget}-cycle budget, and Q15 with floor rounding. The top two members
+finish {gap}% apart, which is a tie at this resolution rather than an ordering.</p>
 """
 
 F_PHASE0_INTERP = """
-<p>The optimum is a21 = {opt_a21} with b = {opt_b}: held-out error {opt_err} at
-{opt_cyc} cycles per step. The runner-up, a21 = {ru_a21}, is at {ru_err}, {gap}% away,
-so call it a tie. Neither is a textbook method, and both have lower held-out error than
-all {n_anchors} classical methods (the best of those is {anchor_name} at {anchor_err}).
+<p>The two best members are a21 = {opt_a21} with b = {opt_b}, at held-out error {opt_err}
+and {opt_cyc} cycles per step, and a21 = {ru_a21} at {ru_err}, {gap}% behind it: a tie,
+not a ranking. Neither is a textbook method, and both have lower held-out error than all
+{n_anchors} classical methods (the best of those is {anchor_name} at {anchor_err}).
 Within the family, midpoint ranks {mid_rank} and heun2 {heun_rank} of {valid}.</p>
+<h3>Re-ranking with one held-out problem dropped</h3>
+<p>A ranking of {valid} members whose top two are {gap}% apart is worth testing against
+the problem set that produced it. Dropping each held-out problem in turn and re-ranking
+every member gives five orderings. {p0_stab_sentence}</p>
+{p0_stab_table}
 """
 
 F_VALIDATION_INTRO = """
@@ -633,14 +754,31 @@ F_VALIDATION_INTRO = """
 suite asks whether the winners transfer to {n_prac} equations from embedded applications
 ({domains}) that no optimizer saw, run at the same {budget}-cycle budget in Q15 with
 floor rounding and scored against independent reference solutions.</p>
+<p>The comparator is fixed. It is the champion from <a href="#efficiency">finding 1</a>,
+picked at cycle {ch_cycle} out of {vd_records} archived records, before this suite ran,
+with its coefficients unchanged. Against the best of the {n_cls} classical anchors on each
+problem it has the lower Q15 error on {ch_won} of {ch_cmp} non-stiff
+problems{ch_tie_clause}, and on {ch_stiff_won} of the {ch_stiff_cmp} stiff problems where
+both sides finish{ch_stiff_clause}. Taking the anchors one at a time instead of the best of
+them, one discovered method against {n_cls} classical ones with no maximum on either side,
+it is lower in {ch_lower} of {ch_cells} cells, higher in {ch_higher} and tied in
+{ch_tied}.{ch_loss_sentence}</p>
+{ch_table}
+<p>{ch_flag_sentence} A ratio within {tie_pct}% of 1.0 is counted as a tie rather than a
+win, on both sides of the comparison. The findings validation page applies the same two
+rules to the same document, so the two sites report one tally.</p>
 """
 
 F_VALIDATION_INTERP = """
-<p>The discovered methods have the lower error on {won} of the {n_prac} problems, with a
-median error ratio (best discovered over best classical) of {median}. The widest margin
-is on {wide} ({wide_d} against {wide_c} for {wide_cname}, {wide_x}&times;). The
-three-stage champion from finding 1, coefficients unchanged, wins {champ_wins} of
-them.{loss_sentence}</p>
+<details class="fold"><summary>The other way to count it: best of {n_disc} discovered
+against best of {n_cls} classical</summary><div>
+<p>Taking the lowest error on each side reads {mm_won} of {mm_cmp} on the non-stiff
+problems, with a median error ratio of {median} and the widest margin on {wide} ({wide_d}
+against {wide_c} for {wide_cname}, {wide_x}&times;). Both sides are maxima there, and the
+discovered side is a maximum over methods already selected on error, so that count rises
+with the number of discovered methods run. That is why the finding leads with one fixed
+comparator instead.</p>
+</div></details>
 <p>Float64 runs of the same tableaus and step counts are at least {float_x}&times; more
 accurate in every case, so these errors measure quantization, and the largest raw Q15
 value in any run is {max_q:,} of 32,767, so none leaned on overflow luck. The {n_stiff}
@@ -648,9 +786,8 @@ stiff problems tell a different story (overflow, not accuracy); they and the ful
 are on the <a href="{live}validation.html">findings validation page</a>.</p>
 """
 
-F_VALIDATION_LOSS = (" On {p}, {c_name} reaches {c_err} against {d_err} for the best "
-                     "discovered method (ratio {ratio}), so the transfer is strong but "
-                     "not universal.")
+F_VALIDATION_LOSS = ("{p}, where {c_name} reaches {c_err} against the champion's {d_err} "
+                     "(ratio {ratio})")
 
 # (slug, heading, intro, interpretation). Charts are attached by slug in generate.py.
 FINDINGS = (
@@ -763,8 +900,11 @@ page</a>.</p>
 PROTOCOL_TITLE = "How the numbers were made"
 
 PROTOCOL = """
-<p>Code assigns each record's tier when it is written (heldout_verified, search_only or
-unreplicated) by comparison with its cell's incumbent. The model proposes hypotheses only
+<p>Code assigns each record's tier when it is written, by comparison with its cell's
+incumbent: heldout_verified, search_only, no_incumbent when the cell was empty, or
+no_improvement when the candidate earned neither of the other two. Those last two were one
+word, unreplicated, and records written before the split still carry it. The model
+proposes hypotheses only
 as predicates in a closed grammar, and code writes the verdict: no data or an effect
 below Cohen's d of 0.2 is inconclusive, and refuted hypotheses are fed back into later
 prompts. The premise got the same treatment, a falsification run with thresholds fixed in

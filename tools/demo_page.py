@@ -277,7 +277,8 @@ function board(){
   var W=760, ml=190, mr=74, rowh=27, top=30;
   var H=top+rows.length*rowh+30;
   var x=logScale(lo*0.7,hi*1.4,ml,W-mr);
-  var out=['<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="img" aria-label="methods ranked by final error">'];
+  var out=['<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="img" aria-label="'+
+    ok.length+' methods ranked by final error, lowest first">'];
   decades(lo*0.7,hi*1.4).forEach(function(d){
     var px=x(d);
     if(px<ml-1||px>W-mr+1) return;
@@ -330,7 +331,9 @@ function traj(){
   var every=Math.max(1,Math.floor(n/420));
   var r=run(S.meth,S.prob,S.mode,every);
   var W=760, H=300, ml=62, mr=14, mt=16, mb=34;
-  var out=['<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="img" aria-label="trajectory against the reference">'];
+  var out=['<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="img" aria-label="'+
+    'trajectory against the reference: '+(r.status==="ok"?r.samples.length:0)+
+    ' Q15 samples against '+p.ref_curve.length+' reference points">'];
   var lo=Infinity, hi=-Infinity, k=S.state;
   p.ref_curve.forEach(function(row){ var v=row[1+k]; if(v<lo)lo=v; if(v>hi)hi=v; });
   if(r.status==="ok"){
@@ -393,7 +396,8 @@ function pareto(){
   var xs=pts.map(function(z){ return z.x; }), ys=pts.map(function(z){ return z.y; });
   var X=logScale(Math.min.apply(null,xs)*0.82, Math.max.apply(null,xs)*1.22, ml, W-mr);
   var Y=logScale(Math.min.apply(null,ys)*0.6, Math.max.apply(null,ys)*1.7, H-mb, mt);
-  var out=['<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="img" aria-label="cycles per step against final error">'];
+  var out=['<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="img" aria-label="'+
+    pts.length+' methods by cycles per step against final error, both axes log">'];
   decades(Math.min.apply(null,xs)*0.82, Math.max.apply(null,xs)*1.22).forEach(function(d){
     var px=X(d); if(px<ml-1||px>W-mr+1) return;
     out.push('<line class="gridline" x1="'+px.toFixed(1)+'" y1="'+mt+'" x2="'+px.toFixed(1)+'" y2="'+(H-mb)+'"/>');
@@ -580,9 +584,9 @@ classical, blue was found by the search.</p>
 
 <h2>Cost against error, recomputed live</h2>
 <p class="lead">The same {n_methods} methods, placed by what they cost and what they
-achieve on the selected problem. The dashed line is the Pareto frontier: the methods that
-no other method beats on cost and error at once. It moves when you change the problem or
-the rounding mode.</p>
+achieve on the selected problem. The dashed line is the Pareto frontier: the methods no
+other method improves on for cost and error at once. It moves when you change the problem
+or the rounding mode.</p>
 <div class="panel"><div id="pareto"></div>
   <p class="hint" id="paretoline"></p></div>
 
@@ -671,7 +675,8 @@ function draw(){
   var rowh=25, top=44, W=760, H2=top+L.length*rowh+16;
   var xl=250, xr=W-250;
   var o=['<svg viewBox="0 0 '+W+' '+H2+'" width="'+W+'" height="'+H2+'" role="img" '+
-         'aria-label="method ranking under floor rounding against round-to-nearest">'];
+         'aria-label="'+L.length+' methods ranked under floor rounding against '+
+         'round-to-nearest">'];
   o.push('<text class="fh" x="'+xl+'" y="20" text-anchor="end">floor (what the chip does)</text>');
   o.push('<text class="fh" x="'+xr+'" y="20" text-anchor="start">round-to-nearest</text>');
   L.forEach(function(z,i){
@@ -743,15 +748,23 @@ document.addEventListener("DOMContentLoaded",function(){
 """
 
 
-def hero_body(n_methods: int, budget: int) -> str:
-    """The one thing worth putting above the fold: the result, running."""
+def hero_body(methods: list[dict], budget: int) -> str:
+    """The one thing worth putting above the fold: the result, running.
+
+    The composition is counted from each method's own origin field rather than typed, so
+    adding a discovered method to demo_data.json rewrites the sentence instead of leaving
+    it a cycle behind the chart it describes."""
+    n_methods = len(methods)
+    n_classical = sum(1 for m in methods if m.get("origin") == "classical")
+    n_discovered = sum(1 for m in methods if m.get("origin") == "discovered")
     return f"""
 <div class="hero">
 <h2>The result, in one interaction</h2>
-<p class="heroq">{n_methods} Runge-Kutta methods, ranked by their error at an equal
+<p class="heroq">{n_methods} Runge-Kutta methods, {n_classical} textbook and
+{n_discovered} found by the search, ranked by their error at an equal
 {budget:,}-cycle budget. On the left every multiply rounds down, which is what a
 Cortex-M0+ without an FPU does. On the right it rounds to nearest, as the textbooks
-assume. Hover a line or switch problems.</p>
+assume. Tap or hover a line, or switch problems.</p>
 <div class="flipwrap">
   <div class="flipbar"><span class="lab">test problem</span><div class="flipseg" id="flipseg"></div></div>
   <div id="flip"></div>
